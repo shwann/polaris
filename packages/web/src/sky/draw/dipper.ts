@@ -2,7 +2,7 @@ import { FIG_LANE as CARD_LANE, COL, DIPPER_LINES, GOLD } from '../../domain/lan
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
 import { drawHub } from './hub';
-import { tetherEnd, type TetherStar } from '../geometry/tether';
+import { clusterTether, hubDraggable } from '../motion/constellation';
 
 export function drawDipper(state: SkyState, t: number) {
   const pos = state.hubs(),
@@ -74,15 +74,8 @@ export function drawDipper(state: SkyState, t: number) {
     for (let k = 1; k < 7; k++) {
       const g = CARD_LANE[k]!;
       if (!state.laneCount(g)) continue;
-      const stars: TetherStar[] = [];
-      for (const s of state.stars.values())
-        if (s.group === g && !s.dead) stars.push({ id: s.id, point: state.at(s.x, s.y, 14), alpha: s.alpha });
-      const hit = tetherEnd(pos[k]!, stars, 7 * state.sz, state.tetherHub.get(g));
-      if (!hit) {
-        state.tetherHub.delete(g);
-        continue;
-      }
-      state.tetherHub.set(g, hit.id);
+      const hit = clusterTether(state, k, pos[k]!, hubDraggable(state));
+      if (!hit) continue;
       const end = hit.end;
       const c = COL[g]! || COL.planned,
         a = Math.min(1, 0.55 * state.skyK * (k === lit ? 1.5 : 1));

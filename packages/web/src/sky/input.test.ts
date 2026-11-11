@@ -121,7 +121,7 @@ describe('pointer input', () => {
     pointer('pointermove', 550, 400, 120);
     s.frame(120);
     expect(a.x).toBe(550);
-    expect(s.drag?.weights.size).toBe(0);
+    expect(s.stars.get('a')!.vx).toBe(0);
     pointer('pointerup', 550, 400, 121);
     expect(a.x).toBe(400);
     expect(a.ox).toBe(0);

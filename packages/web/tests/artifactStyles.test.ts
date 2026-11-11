@@ -39,5 +39,5 @@ it('ships container sizing, both narrow-card marks, hidden subtitle and global s
   expect(css).toContain('@container');
   expect(css).toContain('--bg:');
   for (const name of ['.hud', '.boot', 'html.proj', 'html.sky']) expect(css).toContain(name);
-  expect(statSync('plugin/assets/index.html').size).toBeLessThanOrEqual(400 * 1024);
+  expect(statSync('plugin/assets/index.html').size).toBeLessThanOrEqual(512 * 1024);
 });

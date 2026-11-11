@@ -1,0 +1,78 @@
+import { DIPPER_LINES, FIG_LANE } from '../../domain/lanes';
+import { tetherEnd } from '../geometry/tether';
+import { hubHomes } from '../layout';
+import type { Drag, Point, SkyState, Star } from '../types';
+import { advance, resetParticle, type Constraint } from './softbody';
+
+export const hubDraggable = (s: SkyState) => s.sky && s.w > 560 && !s.reduce.matches;
+export const draggedParticle = (s: SkyState, d: Drag) =>
+  d.star || (hubDraggable(s) ? s.hubParticles[d.dip] : undefined);
+
+export function syncHubs(s: SkyState) {
+  hubHomes(s).forEach(([x, y], i) => {
+    const p = (s.hubParticles[i] ??= { ox: 0, oy: 0, vx: 0, vy: 0 });
+    [p.baseX, p.baseY] = [x, y];
+    if (!hubDraggable(s)) resetParticle(p);
+  });
+}
+
+export function moveHeld(s: SkyState, d: Drag, x = s.px, y = s.py): Point | undefined {
+  const p = draggedParticle(s, d);
+  if (!p) return;
+  const [wx, wy] = s.toWorld(x, y),
+    parallax = d.star ? 14 : 0;
+  const point: Point = [wx - s.mx * parallax + d.grab[0] - p.baseX!, wy - s.my * parallax + d.grab[1] - p.baseY!];
+  if (d.star) {
+    d.star.x = p.baseX! + point[0];
+    d.star.y = p.baseY! + point[1];
+  }
+  return point;
+}
+
+/** Hub tethers transmit gently outward only; a task drag cannot disturb other lanes via the Dipper. */
+export function constellation(s: SkyState, list: Star[], dt: number) {
+  syncHubs(s);
+  const hubs = s.hubParticles,
+    edges: Constraint[] = [];
+  for (const tree of s.trees.values())
+    for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
+  if (hubDraggable(s)) {
+    for (const [a, b] of [...DIPPER_LINES, [0, 7]]) edges.push({ a: hubs[a!]!, b: hubs[b!]!, compliance: 0.012 });
+    for (let k = 1; k < 7; k++) {
+      const p = hubs[k]!,
+        b = clusterTether(s, k)?.star;
+      if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
+    }
+  }
+  const d = s.drag?.moved ? s.drag : null,
+    particle = d ? draggedParticle(s, d) : undefined,
+    point = d && particle ? moveHeld(s, d) : undefined;
+  if (s.reduce.matches || s.w <= 560) {
+    // Preserve the existing mobile motion path in physics.ts; reduced motion moves only the held star.
+    if (s.reduce.matches) for (const p of list) resetParticle(p);
+    if (particle && point) [particle.ox, particle.oy] = point;
+    s.soft.remainder = 0;
+    s.soft.pin = undefined;
+  } else advance(s.soft, [...list, ...hubs], edges, dt, particle && point ? { particle, point } : undefined);
+  for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
+}
+
+/** One selection path keeps the dotted endpoint and the simulated attachment identical. */
+export function clusterTether(s: SkyState, k: number, from = s.hubs()[k]!, locked = false) {
+  const group = FIG_LANE[k]!,
+    previous = s.tetherHub.get(group);
+  const hit = tetherEnd(
+    from,
+    [...s.stars.values()]
+      .filter((v) => v.group === group && !v.dead && (!locked || !previous || v.id === previous))
+      .map((v) => ({ id: v.id, point: s.at(v.x, v.y, 14), alpha: v.alpha })),
+    7 * s.sz,
+    previous,
+  );
+  if (!hit) {
+    s.tetherHub.delete(group);
+    return null;
+  }
+  s.tetherHub.set(group, hit.id);
+  return { ...hit, star: s.stars.get(hit.id)! };
+}

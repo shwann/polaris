@@ -35,6 +35,12 @@ export function measureHeader(s: SkyState) {
   s.smallPole = [px, py + Y];
 }
 export function hubs(s: SkyState): Point[] {
+  return hubHomes(s).map(([x, y], i) => {
+    const p = s.sky && s.w > 560 && !s.reduce.matches ? s.hubParticles[i] : undefined;
+    return [x + (p?.ox || 0), y + (p?.oy || 0)];
+  });
+}
+export function hubHomes(s: SkyState): Point[] {
   if (!s.ZONE.dip)
     return [
       ...DIPPER.map((_, k) => (k ? s.centre(FIG_LANE[k]!) : anchor(s.ZONE.app, 110, 80, s.w, s.h))),
@@ -76,6 +82,8 @@ export function size(s: SkyState) {
       Math.min((Math.max(...xs) - Math.min(...xs)) / 2 / 1.25, (Math.max(...ys) - Math.min(...ys)) / 2 / 0.85) * 0.62,
     ];
   } else s.bowl = null;
+  s.hubParticles = [];
+  s.soft = { remainder: 0 };
   s.rebuild();
   if (s.w >= 2 && s.h >= 2) s.drawChart();
   s.measureHeader();

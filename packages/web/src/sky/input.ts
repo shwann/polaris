@@ -6,7 +6,8 @@ import { pickAt } from './draw/picking';
 import { constrain, rubberPoint } from './motion/bounds';
 import { cameraBounds, cameraMoving, stopCamera } from './motion/cameraMotion';
 import { LAUNCH_SPEED, record, velocity } from './motion/inertia';
-import { tetherWeights } from './motion/tether';
+import { draggedParticle } from './motion/constellation';
+import { prepareDrag, releaseHeld } from './motion/drag';
 import type { Point, SkyState } from './types';
 
 export function attachInput(s: SkyState) {
@@ -60,9 +61,9 @@ export function attachInput(s: SkyState) {
       }
       const dx = e.clientX - d.x0,
         dy = e.clientY - d.y0;
-      if (!d.moved && Math.hypot(dx, dy) >= 5 && (s.sky || d.star)) d.moved = true;
+      if (!d.moved && Math.hypot(dx, dy) >= 5 && (s.sky || d.star || (s.w > 560 && d.dip >= 0))) d.moved = true;
       d.samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
-      if (d.moved && !d.star) {
+      if (d.moved && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
         [s.camT.x, s.camT.y] = rubberPoint([d.cx + dx, d.cy + dy], cameraBounds(s));
         // Direct manipulation must not wait for the next interpolated camera frame.
         Object.assign(s.cam, s.camT);
@@ -72,6 +73,7 @@ export function attachInput(s: SkyState) {
   );
   const cancel = () => {
     s.drag = null;
+    s.soft.pin = undefined;
     s.pointers.clear();
     stopCamera(s);
     s.px = s.py = -1e4;
@@ -115,7 +117,6 @@ export function attachInput(s: SkyState) {
           samples: [],
           grab: [0, 0],
           dip: -1,
-          weights: new Map(),
         };
       } else {
         const hit = pickAt(s, e.clientX, e.clientY);
@@ -128,16 +129,10 @@ export function attachInput(s: SkyState) {
           moved: false,
           star: hit.star,
           dip: hit.dip,
-          grab: hit.star ? [hit.star.x + s.mx * 14 - wx, hit.star.y + s.my * 14 - wy] : [0, 0],
+          grab: [0, 0],
           samples: [{ x: e.clientX, y: e.clientY, t: e.timeStamp }],
-          weights:
-            hit.star && !s.reduce.matches ? tetherWeights(hit.star, s.trees.get(hit.star.group) || []) : new Map(),
         };
-        if (hit.star) {
-          hit.star.baseX ??= hit.star.x - hit.star.ox;
-          hit.star.baseY ??= hit.star.y - hit.star.oy;
-          hit.star.vx = hit.star.vy = 0;
-        }
+        prepareDrag(s, s.drag, wx, wy);
       }
       s.emitTooltip();
     },
@@ -155,13 +150,7 @@ export function attachInput(s: SkyState) {
     if (d?.moved && e.type !== 'pointercancel') {
       s.px = e.clientX;
       s.py = e.clientY;
-      if (d.star) {
-        const [wx, wy] = s.toWorld(e.clientX, e.clientY);
-        d.star.x = wx - s.mx * 14 + d.grab[0];
-        d.star.y = wy - s.my * 14 + d.grab[1];
-        d.star.ox = d.star.x - (d.star.baseX ?? d.star.x);
-        d.star.oy = d.star.y - (d.star.baseY ?? d.star.y);
-      } else {
+      if (!draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
         [s.camT.x, s.camT.y] = rubberPoint([d.cx + e.clientX - d.x0, d.cy + e.clientY - d.y0], cameraBounds(s));
         Object.assign(s.cam, s.camT);
       }
@@ -169,17 +158,8 @@ export function attachInput(s: SkyState) {
     s.drag = null;
     if (!d) return;
     if (d.moved || e.type === 'pointercancel') lastTap = null;
-    if (d.star && d.moved) {
-      d.star.flare = Math.max(d.star.flare, 0.7);
-      if (!s.reduce.matches && e.type !== 'pointercancel') {
-        const [x, y] = s.at(d.star.x, d.star.y, 14);
-        s.ripples.push({ x, y, c: COL[d.star.group], t0: performance.now(), power: 0.8, small: true, hit: new Set() });
-        if (s.ripples.length > 6) s.ripples.shift();
-      }
-      if (s.reduce.matches) {
-        d.star.ox = d.star.oy = d.star.vx = d.star.vy = 0;
-        [d.star.x, d.star.y] = s.home(d.star, 0);
-      }
+    if ((d.star || (s.w > 560 && d.dip >= 0)) && d.moved) {
+      releaseHeld(s, d, e);
       return;
     }
     if (d.moved && s.sky && !s.reduce.matches && e.type !== 'pointercancel') {
