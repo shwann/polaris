@@ -45,7 +45,7 @@ it('drags a Dipper star without moving the camera, carries neighbors and its liv
   expect(s.cam).toEqual({ s: 1, x: 0, y: 0 });
   pointer('pointerup', x - 92, y - 77, 321);
   expect(s.inertia).toEqual([0, 0]);
-  for (let t = 336; t < 1840; t += 16) s.physics(t, 16, [...s.stars.values()]);
+  for (let t = 336; t < 3400; t += 16) s.physics(t, 16, [...s.stars.values()]);
   expect(Math.max(...s.hubParticles.map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(0.5);
   expect(Math.hypot(center.ox, center.oy)).toBeLessThan(0.5);
   dispose();

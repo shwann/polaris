@@ -37,11 +37,11 @@ export function constellation(s: SkyState, list: Star[], dt: number) {
   for (const tree of s.trees.values())
     for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
   if (hubDraggable(s)) {
-    for (const [a, b] of [...DIPPER_LINES, [0, 7]]) edges.push({ a: hubs[a!]!, b: hubs[b!]!, compliance: 0.002 });
+    for (const [a, b] of [...DIPPER_LINES, [0, 7]]) edges.push({ a: hubs[a!]!, b: hubs[b!]!, compliance: 0.012 });
     for (let k = 1; k < 7; k++) {
       const p = hubs[k]!,
         b = clusterTether(s, k)?.star;
-      if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.025 });
+      if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
     }
   }
   const d = s.drag?.moved ? s.drag : null,

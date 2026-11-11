@@ -19,10 +19,10 @@ export interface SoftBody {
   pin?: { particle: Particle; point: Point };
 }
 export const STEP = 1 / 120;
-export const HOME = 180;
-export const DAMPING = 16;
-export const COMPLIANCE = 0.0012;
-export const THROW_SPEED = 1400;
+export const HOME = 36;
+export const DAMPING = 6;
+export const COMPLIANCE = 0.02;
+export const THROW_SPEED = 900;
 export const softBody = (): SoftBody => ({ remainder: 0 });
 export const resetParticle = (p: Particle) => (p.ox = p.oy = p.vx = p.vy = 0);
 

@@ -29,7 +29,7 @@ it('pulls tree neighbors through distances and rebounds without migration easing
   pointer('pointerup', 300, 320, 1501);
   s.px = s.py = -1e4;
   let maximum = 0;
-  for (let t = 1516; t <= 3500; t += 16) {
+  for (let t = 1516; t <= 4500; t += 16) {
     s.frame(t);
     maximum = Math.max(maximum, a.ox);
   }

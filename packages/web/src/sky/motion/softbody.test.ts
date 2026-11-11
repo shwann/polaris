@@ -78,13 +78,13 @@ describe('soft body', () => {
     launch(p, [400, 0], 2);
     expect(p.vx).toBe(200);
   });
-  it('overshoots gently after slow release and returns the whole chain within 0.5px in 1.5 seconds', () => {
+  it('overshoots gently after slow release and returns the whole chain within 0.5px in 2.5 seconds', () => {
     const { particles, edges, body } = chain(),
       root = particles[0]!;
     for (let i = 0; i < 120; i++) advance(body, particles, edges, STEP * 1000, { particle: root, point: [-120, 80] });
     launch(root, [0, 0]);
     let over = false;
-    for (let i = 0; i < 180; i++) {
+    for (let i = 0; i < 300; i++) {
       advance(body, particles, edges, STEP * 1000);
       over ||= root.ox > 0;
     }
