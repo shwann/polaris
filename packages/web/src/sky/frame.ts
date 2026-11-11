@@ -1,5 +1,6 @@
 import { FIG_LANE as CARD_LANE } from '../domain/lanes';
 import { drawBackgroundChart } from './draw/background';
+import { layerScale } from './draw/chartGeometry';
 import { DEPTH } from './constants';
 import { advanceCamera, cameraMoving } from './motion/cameraMotion';
 import { drawDust } from './draw/dust';
@@ -42,7 +43,7 @@ export function frame(state: SkyState, t: number) {
           ? CARD_LANE[state.dipHover]!
           : null);
   const layer = (depth: number) => {
-    const zoom = 1 + (state.cam.s - 1) * state.skyK;
+    const zoom = layerScale(state.cam.s, depth, state.skyK);
     state.ctx.setTransform(
       state.dpr * zoom,
       0,

@@ -53,5 +53,5 @@ export const anchor = (z: Point, rx: number, ry: number, w: number, h: number): 
   Math.min(Math.max(z[1] * h, ry), h - ry),
 ];
 
-// Translation only: every layer retains the same zoom scale.
+// Translation parallax; zoom damping is defined in draw/chartGeometry.
 export const DEPTH = { dust: 0.35, nebula: 0.6, chart: 0.8, stars: 1 } as const;

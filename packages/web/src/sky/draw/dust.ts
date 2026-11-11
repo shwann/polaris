@@ -16,7 +16,7 @@ export function drawDust(s: SkyState, t: number) {
   const view = backgroundView(s, DEPTH.dust);
   for (const d of s.dust) {
     const [x, y] = s.at(d.x, d.y, 4),
-      points = dustCopies(x, y, s.w, s.h, view);
+      points: Point[] = s.skyK === 0 ? [[x, y]] : dustCopies(x, y, s.w, s.h, view);
     if (!points.length) continue;
     const tw = 0.55 + 0.45 * Math.sin((t / 1300) * (0.5 + d.m) + d.ph);
     s.ctx.fillStyle = rgba(

@@ -163,7 +163,9 @@ export interface SkyState extends SkyMethods {
   pulses: { a: Star; b: Star; t0: number; dur: number }[];
   packets: { a: Lane; b: Lane; t0: number; dur: number }[];
   chart: HTMLCanvasElement | null;
-  chartPattern: CanvasPattern | null;
+  boardChart: HTMLCanvasElement | null;
+  chartCore: HTMLCanvasElement | null;
+  chartBox: Box;
   layoutScale: number;
   tooltipGate: { x: number; y: number; id: string | null } | null;
   tints: Map<string, HTMLCanvasElement>;
