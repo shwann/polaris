@@ -66,7 +66,7 @@ export function drawDipper(state: SkyState, t: number) {
   state.ctx.stroke();
   state.ctx.setLineDash([]);
   state.ctx.lineDashOffset = 0;
-  // Tethers: a dotted line from each Dipper star to the nearest task star of the cluster it carries, as drawn this
+  // Tethers: a dotted line from each Dipper star to the task star nearest its cluster's live centre, as drawn this
   // frame, ending at that star's halo with a small node so it reads as connected.
   if (state.ZONE.dip && state.skyK > 0.05) {
     state.ctx.setLineDash([2, 4]);
