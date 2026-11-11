@@ -1,0 +1,35 @@
+.lanes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: start;
+}
+.lanes > div {
+  display: grid;
+  gap: 1.6rem;
+  min-width: 0;
+}
+@media (max-width: 1300px) {
+  .lanes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 1301px) {
+  .lanes [data-task-row] {
+    padding: 0.8rem 1.05rem;
+  }
+}
+
+.main {
+  display: grid;
+  gap: 1.6rem;
+  min-width: 0;
+}
+
+.empty {
+  color: var(--ink-2);
+  border: 1px dashed var(--edge);
+  padding: 0.9rem;
+  margin: 0;
+  background: var(--glass);
+}

@@ -1,0 +1,72 @@
+.systems {
+  flex: 1 1 18rem;
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.2rem 0.3rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 2rem), transparent);
+  mask: linear-gradient(90deg, #000 calc(100% - 2rem), transparent);
+}
+.systems::-webkit-scrollbar {
+  display: none;
+}
+.systems > * {
+  flex: none;
+}
+.systems button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.systems button .c {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: rgb(255, 214, 140);
+}
+.systems button .n {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.systems button:hover {
+  color: var(--ink);
+}
+.systems button[aria-selected='true'] {
+  color: var(--ink);
+  font-weight: 600;
+  border-color: rgba(46, 230, 255, 0.45);
+  border-bottom-color: var(--cyan);
+  background: rgba(46, 230, 255, 0.08);
+}
+.systems .add {
+  color: var(--ink-3);
+}
+.systems .add:hover {
+  color: var(--cyan);
+}
+.systems button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.systems .more {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+:global(.proj) .systems .more {
+  display: none;
+}

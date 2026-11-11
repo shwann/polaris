@@ -1,0 +1,17 @@
+[data-dipcard] .dc-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  min-height: 0;
+  padding-right: 0.2rem;
+}
+[data-dipcard] .dc-body ul {
+  overflow: visible;
+}
+[data-dipcard] .dc-sub {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}

@@ -1,0 +1,94 @@
+.skybar {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.55rem 0.6rem 0.55rem 1rem;
+  background: rgba(6, 14, 26, 0.85);
+  border: 1px solid var(--edge-hi);
+  box-shadow: 0 0 30px rgba(46, 230, 255, 0.2);
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  transition:
+    opacity 0.4s,
+    transform 0.4s;
+  max-width: calc(100vw - 32px);
+}
+html:global(.sky) .skybar {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+.skybar b {
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+}
+.skybar .zoom {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.skybar .zoom .btn {
+  padding: 0.3rem 0.6rem;
+  letter-spacing: 0;
+}
+@media (max-width: 640px) {
+  .skybar .skyhint {
+    display: none;
+  }
+}
+.skybar {
+  width: max-content;
+}
+.skybar .btn,
+.skybar .skyhint {
+  white-space: nowrap;
+}
+.skybar .imode {
+  display: inline-flex;
+}
+.skybar .imode .btn {
+  padding: 0.3rem 0.55rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  border-color: rgba(120, 170, 230, 0.3);
+  background: none;
+}
+.skybar .imode .btn + .btn {
+  border-left: 0;
+}
+.skybar .imode .btn[aria-pressed='true'] {
+  color: var(--cyan);
+  border-color: rgba(46, 230, 255, 0.6);
+  background: rgba(46, 230, 255, 0.14);
+}
+@media (pointer: coarse) {
+  .skybar .imode {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .skybar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 0.6rem;
+    padding: 0.5rem 0.6rem;
+    width: calc(100vw - 24px);
+  }
+  .skybar > b {
+    display: none;
+  }
+}
+.skybar .skyfilter {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--amber);
+  white-space: nowrap;
+}

@@ -1,0 +1,48 @@
+.overview {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  padding: 0.8rem;
+  gap: 0.5rem;
+}
+.overview button,
+.overview > div {
+  display: grid;
+  gap: 0.4rem;
+  text-align: center;
+  padding: 0.65rem 0.3rem;
+  border: 1px solid var(--edge);
+  background: var(--glass);
+  color: var(--ink-2);
+  font: 0.76rem var(--sans);
+}
+.overview button {
+  cursor: pointer;
+}
+.overview b {
+  font: 1.5rem var(--mono);
+  color: var(--cyan);
+}
+.overview button[aria-pressed='true'],
+.overview button:hover {
+  border-color: var(--cyan);
+  background: var(--glass-2);
+}
+.overview button:focus-visible {
+  outline: 2px solid var(--cyan);
+}
+.priority b {
+  color: var(--amber);
+}
+.gaps b {
+  color: var(--coral);
+}
+@media (max-width: 1000px) {
+  .overview {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

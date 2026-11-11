@@ -1,0 +1,55 @@
+.tools {
+  --edge-c: var(--cyan);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  padding: 0.7rem 1rem;
+}
+.tools .tag {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  color: var(--cyan);
+}
+.tools input {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: rgba(120, 170, 230, 0.07);
+  border: 1px solid rgba(120, 170, 230, 0.25);
+  padding: 0.4rem 0.7rem;
+}
+.tools input::placeholder {
+  color: var(--ink-3);
+}
+.tg {
+  font: 600 0.78rem var(--sans);
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid rgba(120, 170, 230, 0.3);
+  padding: 0.32rem 0.75rem;
+  cursor: pointer;
+}
+.tg[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--coral);
+  border-color: var(--coral);
+  box-shadow: 0 0 14px rgba(255, 79, 109, 0.45);
+}
+.hits {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+:global(.proj) .tools {
+  display: none;
+}
+.tools input:focus-visible,
+.tg:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}

@@ -1,0 +1,31 @@
+import { isIsoTime } from '@polaris/core';
+import type { Context } from './context.js';
+import type { Row } from '../db/connection.js';
+import { existing, required } from './context.js';
+import { appRow } from '../repo/systems.js';
+import { insert, update } from '../repo/rows.js';
+import { newId } from '../audit.js';
+
+export function recordRelease(ctx: Context, patch: Row, tasks: string[], note?: string): void {
+  const system = required(ctx.config.system, '--system');
+  existing(ctx, 'systems', system);
+  const version = required(typeof patch.version === 'string' ? patch.version : undefined, '--version');
+  const old = appRow(ctx.db, system);
+  const app = { ...patch, version, rollback: old?.version ?? null, released_at: patch.released_at ?? ctx.at };
+  if (!isIsoTime(app.released_at)) throw new Error('--released-at 必须是带时区的 ISO 时间');
+  if (old) update(ctx.db, 'system_apps', { system_key: system }, app);
+  else insert(ctx.db, 'system_apps', { system_key: system, ...app });
+  insert(ctx.db, 'releases', {
+    id: newId(),
+    system_key: system,
+    version,
+    released_at: app.released_at,
+    ref: patch.ref ?? null,
+    note: note ?? null,
+  });
+  for (const id of tasks) {
+    const task = existing(ctx, 'tasks', id);
+    if (task.system_key !== system) throw new Error(`任务 ${id} 不属于系统 ${system}`);
+    update(ctx.db, 'tasks', { id }, { shipped_in: version, target_release: null, updated_at: ctx.at });
+  }
+}

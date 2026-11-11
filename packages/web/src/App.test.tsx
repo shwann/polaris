@@ -1,0 +1,21 @@
+import '../tests/support';
+import { it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { Dashboard } from './App';
+it('runs the sample dashboard with canvas and all panels, including layered Esc', async () => {
+  const warn = vi.spyOn(console, 'warn');
+  render(<Dashboard />);
+  expect(screen.getAllByRole('tab')).toHaveLength(2);
+  expect(screen.getByRole('searchbox')).toBeTruthy();
+  fireEvent.click(screen.getByTitle('北辰 · 总览：各系统与七个模块'));
+  expect(screen.getByRole('dialog', { name: '北斗分组' })).toBeTruthy();
+  fireEvent.keyDown(window, { key: 'Escape' });
+  fireEvent.click(screen.getByRole('button', { name: /在星图中定位 EXPORT/ }));
+  await act(() => vi.advanceTimersByTimeAsync(32));
+  expect(screen.getByRole('dialog', { name: '任务详情' })).toBeTruthy();
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(screen.queryByRole('dialog', { name: '任务详情' })).toBeNull();
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(document.documentElement.classList.contains('sky')).toBe(false);
+  expect(warn).not.toHaveBeenCalled();
+});

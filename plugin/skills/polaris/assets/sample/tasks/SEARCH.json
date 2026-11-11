@@ -1,0 +1,9 @@
+{
+  "code": "SEARCH",
+  "group": "release",
+  "title": "全文搜索",
+  "status": "已合入，等发版",
+  "order": 3,
+  "updatedAt": "2026-11-11T09:00:00+08:00",
+  "targetRelease": "1.3"
+}

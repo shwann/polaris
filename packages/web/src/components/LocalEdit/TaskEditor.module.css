@@ -1,0 +1,29 @@
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+.editor select,
+.progress {
+  border: 1px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.25rem;
+  max-width: 100%;
+}
+.progress {
+  width: 4.5rem;
+}
+.editor select:focus-visible,
+.progress:focus-visible {
+  outline: 1px solid var(--cyan);
+}
+.editor select:disabled,
+.progress:disabled {
+  opacity: 0.5;
+}

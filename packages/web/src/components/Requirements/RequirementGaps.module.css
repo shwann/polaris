@@ -1,0 +1,69 @@
+.gaps {
+  --edge-c: var(--coral);
+  padding: 1rem;
+}
+.gaps h3 {
+  margin: 0 0 0.8rem;
+  color: var(--coral);
+  font-size: 0.9rem;
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.columns h4 {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.columns ul {
+  padding-left: 1.2rem;
+  margin: 0.6rem 0 0;
+}
+.columns li,
+.columns p {
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.columns b {
+  font: 0.8rem var(--mono);
+  color: var(--coral);
+}
+.columns button {
+  border: 0;
+  padding: 0.2rem 0;
+  background: transparent;
+  color: var(--cyan);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.columns button:hover {
+  text-decoration: underline;
+}
+.columns button:focus-visible {
+  outline: 2px solid var(--cyan);
+}
+@media (max-width: 760px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.columns .more {
+  margin-top: 0.4rem;
+  font: 500 0.72rem var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.columns .more:hover,
+.columns .more:focus-visible {
+  color: var(--cyan);
+}

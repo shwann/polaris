@@ -1,0 +1,152 @@
+.btn {
+  font: 600 0.74rem var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  background: rgba(46, 230, 255, 0.08);
+  border: 1px solid rgba(46, 230, 255, 0.5);
+  padding: 0.38rem 0.8rem;
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.btn:hover {
+  background: rgba(46, 230, 255, 0.18);
+  box-shadow: 0 0 18px rgba(46, 230, 255, 0.3);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+.ref {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.needs {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: rgba(255, 79, 109, 0.1);
+  border: 1px solid rgba(255, 79, 109, 0.45);
+  padding: 0.4rem 0.65rem;
+  overflow-wrap: anywhere;
+  box-shadow: inset 0 0 14px rgba(255, 79, 109, 0.08);
+}
+.needs b {
+  color: var(--coral);
+  font-weight: 700;
+}
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lines, 2);
+  overflow: hidden;
+}
+.clamp.open {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+.more {
+  justify-self: start;
+  align-self: start;
+  font: 500 0.68rem var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: -0.15rem;
+  cursor: pointer;
+}
+.more:hover {
+  color: var(--cyan);
+}
+.clamp.cut {
+  cursor: pointer;
+}
+.more:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.copy {
+  margin-left: 0.5rem;
+  font: 600 0.66rem var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--cyan);
+  background: rgba(46, 230, 255, 0.06);
+  border: 1px solid rgba(46, 230, 255, 0.35);
+  padding: 0 0.45rem;
+  cursor: pointer;
+  vertical-align: 0.05em;
+}
+.copy:hover {
+  background: rgba(46, 230, 255, 0.16);
+}
+@media (hover: hover) {
+  .copy {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+}
+.copy.ok {
+  color: var(--green);
+  border-color: rgba(44, 245, 160, 0.5);
+}
+:global(.proj) .clamp:not(.open) {
+  -webkit-line-clamp: 1;
+}
+.btn[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--cyan);
+}
+.changed {
+  animation: changed 2.6s ease-out;
+}
+.pinged {
+  animation: pinged 2.4s ease-out;
+  outline: 1px solid var(--c, var(--cyan));
+  outline-offset: 2px;
+}
+.locate {
+  font: 600 0.66rem var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--c, var(--cyan));
+  background: color-mix(in srgb, var(--c, var(--cyan)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 40%, transparent);
+  padding: 0.05rem 0.45rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.locate:hover {
+  background: color-mix(in srgb, var(--c, var(--cyan)) 18%, transparent);
+}
+@media (hover: hover) {
+  .locate {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+}
+:global(.proj) .locate {
+  display: none;
+}
+
+:global(.proj) .ref,
+:global(.proj) .more,
+:global(.proj) .copy {
+  display: none;
+}
+
+@media (hover: hover) {
+  [data-task-row]:hover .copy,
+  [data-active-task]:hover .copy,
+  .copy:focus-visible {
+    opacity: 1;
+  }
+}
+@media (hover: hover) {
+  [data-task-row]:hover .locate,
+  [data-active-task]:hover .locate,
+  .locate:focus-visible {
+    opacity: 1;
+  }
+}

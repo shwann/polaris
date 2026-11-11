@@ -1,0 +1,14 @@
+.filters {
+  min-width: 0;
+}
+.priority {
+  min-width: 7rem;
+  border: 1px solid var(--edge);
+  padding: 0.4rem;
+  background: var(--glass);
+  color: var(--ink);
+  font: 0.8rem var(--sans);
+}
+.priority:focus-visible {
+  outline: 2px solid var(--cyan);
+}

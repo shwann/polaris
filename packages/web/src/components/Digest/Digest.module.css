@@ -1,0 +1,65 @@
+.digest {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  .digest {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.dg {
+  padding: 0.9rem 1.1rem 0.7rem;
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+.dg h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+.dg-rows {
+  display: grid;
+}
+.dg-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 0.1rem;
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  border-top: 1px solid rgba(120, 170, 230, 0.12);
+  cursor: pointer;
+}
+.dg-row:first-child {
+  border-top: 0;
+}
+.dg-row:hover,
+.dg-row:focus-visible {
+  background: rgba(46, 230, 255, 0.05);
+  outline: none;
+}
+.dg-row b {
+  font-weight: 600;
+  color: var(--c, var(--ink));
+  white-space: nowrap;
+}
+.dg-row span {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dg .none {
+  margin: 0.3rem 0;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}

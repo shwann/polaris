@@ -1,0 +1,66 @@
+.cover {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.2rem 1.6rem;
+  align-items: end;
+}
+@media (max-width: 760px) {
+  .cover {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.sub {
+  display: none;
+}
+.side {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+}
+@media (max-width: 760px) {
+  .side {
+    justify-items: start;
+  }
+}
+.stamp {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.cover {
+  align-items: start;
+}
+.tabbar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1.2rem;
+  border-bottom: 1px solid rgba(120, 170, 230, 0.18);
+  margin-top: 0.4rem;
+}
+.tabbar .actions {
+  flex: none;
+  padding-bottom: 0.45rem;
+}
+.sec-h {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem 1rem;
+  margin-top: 0.3rem;
+}
+.sec-h h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+}
+
+:global(.proj) .cover .sub {
+  display: none;
+}

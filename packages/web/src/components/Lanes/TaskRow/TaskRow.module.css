@@ -1,0 +1,115 @@
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'code right' 'body body';
+  gap: 0.35rem 1rem;
+  padding: 0.95rem 1.2rem;
+  border-top: 1px solid rgba(120, 170, 230, 0.1);
+  transition: background 0.2s;
+}
+.row:first-child {
+  border-top: 0;
+}
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0.4rem;
+  top: 1rem;
+  bottom: 1rem;
+  width: 2px;
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c);
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.row:hover {
+  background: color-mix(in srgb, var(--c) 7%, transparent);
+}
+.row:hover::before {
+  opacity: 1;
+}
+.row > .code {
+  grid-area: code;
+}
+.row > .body {
+  grid-area: body;
+}
+.row > .right {
+  grid-area: right;
+}
+.code {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--c);
+  padding-top: 0.15rem;
+  overflow-wrap: anywhere;
+  letter-spacing: 0.03em;
+}
+.body {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.detail {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+.right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem 0.6rem;
+  min-width: 0;
+  max-width: min(26rem, 70vw);
+}
+.chip {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  padding: 0 0.55rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.when {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.age {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.age.late {
+  color: var(--coral);
+  font-weight: 600;
+}
+.age.late::before {
+  content: '';
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 8px var(--coral);
+  margin-right: 0.35rem;
+  vertical-align: 0.05em;
+}
+.row.late::before {
+  opacity: 1;
+  width: 3px;
+}

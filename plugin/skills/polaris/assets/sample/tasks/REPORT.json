@@ -1,0 +1,8 @@
+{
+  "code": "REPORT",
+  "group": "planned",
+  "title": "月度报表",
+  "status": "需求已写好，排队",
+  "order": 5,
+  "updatedAt": "2026-11-11T09:00:00+08:00"
+}

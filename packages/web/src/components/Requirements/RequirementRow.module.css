@@ -1,0 +1,144 @@
+.row {
+  margin-bottom: 0.5rem;
+  min-width: 0;
+}
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+.summary::before {
+  content: '›';
+  color: var(--cyan);
+}
+.row[open] .summary::before {
+  content: '⌄';
+}
+.summary:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+.code {
+  color: var(--cyan);
+  font-family: var(--mono);
+}
+.title {
+  flex: 1 1 15rem;
+  color: var(--ink);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.priority {
+  color: var(--ink-2);
+  font-family: var(--mono);
+}
+.priority[data-priority='P0'] {
+  color: var(--amber);
+}
+.scope {
+  border: 1px solid var(--edge);
+  padding: 0.1rem 0.4rem;
+  color: var(--violet);
+  overflow-wrap: anywhere;
+}
+.acceptance {
+  font-family: var(--mono);
+}
+.tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip {
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: color-mix(in srgb, var(--c) 8%, transparent);
+  color: var(--c);
+  padding: 0.1rem 0.4rem;
+  font-family: var(--mono);
+}
+.detail {
+  border-top: 1px solid var(--edge);
+  padding: 1rem;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.detail h4 {
+  color: var(--ink);
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+}
+.detail ul {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+.met {
+  color: var(--green);
+}
+.pending {
+  color: var(--ink-3);
+}
+.reference {
+  display: block;
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+.task {
+  padding: 0.25rem 0;
+}
+.task button {
+  border: 0;
+  background: transparent;
+  color: var(--c);
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.task span {
+  display: block;
+  font-size: 0.78rem;
+}
+.task button:focus-visible {
+  outline: 2px solid var(--cyan);
+}
+
+.editor {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.editor select {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  font: inherit;
+  padding: 0.25rem;
+}
+.criteria {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.check {
+  background: transparent;
+  border: 1px solid var(--edge);
+  font: inherit;
+  cursor: pointer;
+  min-width: 1.5rem;
+}
+.editor select:focus-visible,
+.check:focus-visible {
+  outline: 1px solid var(--cyan);
+}
+.editor select:disabled,
+.check:disabled {
+  opacity: 0.5;
+}

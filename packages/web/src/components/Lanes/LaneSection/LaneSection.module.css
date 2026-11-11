@@ -1,0 +1,70 @@
+.lane-h {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 0.7rem;
+}
+.lane-h .bar {
+  width: 0.28rem;
+  height: 1.25rem;
+  background: var(--c);
+  box-shadow: 0 0 12px var(--c);
+  transform: skewX(-16deg);
+}
+.lane-h .name {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+.lane-h .n {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  padding: 0 0.55rem;
+  font-variant-numeric: tabular-nums;
+}
+.lane-h .hint {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.rows {
+  display: grid;
+}
+details.done > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details.done > summary::-webkit-details-marker {
+  display: none;
+}
+details.done > summary .hint {
+  color: var(--cyan);
+}
+details.done > summary .hint::after {
+  content: ' · 展开';
+}
+details.done[open] > summary .hint::after {
+  content: ' · 收起';
+}
+details.older {
+  border-top: 1px solid rgba(120, 170, 230, 0.1);
+}
+details.older > summary {
+  cursor: pointer;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+  list-style: none;
+}
+details.older > summary::-webkit-details-marker {
+  display: none;
+}
+details.older > summary::before {
+  content: '▸ ';
+  color: var(--green);
+}
+details.older[open] > summary::before {
+  content: '▾ ';
+}

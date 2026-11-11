@@ -1,0 +1,10 @@
+{
+  "code": "CACHE",
+  "group": "risk",
+  "title": "缓存失效",
+  "status": "已上线，未在真实使用中验证",
+  "order": 4,
+  "updatedAt": "2026-11-11T09:00:00+08:00",
+  "shippedIn": "1.2",
+  "unverified": "还没遇到真实的高并发"
+}

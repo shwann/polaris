@@ -1,0 +1,23 @@
+# Same gates as .github/workflows/ci.yml, on Linux runners (Node 22 and 24).
+stages: [check]
+
+check:
+  stage: check
+  parallel:
+    matrix:
+      - NODE: ['22', '24']
+  image: node:${NODE}
+  variables:
+    PNPM_HOME: /pnpm
+  cache:
+    key: pnpm-node${NODE}-${CI_COMMIT_REF_SLUG}
+    paths: [.pnpm-store]
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+  script:
+    - umask 022
+    - pnpm check
+    - pnpm build
+    - git diff --exit-code -- plugin/ || (echo '请提交构建产物' && exit 1)

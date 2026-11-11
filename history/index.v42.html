@@ -1,0 +1,1919 @@
+<title>北辰 · 研发总览</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout (kept from v6): cover with key figures → one-cell-per-task energy bar → lanes + sticky system log.
+   Look: a command-centre HUD on deep space — chamfered glass panels, neon state colours, one live particle field. */
+:root {
+  color-scheme: dark;
+  --bg: #03060c; --glass: rgba(9, 18, 33, .84); --glass-2: rgba(16, 30, 52, .78); --edge: rgba(70, 180, 255, .22); --edge-hi: rgba(80, 220, 255, .7);
+  --ink: #eaf4ff; --ink-2: #a9bcd4; --ink-3: #7489a6;
+  --cyan: #2ee6ff; --blue: #3d7bff; --coral: #ff4f6d; --amber: #ffb02e; --violet: #b07cff; --slate: #6f85a6; --green: #2cf5a0;
+  --display: "Chakra Petch", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --cut: 14px;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html { font-size: clamp(14px, .5vw + 7.5px, 23px); background: var(--bg) }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 56px; overflow-x: hidden }
+#field { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none }
+body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  /* Nebula glow only; the chart's graticule is drawn on the canvas. */
+  background: radial-gradient(1200px 700px at 12% -8%, rgba(46, 230, 255, .16), transparent 65%), radial-gradient(1100px 800px at 100% 0%, rgba(61, 123, 255, .17), transparent 60%),
+    radial-gradient(1000px 680px at 50% 110%, rgba(176, 124, 255, .11), transparent 70%) }
+.wrap { position: relative; z-index: 1; max-width: 2200px; margin: 0 auto; display: grid; gap: 1.4rem }
+
+/* Chamfered glass panel with a lit edge (border drawn by a clipped gradient layer). */
+/* No backdrop-filter: blurring the constantly redrawn particle canvas behind clipped panels makes Chromium repaint them visibly (flicker). */
+.hud { position: relative; background: var(--glass);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)); isolation: isolate }
+.hud::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; padding: 1px;
+  background: linear-gradient(135deg, var(--edge-c, var(--edge-hi)), var(--edge) 30%, var(--edge) 70%, var(--edge-c, var(--edge-hi)));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  clip-path: inherit }
+.hud::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(320px circle at var(--mx, -400px) var(--my, -400px), rgba(46, 230, 255, .12), transparent 70%) }
+.hud:hover::after { opacity: 1 }
+
+/* Cover */
+.cover { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2rem 1.6rem; align-items: end }
+@media (max-width: 760px) { .cover { grid-template-columns: minmax(0, 1fr); align-items: start } }
+.kicker { display: flex; align-items: center; gap: .6rem; font-family: var(--mono); font-size: .72rem; letter-spacing: .22em; color: var(--cyan) }
+.kicker::before { content: ""; width: 2.2rem; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan)) }
+h1 { margin: .35rem 0 .3rem; font-weight: 900; font-size: clamp(2rem, 3.4vw, 3.4rem); line-height: 1.08; letter-spacing: .02em; text-wrap: balance }
+h1 .en { display: block; font-family: var(--display); font-weight: 700; font-size: .5em; letter-spacing: .32em; color: transparent;
+  background: linear-gradient(90deg, var(--cyan), var(--blue) 60%, var(--violet)); -webkit-background-clip: text; background-clip: text }
+h1 .zh { display: block; font-size: 1.7em; line-height: 1.05; text-shadow: 0 0 28px rgba(46, 230, 255, .35); letter-spacing: .1em }
+h1 .motto { display: block; margin-top: .45rem; font-size: .3em; font-weight: 500; letter-spacing: .14em; color: var(--ink-2) }
+/* Big Dipper mark on each figure card: the seven cards are the seven stars, the card's own star lit. */
+.fig .lab em { display: inline-flex; align-items: center; gap: .35rem; letter-spacing: .08em }
+.dip { width: 2.1rem; height: .95rem; flex: none; overflow: visible }
+.dip path { fill: none; stroke: currentColor; stroke-width: .45; opacity: .45 }
+.dip circle { fill: currentColor; opacity: .5 }
+.dip circle.me { fill: var(--c); opacity: 1; filter: drop-shadow(0 0 2px var(--c)) }
+/* Narrow cards keep the star's Chinese name whole and drop the mini Dipper and Greek letter first. */
+.fig { container-type: inline-size }
+.fig .lab em b .gr { font-style: normal }
+@container (max-width: 230px) { .fig .lab em .dip, .fig .lab em b .gr { display: none } .fig .lab { gap: .35rem } }
+@container (max-width: 132px) { .fig .lab { font-size: .76rem; gap: .3rem } .fig .lab::before { display: none } }
+@container (max-width: 80px) { .fig .lab em { display: none } }
+@media (min-width: 961px) and (max-width: 1300px) { .fig { padding: .85rem .8rem .9rem } }
+.fig .lab em b { font-family: var(--sans); font-weight: 600; font-size: 1.05em; color: color-mix(in srgb, var(--c) 70%, var(--ink-2)); letter-spacing: .12em; text-shadow: none }
+.sub { display: none }
+.side { display: grid; gap: .5rem; justify-items: end }
+@media (max-width: 760px) { .side { justify-items: start } }
+.clock { font-family: var(--display); font-weight: 600; font-size: 2.6rem; line-height: 1; letter-spacing: .08em; color: var(--ink); text-shadow: 0 0 22px rgba(46, 230, 255, .45); font-variant-numeric: tabular-nums }
+.date { font-family: var(--mono); font-size: .72rem; letter-spacing: .16em; color: var(--ink-3) }
+.side-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem }
+.live { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .74rem; letter-spacing: .14em; color: var(--ink-3) }
+.live i { position: relative; width: .55rem; height: .55rem; border-radius: 50%; background: currentColor }
+.live i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0 }
+.live.on { color: var(--green) } .live.on i { box-shadow: 0 0 12px var(--green) }
+.stamp { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); font-variant-numeric: tabular-nums }
+/* Right column, top to bottom: the all-systems completion card (opens 北辰's overview), clock, date with live status,
+   actions. A narrow stack, so the header's middle stays open for 北辰 and the systems' constellations. */
+.status { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .3rem .9rem }
+.cover { align-items: start }
+/* 关注: three frameless rows under the clock — what needs you, the next build, overall completion; each opens its view. */
+.watch { display: grid; gap: .1rem; min-width: 14.5rem; margin-top: .2rem; border-top: 1px solid rgba(120, 170, 230, .16) }
+.w-row { display: grid; grid-template-columns: 3.4rem auto minmax(0, 1fr) auto; align-items: baseline; gap: .7rem; padding: .32rem .1rem; font: inherit; text-align: left; color: var(--ink-2); background: none; border: 0; border-bottom: 1px solid rgba(120, 170, 230, .1); cursor: pointer }
+.w-row .k { font-size: .74rem; letter-spacing: .1em; color: var(--ink-3) }
+.w-row b { font-family: var(--display); font-size: 1.05rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums }
+.w-row .s { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.w-row i { font-style: normal; color: var(--ink-3); transition: transform .2s }
+.w-row:hover, .w-row:focus-visible { background: rgba(46, 230, 255, .05); outline: none } .w-row:hover i, .w-row:focus-visible i { color: var(--cyan); transform: translateX(3px) }
+#w-me b { color: var(--coral) } #w-me.late .s { color: var(--coral) } #w-next b { color: var(--amber) } #pole b { color: var(--green) }
+/* Latest activity under the title: one line, flashes when a new entry lands. */
+.ticker { display: flex; align-items: baseline; gap: .6rem; max-width: min(21rem, 100%); margin-top: .7rem; padding: .3rem .7rem .3rem .55rem; font: inherit; font-size: .8rem; text-align: left; color: var(--ink-2); background: rgba(46, 230, 255, .05); border: 0; border-left: 2px solid rgba(46, 230, 255, .5); cursor: pointer }
+.ticker i { width: .45rem; height: .45rem; flex: none; align-self: center; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green) }
+.ticker .tk-k { white-space: nowrap; font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; color: var(--cyan) }
+.ticker time { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); white-space: nowrap }
+.ticker .tk-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ticker:hover { background: rgba(46, 230, 255, .1) }
+.ticker.new { animation: tick-new 1.6s ease-out }
+@keyframes tick-new { 0%, 30% { background: rgba(46, 230, 255, .3) } }
+.proj .ticker { display: none }
+@media (max-width: 760px) { .status { justify-content: flex-start } .watch { min-width: 0; width: 100% } }
+.btn { font: 600 .74rem var(--mono); letter-spacing: .12em; color: var(--cyan); background: rgba(46, 230, 255, .08); border: 1px solid rgba(46, 230, 255, .5); padding: .38rem .8rem; cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px) }
+.btn:hover { background: rgba(46, 230, 255, .18); box-shadow: 0 0 18px rgba(46, 230, 255, .3) }
+.btn:focus-visible, summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px }
+
+/* Figures */
+/* System switcher: one tab per system (a constellation each); the cards, matrix and lists below show the chosen one. */
+/* One bar: system tabs on the left (they scroll sideways once there are many), view buttons on the right. */
+.tabbar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .5rem 1.2rem; border-bottom: 1px solid rgba(120, 170, 230, .18); margin-top: .4rem }
+.tabbar .side-row { flex: none; padding-bottom: .45rem }
+.systems { flex: 1 1 18rem; min-width: 0; display: flex; flex-wrap: nowrap; align-items: flex-end; gap: .2rem .3rem; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); mask: linear-gradient(90deg, #000 calc(100% - 2rem), transparent) }
+.systems::-webkit-scrollbar { display: none }
+.systems > * { flex: none }
+.systems button { display: inline-flex; align-items: baseline; gap: .55rem; font: inherit; font-size: .9rem; color: var(--ink-2); background: none; border: 1px solid transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: .5rem 1rem; cursor: pointer }
+.systems button .c { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: rgb(255, 214, 140) }
+.systems button .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); font-variant-numeric: tabular-nums }
+.systems button:hover { color: var(--ink) }
+.systems button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-color: rgba(46, 230, 255, .45); border-bottom-color: var(--cyan); background: rgba(46, 230, 255, .08) }
+.systems .add { color: var(--ink-3) } .systems .add:hover { color: var(--cyan) }
+.sec-h { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .3rem 1rem; margin-top: .3rem }
+.sec-h h2 { margin: 0; font-size: 1.05rem; letter-spacing: .06em }
+.systems button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px }
+.systems .more { font-size: .76rem; color: var(--ink-3) }
+.proj .systems .more { display: none }
+.figures { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .8rem }
+@media (max-width: 960px) { .figures { grid-template-columns: repeat(4, minmax(0, 1fr)) } }
+@media (max-width: 560px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+/* Column flex so label, figure and note sit at the same height in every card of a row, and the meter pins to the bottom. */
+.fig { --edge-c: var(--c); padding: 1rem 1.15rem 1.05rem; display: flex; flex-direction: column; gap: .4rem; min-width: 0; transition: transform .25s }
+.fig:hover { transform: translateY(-3px) }
+.fig .lab { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--ink-2); white-space: nowrap; min-width: 0 }
+.proj .fig .lab em { display: none }
+.fig .lab::before { content: ""; width: .5rem; height: .5rem; transform: rotate(45deg); background: var(--c); box-shadow: 0 0 10px var(--c) }
+.fig .lab em { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-family: var(--mono); font-size: .62rem; letter-spacing: .16em; color: var(--ink-3) }
+.fig b { font-family: var(--display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--c); text-shadow: 0 0 24px color-mix(in srgb, var(--c) 60%, transparent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.fig small { font-size: .74rem; line-height: 1.5; color: var(--ink-3) }
+.fig small .sg { white-space: nowrap } .fig small .dot { white-space: normal; color: var(--ink-3); opacity: .7 }
+.seg { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: auto; padding-top: .45rem }
+.seg i { height: .32rem; background: rgba(120, 170, 230, .14); transform: skewX(-20deg) }
+.seg i.on { background: var(--c); box-shadow: 0 0 8px var(--c) }
+
+/* Energy bar: one cell per task */
+.ribbon { padding: 1rem 1.2rem 1.05rem; display: grid; gap: .8rem }
+.ribbon-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem }
+.ribbon-h .t { font-weight: 700; font-size: 1rem }
+.ribbon-h .tag, .lane-h .tag, aside .tag { font-family: var(--mono); font-size: .64rem; letter-spacing: .2em; color: var(--cyan) }
+.ribbon-h .ratio { margin-left: auto; background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--display); font-size: 1.6rem; font-weight: 700; color: var(--green); text-shadow: 0 0 16px rgba(44, 245, 160, .5); font-variant-numeric: tabular-nums }
+.ribbon-h .ratio small { font-size: .55em; color: var(--ink-3); margin-left: .2rem }
+/* One row, one cell per task; on narrow screens fall back to wrapping. */
+.cells { display: grid; grid-template-columns: repeat(var(--n, 40), minmax(0, 1fr)); gap: 4px }
+@media (max-width: 720px) { .cells { grid-template-columns: repeat(auto-fill, minmax(12px, 1fr)) } }
+.cells i { height: 2.1rem; background: color-mix(in srgb, var(--c) 78%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 0 1px color-mix(in srgb, #fff 18%, transparent);
+  transform: skewX(-16deg); transition: transform .15s, opacity .15s, filter .15s; cursor: default }
+.cells i.hatch { background: repeating-linear-gradient(135deg, var(--c) 0 4px, color-mix(in srgb, var(--c) 30%, transparent) 4px 8px); background-size: 22px 100% }
+.cells:hover i { opacity: .35 } .cells i:hover { opacity: 1; filter: brightness(1.3); transform: skewX(-16deg) translateY(-4px) scaleY(1.15) }
+.legend { display: flex; flex-wrap: wrap; gap: .3rem 1.3rem; font-size: .8rem; color: var(--ink-2) }
+.legend span::before { content: ""; display: inline-block; width: .6rem; height: .6rem; transform: skewX(-16deg); background: var(--c); box-shadow: 0 0 8px var(--c); margin-right: .45rem; vertical-align: -.02em }
+.legend b { font-family: var(--display); color: var(--ink); margin-left: .3rem; font-variant-numeric: tabular-nums }
+.tip { position: fixed; z-index: 30; pointer-events: none; max-width: 300px; font-size: .8rem; line-height: 1.45; color: var(--ink); background: rgba(6, 14, 26, .95); border: 1px solid var(--edge-hi);
+  padding: .45rem .65rem; box-shadow: 0 0 24px rgba(46, 230, 255, .25); opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s }
+.tip.on { opacity: 1; transform: none }
+.tip small { display: block; color: var(--cyan); font-family: var(--mono); font-size: .7rem; margin-top: .1rem }
+
+/* Lanes + log */
+/* Digest under the matrix: what needs attention by group, and where releases stand. */
+.digest { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem }
+@media (max-width: 900px) { .digest { grid-template-columns: minmax(0, 1fr) } }
+.dg { padding: .9rem 1.1rem .7rem; display: grid; align-content: start; gap: .2rem }
+.dg h2 { margin: 0 0 .35rem; font-size: 1rem }
+.dg-rows { display: grid }
+.dg-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 1rem; padding: .5rem .1rem; font: inherit; font-size: .84rem; text-align: left; color: var(--ink-2); background: none; border: 0; border-top: 1px solid rgba(120, 170, 230, .12); cursor: pointer }
+.dg-row:first-child { border-top: 0 }
+.dg-row:hover, .dg-row:focus-visible { background: rgba(46, 230, 255, .05); outline: none }
+.dg-row b { font-weight: 600; color: var(--c, var(--ink)); white-space: nowrap }
+.dg-row span { text-align: right; font-family: var(--mono); font-size: .76rem; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.dg .none { margin: .3rem 0; font-size: .82rem; color: var(--ink-3) }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 25rem); gap: 1.6rem; align-items: start }
+@media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr) } }
+.main { display: grid; gap: 1.6rem; min-width: 0 }
+/* Below the active work, lanes sit in two columns so a projector shows them without scrolling. */
+.lanes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.6rem; align-items: start }
+.lanes > div { display: grid; gap: 1.6rem; min-width: 0 }
+@media (max-width: 1300px) { .lanes { grid-template-columns: minmax(0, 1fr) } }
+@media (min-width: 1301px) { .lanes .row { padding: .8rem 1.05rem } }
+.lane-h { display: flex; align-items: center; gap: .7rem; margin: 0 0 .7rem }
+.lane-h .bar { width: .28rem; height: 1.25rem; background: var(--c); box-shadow: 0 0 12px var(--c); transform: skewX(-16deg) }
+.lane-h .name { font-size: 1.12rem; font-weight: 700 }
+.lane-h .n { font-family: var(--display); font-weight: 700; font-size: .95rem; color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); padding: 0 .55rem; font-variant-numeric: tabular-nums }
+.lane-h .hint { margin-left: auto; font-size: .8rem; color: var(--ink-3) }
+
+.active { --edge-c: var(--cyan); padding: 1.2rem 1.35rem; display: grid; gap: 1rem }
+.a-top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem }
+.a-code { font-family: var(--mono); font-size: .76rem; color: var(--bg); background: var(--cyan); padding: .05rem .5rem; box-shadow: 0 0 14px rgba(46, 230, 255, .5) }
+.a-title { font-weight: 900; font-size: 1.32rem; line-height: 1.3; overflow-wrap: anywhere }
+.a-pct { margin-left: auto; font-family: var(--display); font-weight: 700; font-size: 2.6rem; line-height: 1; color: var(--cyan); text-shadow: 0 0 22px rgba(46, 230, 255, .6); font-variant-numeric: tabular-nums }
+.a-pct small { font-size: .45em; margin-left: .1rem }
+.meter { height: .4rem; background: rgba(120, 170, 230, .12); position: relative; overflow: hidden }
+.meter i { position: absolute; inset: 0 auto 0 0; width: var(--p, 0%); background: linear-gradient(90deg, var(--blue), var(--cyan)); box-shadow: 0 0 14px var(--cyan); transition: width 1.2s cubic-bezier(.2, .8, .2, 1) }
+.meter i::after { content: ""; position: absolute; right: 0; top: -3px; bottom: -3px; width: 3px; background: #fff; box-shadow: 0 0 10px #fff, 0 0 20px var(--cyan) }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: .55rem }
+.step { display: grid; gap: .35rem; min-width: 0; padding: .55rem .65rem; background: rgba(120, 170, 230, .06); border: 1px solid rgba(120, 170, 230, .14) }
+.step em { font-style: normal; font-family: var(--mono); font-size: .64rem; letter-spacing: .16em; color: var(--ink-3) }
+.step b { font-size: .9rem; font-weight: 600; overflow-wrap: anywhere }
+.step.done { border-color: rgba(44, 245, 160, .4); background: rgba(44, 245, 160, .07) } .step.done em { color: var(--green) }
+.step.doing { border-color: var(--cyan); background: linear-gradient(90deg, rgba(46, 230, 255, .16), rgba(46, 230, 255, .04)); box-shadow: 0 0 18px rgba(46, 230, 255, .25), inset 0 0 12px rgba(46, 230, 255, .12) }
+.step.doing em { color: var(--cyan) } .step.doing em::after { content: " ▮"; }
+.step.blocked { border-color: rgba(255, 79, 109, .5) } .step.blocked em { color: var(--coral) }
+.a-detail { margin: 0; color: var(--ink-2); font-size: .92rem }
+.ref { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); overflow-wrap: anywhere }
+
+.rows { display: grid }
+/* Code and status share the top line; the body gets the full card width so long statuses never squeeze the text. */
+.row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "code right" "body body"; gap: .35rem 1rem; padding: .95rem 1.2rem; border-top: 1px solid rgba(120, 170, 230, .1); transition: background .2s }
+.row:first-child { border-top: 0 }
+.row::before { content: ""; position: absolute; left: .4rem; top: 1rem; bottom: 1rem; width: 2px; background: var(--c); box-shadow: 0 0 6px var(--c); opacity: .4; transition: opacity .2s }
+.row:hover { background: color-mix(in srgb, var(--c) 7%, transparent) } .row:hover::before { opacity: 1 }
+.row > .code { grid-area: code } .row > .body { grid-area: body } .row > .right { grid-area: right }
+.code { font-family: var(--mono); font-size: .74rem; color: var(--c); padding-top: .15rem; overflow-wrap: anywhere; letter-spacing: .03em }
+.body { display: grid; gap: .25rem; min-width: 0 }
+.title { font-weight: 700; overflow-wrap: anywhere }
+.detail { margin: 0; color: var(--ink-2); font-size: .86rem; overflow-wrap: anywhere }
+.needs { margin: .3rem 0 0; font-size: .88rem; color: var(--ink); background: rgba(255, 79, 109, .1); border: 1px solid rgba(255, 79, 109, .45); padding: .4rem .65rem; overflow-wrap: anywhere; box-shadow: inset 0 0 14px rgba(255, 79, 109, .08) }
+.needs b { color: var(--coral); font-weight: 700 }
+.right { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .3rem .6rem; min-width: 0; max-width: min(26rem, 70vw) }
+.chip { font-size: .74rem; font-weight: 600; color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); padding: 0 .55rem; text-align: right; overflow-wrap: anywhere }
+.when { font-family: var(--mono); font-size: .68rem; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums }
+
+details.done > summary { list-style: none; cursor: pointer }
+details.done > summary::-webkit-details-marker { display: none }
+details.done > summary .hint { color: var(--cyan) }
+details.done > summary .hint::after { content: " · 展开" }
+details.done[open] > summary .hint::after { content: " · 收起" }
+
+aside.hud { padding: 1.1rem 1.2rem .6rem; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0 }
+@media (max-width: 1000px) { aside.hud { position: relative } }
+aside h2 { display: flex; align-items: baseline; gap: .6rem; font-size: 1.02rem; font-weight: 700; margin: 0 0 .7rem }
+aside h2 .today { margin-left: auto; font-family: var(--mono); font-size: .68rem; font-weight: 400; letter-spacing: .08em; color: var(--ink-3) }
+aside h2 .today b { font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--cyan); text-shadow: 0 0 12px rgba(46, 230, 255, .5); margin: 0 .2rem }
+/* Today's updates by hour: one bar per hour, height = number of entries. */
+.pulse { display: grid; grid-template-columns: repeat(24, 1fr); align-items: end; gap: 2px; height: 2rem; margin: 0 0 .25rem; padding-bottom: 1px; border-bottom: 1px solid rgba(120, 170, 230, .14) }
+.pulse i { height: max(2px, calc(var(--h, 0) * 100%)); background: rgba(120, 170, 230, .16) }
+.pulse i.on { background: linear-gradient(var(--cyan), rgba(61, 123, 255, .6)); box-shadow: 0 0 6px rgba(46, 230, 255, .45) }
+.pulse i.now { outline: 1px solid rgba(46, 230, 255, .6); outline-offset: 1px }
+.pulse-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .58rem; color: var(--ink-3); margin: 0 0 .9rem; letter-spacing: .05em }
+.log { list-style: none; margin: 0; padding: 0 0 0 1.1rem; max-height: 64vh; overflow-y: auto; position: relative; scrollbar-color: var(--edge) transparent }
+.log::before { content: ""; position: absolute; left: .25rem; top: .5rem; bottom: .5rem; width: 1px; background: linear-gradient(rgba(46, 230, 255, .35), rgba(70, 180, 255, .12) 40%, transparent) }
+.log li { position: relative; display: grid; gap: .2rem; padding: 0 0 .9rem; font-size: .86rem }
+.log li::before { content: ""; position: absolute; left: -1.06rem; top: .42rem; width: .42rem; height: .42rem; transform: rotate(45deg); background: var(--bg); border: 1px solid var(--k, var(--slate)) }
+.log li.day { padding: .1rem 0 .55rem; font-family: var(--mono); font-size: .64rem; letter-spacing: .18em; color: var(--ink-3) }
+.log li.day::before { left: -1.02rem; top: .5rem; width: .34rem; height: 1px; transform: none; border: 0; background: var(--ink-3) }
+.log .meta { display: flex; align-items: center; flex-wrap: wrap; gap: .2rem .5rem }
+.log .kind { font-size: .66rem; font-weight: 600; line-height: 1.45; color: var(--k); border: 1px solid color-mix(in srgb, var(--k) 50%, transparent); background: color-mix(in srgb, var(--k) 10%, transparent); padding: 0 .4rem }
+.log time { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); font-variant-numeric: tabular-nums }
+.log .ago { font-family: var(--mono); font-size: .64rem; color: var(--ink-3) }
+.log .txt { margin: 0; overflow-wrap: anywhere; color: var(--ink-2) }
+.log li.latest .txt { --lines: 4 }
+.log li.latest { padding: .6rem .7rem .65rem; margin: 0 0 .9rem; background: linear-gradient(90deg, color-mix(in srgb, var(--k) 14%, transparent), rgba(16, 30, 52, .35)); border-left: 2px solid var(--k) }
+.log li.latest::before { left: -1.06rem; top: 1.02rem; background: var(--k); box-shadow: 0 0 8px var(--k) }
+.log li.latest .txt { color: var(--ink) }
+.log li.latest .new { margin-left: auto; font-family: var(--mono); font-size: .58rem; letter-spacing: .2em; color: var(--k) }
+
+/* Summary first: long prose shows its first lines; the 展开 control appears only when text is actually cut. */
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 2); overflow: hidden }
+.clamp.open { display: block; -webkit-line-clamp: unset }
+.more { justify-self: start; align-self: start; font: 500 .68rem var(--mono); letter-spacing: .06em; color: var(--ink-3); background: none; border: 0; padding: 0; margin-top: -.15rem; cursor: pointer }
+.more:hover { color: var(--cyan) }
+.clamp.cut { cursor: pointer }
+.more:focus-visible, .tools input:focus-visible, .tg:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px }
+/* Waiting age: how long a request has sat with the user. */
+.age { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums }
+.age.late { color: var(--coral); font-weight: 600 }
+.age.late::before { content: ""; display: inline-block; width: .45rem; height: .45rem; border-radius: 50%; background: var(--coral); box-shadow: 0 0 8px var(--coral); margin-right: .35rem; vertical-align: .05em }
+.row.late::before { opacity: 1; width: 3px }
+/* Filter bar */
+.tools { --edge-c: var(--cyan); display: flex; flex-wrap: wrap; align-items: center; gap: .6rem .9rem; padding: .7rem 1rem }
+.tools .tag { font-family: var(--mono); font-size: .64rem; letter-spacing: .2em; color: var(--cyan) }
+.tools input { flex: 1 1 16rem; min-width: 0; font: inherit; font-size: .9rem; color: var(--ink); background: rgba(120, 170, 230, .07); border: 1px solid rgba(120, 170, 230, .25); padding: .4rem .7rem }
+.tools input::placeholder { color: var(--ink-3) }
+.tg { font: 600 .78rem var(--sans); color: var(--ink-2); background: transparent; border: 1px solid rgba(120, 170, 230, .3); padding: .32rem .75rem; cursor: pointer }
+.tg[aria-pressed="true"] { color: var(--bg); background: var(--coral); border-color: var(--coral); box-shadow: 0 0 14px rgba(255, 79, 109, .45) }
+.hits { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-left: auto }
+.cells i.dim { opacity: .14 !important; filter: none !important }
+.cells i.old { opacity: .45 }
+details.older { border-top: 1px solid rgba(120, 170, 230, .1) }
+details.older > summary { cursor: pointer; padding: .7rem 1.2rem; font-size: .82rem; color: var(--ink-3); list-style: none }
+details.older > summary::-webkit-details-marker { display: none }
+details.older > summary::before { content: "▸ "; color: var(--green) }
+details.older[open] > summary::before { content: "▾ " }
+/* Copy a plan path: the docs live in the local repo, so the page offers the path rather than a dead link. */
+.copy { margin-left: .5rem; font: 600 .66rem var(--mono); letter-spacing: .06em; color: var(--cyan); background: rgba(46, 230, 255, .06); border: 1px solid rgba(46, 230, 255, .35); padding: 0 .45rem; cursor: pointer; vertical-align: .05em }
+.copy:hover { background: rgba(46, 230, 255, .16) }
+@media (hover: hover) { .copy { opacity: 0; transition: opacity .15s } .row:hover .copy, .active:hover .copy, .copy:focus-visible { opacity: 1 } }
+.copy.ok { color: var(--green); border-color: rgba(44, 245, 160, .5) }
+.fig small.clamp { cursor: help }
+/* Projector mode: larger type, one-line summaries, no editing aids. Turned on with full screen or the 大字 button. */
+html.proj { font-size: clamp(16px, .8vw + 7px, 30px) }
+.proj .tools, .proj .ref, .proj .more, .proj .cover .sub, .proj .copy { display: none }
+.proj .clamp:not(.open) { -webkit-line-clamp: 1 }
+.proj .log li.latest .txt { -webkit-line-clamp: 3 }
+.proj .layout { grid-template-columns: minmax(0, 1fr) minmax(260px, 21rem) }
+@media (max-width: 1000px) { .proj .layout { grid-template-columns: minmax(0, 1fr) } }
+.btn[aria-pressed="true"] { color: var(--bg); background: var(--cyan) }
+.empty, .state { color: var(--ink-2); border: 1px dashed var(--edge); padding: .9rem; margin: 0; background: var(--glass) }
+.state[hidden] { display: none }
+.changed { animation: changed 2.6s ease-out }
+/* Star picked on the chart: the matching card glows for a moment. */
+.pinged { animation: pinged 2.4s ease-out; outline: 1px solid var(--c, var(--cyan)); outline-offset: 2px }
+@keyframes pinged { 0%, 30% { background-color: color-mix(in srgb, var(--c, var(--cyan)) 22%, transparent); box-shadow: 0 0 30px color-mix(in srgb, var(--c, var(--cyan)) 45%, transparent) } 100% { outline-color: transparent } }
+/* Sky view: panels fade away so the whole chart shows; a bar offers the way back. */
+.wrap { transition: opacity .6s ease, filter .6s ease }
+html.sky .wrap { opacity: .05; filter: blur(2px); pointer-events: none }
+.skybar { position: fixed; z-index: 20; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  display: flex; align-items: center; gap: .9rem; padding: .55rem .6rem .55rem 1rem; background: rgba(6, 14, 26, .85); border: 1px solid var(--edge-hi); box-shadow: 0 0 30px rgba(46, 230, 255, .2);
+  font-size: .82rem; color: var(--ink-2); transition: opacity .4s, transform .4s; max-width: calc(100vw - 32px) }
+html.sky .skybar { opacity: 1; transform: translate(-50%, 0); pointer-events: auto }
+.skybar b { color: var(--cyan); font-family: var(--mono); font-size: .7rem; letter-spacing: .2em }
+.skybar .zoom { display: inline-flex; gap: .3rem }
+.skybar .zoom .btn { padding: .3rem .6rem; letter-spacing: 0 }
+@media (max-width: 640px) { .skybar .skyhint { display: none } }
+/* left:50% would cap the bar at half the viewport; size it to its content instead (phones override below). */
+.skybar { width: max-content } .skybar .btn, .skybar .skyhint { white-space: nowrap }
+.skybar .imode { display: inline-flex }
+.skybar .imode .btn { padding: .3rem .55rem; letter-spacing: .04em; color: var(--ink-3); border-color: rgba(120, 170, 230, .3); background: none }
+.skybar .imode .btn + .btn { border-left: 0 }
+.skybar .imode .btn[aria-pressed="true"] { color: var(--cyan); border-color: rgba(46, 230, 255, .6); background: rgba(46, 230, 255, .14) }
+@media (pointer: coarse) { .skybar .imode { display: none } }
+@media (max-width: 560px) { .skybar { flex-wrap: wrap; justify-content: center; gap: .5rem .6rem; padding: .5rem .6rem; width: calc(100vw - 24px) } .skybar > b { display: none } }
+html.sky body { overflow: hidden; touch-action: none }
+/* Star detail card: opens beside a clicked star and follows it while the sky pans. */
+.starcard { position: fixed; z-index: 25; left: 0; top: 0; width: min(330px, calc(100vw - 32px)); padding: .85rem .95rem .8rem; display: grid; gap: .5rem; --edge-c: var(--c); background: rgba(6, 14, 26, .94) }
+.starcard .sc-top { display: flex; align-items: center; gap: .55rem }
+.starcard .sc-code { font-family: var(--mono); font-size: .74rem; color: var(--bg); background: var(--c); padding: 0 .45rem; box-shadow: 0 0 12px color-mix(in srgb, var(--c) 50%, transparent) }
+.starcard .sc-lane { font-size: .76rem; color: var(--c) }
+.starcard .sc-x { margin-left: auto; font: 600 .9rem var(--sans); color: var(--ink-3); background: none; border: 0; cursor: pointer; padding: 0 .2rem }
+.starcard .sc-x:hover { color: var(--ink) }
+.starcard h3 { margin: 0; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere }
+.starcard .sc-meta { display: flex; flex-wrap: wrap; gap: .2rem .7rem; font-family: var(--mono); font-size: .72rem; color: var(--ink-3) }
+.starcard .sc-meta .late { color: var(--coral) }
+.starcard .sc-detail { margin: 0; font-size: .82rem; color: var(--ink-2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden }
+.starcard .needs { margin: 0; font-size: .82rem }
+.starcard .sc-go { justify-self: start }
+.starcard:focus-visible, .starcard .btn:focus-visible { outline: 1px solid var(--c); outline-offset: 2px }
+/* Phones: the card docks above the sky bar instead of covering the star; the chart moves the star into the open top half. */
+@media (max-width: 560px) { .starcard { transform: none !important; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); top: auto; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); max-height: 44vh; overflow: auto } }
+/* Locate a task on the chart: sits beside the status chip, revealed on row hover where hover exists. */
+.locate { font: 600 .66rem var(--mono); letter-spacing: .04em; color: var(--c, var(--cyan)); background: color-mix(in srgb, var(--c, var(--cyan)) 8%, transparent); border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 40%, transparent); padding: .05rem .45rem; cursor: pointer; white-space: nowrap }
+.locate:hover { background: color-mix(in srgb, var(--c, var(--cyan)) 18%, transparent) }
+.a-top .locate { margin-left: auto }
+@media (hover: hover) { .locate { opacity: 0; transition: opacity .15s } .row:hover .locate, .active:hover .locate, .locate:focus-visible { opacity: 1 } }
+.proj .locate { display: none }
+.skybar .skyfilter { font-family: var(--mono); font-size: .72rem; color: var(--amber); white-space: nowrap }
+/* Dipper group panel: opens from a Big Dipper star (or a figure card), lists that group, drags by its header. */
+.dipcard { position: fixed; z-index: 24; left: 0; top: 0; width: min(360px, calc(100vw - 32px)); max-height: min(70vh, 640px); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: .55rem; padding: .8rem .9rem .85rem; --edge-c: var(--c); background: rgba(6, 14, 26, .94) }
+.dipcard .dc-head { display: flex; align-items: center; gap: .55rem; cursor: grab; user-select: none; touch-action: none; padding-bottom: .5rem; border-bottom: 1px solid color-mix(in srgb, var(--c) 25%, transparent) }
+.dipcard.dragging .dc-head { cursor: grabbing }
+.dipcard .dc-head em { display: inline-flex; align-items: center; gap: .35rem; font-style: normal; font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; color: rgb(255, 214, 140) }
+.dipcard .dc-head .dip { width: 2.6rem }
+.dipcard .dc-name { font-weight: 700; font-size: 1rem; color: var(--c) }
+.dipcard .dc-n { font-family: var(--display); font-weight: 700; color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); padding: 0 .5rem; font-variant-numeric: tabular-nums }
+.dipcard .dc-x { margin-left: auto; font: 600 .9rem var(--sans); color: var(--ink-3); background: none; border: 0; cursor: pointer; padding: 0 .2rem }
+.dipcard .dc-x:hover { color: var(--ink) }
+.dipcard .dc-sub { margin: 0; font-size: .76rem; color: var(--ink-3) }
+.dipcard ul { list-style: none; margin: 0; padding: 0; overflow: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 2px; min-height: 0 }
+.dipcard li button { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .55rem; padding: .4rem .5rem; font: inherit; font-size: .8rem; color: var(--ink-2); text-align: left; background: color-mix(in srgb, var(--c) 4%, transparent); border: 0; border-left: 2px solid color-mix(in srgb, var(--c) 45%, transparent); cursor: pointer }
+.dipcard li button:hover, .dipcard li button:focus-visible, .dipcard li button.on { background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--ink); outline: none; border-left-color: var(--c) }
+.dipcard li .k { font-family: var(--mono); font-size: .7rem; color: var(--c) }
+.dipcard li .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.dipcard li .r { font-family: var(--mono); font-size: .66rem; color: var(--ink-3); white-space: nowrap }
+.dipcard li .r.late { color: var(--coral) }
+.dipcard .dc-foot { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center }
+.dipcard .dc-foot .btn { padding: .3rem .6rem; letter-spacing: .04em }
+.dipcard .dc-body { overflow: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: .8rem; min-height: 0; padding-right: .2rem }
+.dipcard .dc-body ul { overflow: visible }
+.dipcard .dc-sec { display: grid; gap: .35rem }
+.dipcard .dc-sec h4 { margin: 0; font: 600 .66rem var(--mono); letter-spacing: .14em; color: var(--ink-3) }
+.dipcard .dc-kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .25rem .7rem; margin: 0; font-size: .78rem }
+.dipcard .dc-kv dt { color: var(--ink-3) } .dipcard .dc-kv dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; font-family: var(--mono); font-size: .74rem }
+.dipcard .dc-kv dd.warn, .dipcard li button.warn .r { color: var(--amber) }
+.dipcard li button.warn { border-left-color: color-mix(in srgb, var(--amber) 70%, transparent) }
+.dipcard .dc-tl { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem }
+.dipcard .dc-tl li { display: grid; justify-items: center; padding: .2rem .45rem; border: 1px solid color-mix(in srgb, var(--c) 25%, transparent); font-family: var(--mono); line-height: 1.2 }
+.dipcard .dc-tl li b { font-size: .78rem; color: var(--ink-2) } .dipcard .dc-tl li span { font-size: .6rem; color: var(--ink-3) }
+.dipcard .dc-tl li.cur { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent) } .dipcard .dc-tl li.cur b { color: var(--c) }
+.dipcard .dc-app { display: grid; gap: .4rem; font-size: .82rem; color: var(--ink-2) }
+.dipcard .dc-app b { font-family: var(--display); font-size: 2rem; color: var(--c); line-height: 1 }
+@media (max-width: 560px) { .dipcard { transform: none !important; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 12px); width: auto; max-height: 38vh } .dipcard .dc-head { cursor: default } }
+.fig { cursor: pointer }
+.fig.pinned { box-shadow: 0 0 0 1px var(--c), 0 0 26px color-mix(in srgb, var(--c) 30%, transparent), inset 0 0 30px color-mix(in srgb, var(--c) 10%, transparent) }
+.fig.pinned .lab em { color: rgb(255, 214, 140) }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+@keyframes changed { 0%, 35% { background-color: rgba(46, 230, 255, .18) } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .boot { animation: boot .7s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--d, 0) * 90ms) }
+  .live.on i::after { animation: ping 2s cubic-bezier(0, 0, .2, 1) infinite }
+  /* The light-up sweep plays once on first load; later snapshots must not replay it. */
+  .cells.intro i { animation: lit .45s ease-out both; animation-delay: calc(var(--k, 0) * 30ms + 300ms) }
+  .cells i.hatch { animation: flow 1s linear infinite }
+  .cells.intro i.hatch { animation: lit .45s ease-out both, flow 1s linear infinite; animation-delay: calc(var(--k, 0) * 30ms + 300ms), 0s }
+  .step.doing { animation: glow 2.2s ease-in-out infinite }
+  .hud.scan::before { background-size: 100% 100% }
+}
+@keyframes boot { from { opacity: 0; transform: translateY(10px); filter: blur(4px) } }
+@keyframes ping { 0% { transform: scale(1); opacity: .8 } 80%, 100% { transform: scale(2.8); opacity: 0 } }
+@keyframes lit { from { opacity: 0; filter: brightness(3) } }
+@keyframes flow { to { background-position: 22px 0 } }
+@keyframes glow { 50% { box-shadow: 0 0 28px rgba(46, 230, 255, .45), inset 0 0 18px rgba(46, 230, 255, .2) } }
+@keyframes blink { 50% { opacity: 0 } }
+</style>
+
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="skybar" role="dialog" aria-label="星图视图"><b>STAR CHART</b><span class="skyhint" id="skyhint">拖动平移 · 滚轮缩放 · 点星或按 ← → 看详情</span><span class="imode" role="group" aria-label="输入方式"><button class="btn" id="m-mouse" type="button" aria-pressed="true">鼠标</button><button class="btn" id="m-pad" type="button" aria-pressed="false">触控板</button></span><span class="skyfilter" id="skyfilter" hidden></span>
+  <span class="zoom"><button class="btn" id="zout" type="button" aria-label="缩小">−</button><button class="btn" id="zin" type="button" aria-label="放大">＋</button><button class="btn" id="zreset" type="button">复位</button></span>
+  <button class="btn" id="skyback" type="button">返回看板 · Esc</button></div>
+<div class="starcard hud" id="starcard" role="dialog" aria-label="任务详情" tabindex="-1" hidden></div>
+<div class="dipcard hud" id="dipcard" role="dialog" aria-label="北斗分组" tabindex="-1" hidden></div>
+<div class="sr" id="sr" aria-live="polite"></div>
+<div class="wrap">
+  <header class="cover">
+    <div class="boot" style="--d:0">
+      <div class="kicker">研发总览</div>
+      <h1><span class="en">POLARIS</span><span class="zh">北辰</span><span class="motto">所有系统的任务、决定与发版</span></h1>
+      <button class="ticker" id="ticker" type="button" title="看最近动态"><i aria-hidden="true"></i><span class="tk-k">最新</span><time id="tk-time"></time><span class="tk-t" id="tk-text">读取中…</span></button>
+      <p class="sub" id="note">由 Claude 维护：任务派出、完成、合入、发版、需要你决定时都会更新。</p>
+    </div>
+    <div class="side boot" style="--d:1">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="status">
+        <span class="date" id="date"></span>
+        <span class="live" id="live"><i></i><span id="live-t">CONNECTING</span></span>
+      </div>
+      <div class="watch" aria-label="关注">
+        <button class="w-row" id="w-me" type="button" title="只看需要你处理的任务"><span class="k">需要你</span><b id="w-me-v">—</b><span class="s" id="w-me-s"></span><i aria-hidden="true">›</i></button>
+        <button class="w-row" id="w-next" type="button" title="看正式 App 与下一版"><span class="k">下一版</span><b id="w-next-v">—</b><span class="s" id="w-next-s"></span><i aria-hidden="true">›</i></button>
+        <button class="w-row" id="pole" type="button" title="北辰 · 总览：各系统与七个模块"><span class="k">完成</span><b id="pole-t">—</b><span class="s" id="pole-s"></span><i aria-hidden="true">›</i></button>
+      </div>
+    </div>
+    <div class="tabbar">
+      <div class="systems" id="systems" role="tablist" aria-label="系统"></div>
+        <div class="side-row">
+        <button class="btn" id="skybtn" type="button" title="淡出面板看完整星图；每颗星是一项任务，点星可跳到任务（快捷键 S）">✦ 星图</button>
+        <button class="btn" id="proj" type="button" aria-pressed="false" title="放大字号、每段只留一行，适合会议室投屏">大字</button>
+        <button class="btn" id="full" type="button">⛶ 投屏全屏</button>
+      </div>
+    </div>
+    <div class="sec-h"><h2 id="sys-h">任务概况</h2><span class="stamp" id="stamp">读取中…</span></div>
+    <div class="figures" id="figures"></div>
+  </header>
+
+  <section class="ribbon hud boot" style="--d:7" aria-label="全部任务状态">
+    <div class="ribbon-h"><span class="t">任务矩阵</span><span class="tag" id="ribbon-sub">一格一项</span><button class="ratio" id="ratio" type="button" title="北辰 · 看总览"></button></div>
+    <div class="cells" id="cells"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <div class="digest">
+    <section class="dg hud boot" style="--d:8" aria-labelledby="dg-g-h"><h2 id="dg-g-h">任务分组</h2><div class="dg-rows" id="dg-g"></div></section>
+    <section class="dg hud boot" style="--d:8" aria-labelledby="dg-r-h"><h2 id="dg-r-h">发版动态</h2><div class="dg-rows" id="dg-r"></div></section>
+  </div>
+
+  <p class="state" id="state" hidden></p>
+
+  <div class="tools hud boot" style="--d:8" role="search">
+    <span class="tag">FILTER</span>
+    <input id="q" type="search" placeholder="搜索编号、标题、说明，例如 HOST2 或 发版" aria-label="搜索任务">
+    <button class="tg" id="mine" type="button" aria-pressed="false">只看需要我的</button>
+    <span class="hits" id="hits"></span>
+  </div>
+
+  <div class="layout">
+    <div class="main" id="main"><p class="empty">进度数据加载后，这里按“开发中、等你回复、等发版”等分组列出每项任务。</p></div>
+    <aside class="hud boot" style="--d:8" aria-label="最近动态">
+      <h2><span class="tag">SYS LOG</span>最近动态<span class="today" id="today"></span></h2>
+      <div class="pulse" id="pulse" aria-hidden="true"></div>
+      <div class="pulse-axis" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      <ul class="log" id="log"><li><span>还没有动态记录。</span></li></ul>
+    </aside>
+  </div>
+</div>
+
+<script>
+const LANES = [
+  { key: 'doing', name: '开发中', c: '--cyan' },
+  { key: 'waiting', name: '等你或客户回复', c: '--coral', hint: '不回复就不会往前走' },
+  { key: 'release', name: '已合入、等发版', c: '--amber' },
+  { key: 'risk', name: '已知未验证', c: '--violet' },
+  { key: 'planned', name: '待开工', c: '--slate', hint: '需求已写好，排队等执行' },
+  { key: 'done', name: '已完成', c: '--green', collapsed: true },
+];
+const FLOW = ['planned', 'doing', 'waiting', 'release', 'risk', 'done'];
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const cv = (n, v) => { n.style.setProperty('--c', `var(${v})`); return n; };
+const byOrder = (a, b) => (a.order ?? 999) - (b.order ?? 999);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let tasks = [], board = null, logItems = [], figPin = -1;
+// 北辰 holds several systems, one constellation each. allTasks / boardRaw are everything; tasks / board are the chosen
+// system's view (a task without a system belongs to the first one, so older rows need no rewrite).
+// Fallback when meta/board.systems is empty: one unnamed system, so a fresh board still renders.
+const DEFAULT_SYSTEMS = [{ key: 'main', constellation: '北斗', name: '我的系统', note: '' }];
+let allTasks = [], boardRaw = null, sysSel = '';
+try { sysSel = localStorage.getItem('board-system') || sysSel; } catch {}
+const systems = () => (Array.isArray(boardRaw?.systems) && boardRaw.systems.length ? boardRaw.systems : DEFAULT_SYSTEMS);
+const sysOf = (t) => t.system || systems()[0].key;
+function applySystem() {
+  const list = systems(); if (sysSel !== 'all' && !list.some((x) => x.key === sysSel)) sysSel = list[0].key;
+  tasks = sysSel === 'all' ? allTasks : allTasks.filter((t) => sysOf(t) === sysSel);
+  // The app build belongs to a system: the first system uses board.app, others their own entry (none yet → blank).
+  const cur = list.find((x) => x.key === sysSel), own = sysSel === list[0].key || sysSel === 'all';
+  board = boardRaw ? (own ? boardRaw : { ...boardRaw, app: cur?.app || null, appVersion: cur?.app?.version || '—', appNote: cur?.note || '', nextRelease: '' }) : null;
+}
+function renderSystems() {
+  const list = systems(), root = $('systems'), stat = (ts) => `${ts.filter((t) => t.group === 'done').length}/${ts.length}`;
+  const tab = (key, c, name, ts) => { const b = el('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(key === sysSel));
+    b.append(el('span', 'c', c), el('span', null, name), el('span', 'n', stat(ts)));
+    b.addEventListener('click', () => { if (sysSel === key) return; sysSel = key; try { localStorage.setItem('board-system', key); } catch {} figPin = -1; bg.pin(-1); changed.clear(); refreshAll(); });
+    return b; };
+  const nodes = list.map((x) => tab(x.key, '✦ ' + (x.constellation || '星座'), x.name || x.key, allTasks.filter((t) => sysOf(t) === x.key)));
+  const all = tab('all', '', '全部', allTasks); all.querySelector('.n').remove(); all.querySelector('.c').remove(); nodes.unshift(all);
+  const add = el('button', 'add', '＋ 其他系统'); add.type = 'button'; add.title = '要加入新系统，告诉 Claude 系统名称，它会建好对应的星座';
+  add.addEventListener('click', () => { add.textContent = '告诉 Claude 系统名称即可加入'; setTimeout(() => { add.textContent = '＋ 其他系统'; }, 2600); });
+  nodes.push(add);
+  root.replaceChildren(...nodes);
+}
+function refreshAll() {
+  applySystem(); diff(tasks); bg.setTasks(tasks); syncSkyFilter(); if (cardId) fillCard(cardId); if (!dip.hidden) fillDip();
+  renderSystems(); renderTop(); renderMain();
+}
+// Filter state, clamp state, and helpers for waiting age and archive.
+let query = '', mineOnly = false;
+const opened = new Set();
+const DAY = 86400000, LATE_DAYS = 3, RECENT_DAYS = 3;
+const since = (t) => new Date(t.waitingSince || t.updatedAt || 0);
+function ageText(t) {
+  const ms = Date.now() - since(t); if (!(ms >= 0)) return ['', false];
+  const d = Math.floor(ms / DAY), h = Math.floor(ms / 3600000);
+  return [d >= 1 ? `已等 ${d} 天` : h >= 1 ? `已等 ${h} 小时` : '刚提出', d >= LATE_DAYS];
+}
+const needsMe = (t) => t.group === 'waiting' || !!(t.needs && String(t.needs).trim());
+const matches = (t) => {
+  if (mineOnly && !needsMe(t)) return false;
+  if (!query) return true;
+  const hay = [t.code, t.title, t.detail, t.needs, t.status, t.owner].filter(Boolean).join(' ').toLowerCase();
+  return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w));
+};
+const filtering = () => !!query || mineOnly;
+const isOld = (t) => t.group === 'done' && Date.now() - new Date(t.updatedAt || 0) > RECENT_DAYS * DAY;
+function clampP(cls, text, key, lines) {
+  const p = el('p', cls + ' clamp' + (opened.has(key) ? ' open' : ''), text); if (lines) p.style.setProperty('--lines', lines);
+  p.dataset.key = key; return p;
+}
+// After a render, give each cut-off paragraph a 展开 / 收起 control.
+function fitClamps(root) {
+  requestAnimationFrame(() => root.querySelectorAll('.clamp').forEach((p) => {
+    if (p.nextElementSibling?.classList.contains('more')) return;
+    const isOpen = p.classList.contains('open');
+    if (!isOpen && p.scrollHeight <= p.clientHeight + 1) return;
+    const b = el('button', 'more', isOpen ? '收起 ▴' : '展开 ▾'); b.type = 'button'; p.classList.add('cut');
+    const toggle = () => { const o = p.classList.toggle('open'); o ? opened.add(p.dataset.key) : opened.delete(p.dataset.key); b.textContent = o ? '收起 ▴' : '展开 ▾'; };
+    b.addEventListener('click', toggle); p.addEventListener('click', () => { if (!getSelection()?.toString()) toggle(); });
+    p.after(b);
+  }));
+}
+const p2 = (n) => String(n).padStart(2, '0');
+function fmt(s, short) {
+  if (!s) return ''; const d = new Date(s); if (isNaN(d)) return String(s);
+  return short ? `${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}` : `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+}
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+function tick() { const d = new Date(); $('clock').textContent = `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; $('date').textContent = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} · 星期${WEEK[d.getDay()]}`; }
+tick(); setInterval(tick, 1000);
+
+const shown = new Map();
+function countUp(node, key, to) {
+  const from = shown.has(key) ? shown.get(key) : 0; shown.set(key, to);
+  if (reduce.matches || from === to) { node.textContent = to; return; }
+  const t0 = performance.now(), dur = 1100;
+  const step = (t) => { const k = Math.min(1, (t - t0) / dur); node.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 4))); if (k < 1) requestAnimationFrame(step); };
+  node.textContent = from; requestAnimationFrame(step);
+}
+let seen = null; const changed = new Set();
+function diff(list) { changed.clear(); const next = new Map(list.map((t) => [t.id, JSON.stringify(t)])); if (seen) for (const [id, v] of next) if (seen.get(id) !== v) changed.add(id); seen = next; }
+let booted = false;
+
+/* Snapshots can repeat with identical data (cache → server, reconnects, unrelated writes); rebuilding the DOM then replays animations and reads as a flash. Each section redraws only when its own data changed. */
+const sigs = {};
+const same = (key, value) => { const s = JSON.stringify(value); if (sigs[key] === s) return true; sigs[key] = s; return false; };
+const lastPct = new Map();
+// The Big Dipper, α to η, in sky coordinates (x right, y down), and its line figure.
+// The Big Dipper from catalogue positions (J2000 RA/Dec, RA scaled by cos Dec, east to the left), normalised so the
+// span from 摇光 to 天璇 is 1. The handle bends gently down to 摇光; 天璇→天枢 is the pointer pair that leads to 北辰.
+const DIPPER = [
+  { zh: '天枢', gr: 'α', en: 'Dubhe', x: .925, y: 0 }, { zh: '天璇', gr: 'β', en: 'Merak', x: 1, y: .215 },
+  { zh: '天玑', gr: 'γ', en: 'Phecda', x: .724, y: .322 }, { zh: '天权', gr: 'δ', en: 'Megrez', x: .592, y: .189 },
+  { zh: '玉衡', gr: 'ε', en: 'Alioth', x: .377, y: .232 }, { zh: '开阳', gr: 'ζ', en: 'Mizar', x: .2, y: .273 }, { zh: '摇光', gr: 'η', en: 'Alkaid', x: 0, y: .498 },
+];
+const DIPPER_LINES = [[6, 5], [5, 4], [4, 3], [3, 2], [2, 1], [1, 0], [0, 3]];
+function dipperMark(i) {
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '-1 -1 36 15'); svg.setAttribute('class', 'dip'); svg.setAttribute('aria-hidden', 'true');
+  const P = (k) => [DIPPER[k].x * 34, DIPPER[k].y * 26];
+  const path = document.createElementNS(NS, 'path'); path.setAttribute('d', DIPPER_LINES.map(([a, b]) => `M${P(a)}L${P(b)}`).join('')); svg.append(path);
+  DIPPER.forEach((_, k) => { const c = document.createElementNS(NS, 'circle'); const [x, y] = P(k); c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', k === i ? 1.9 : 1.1); if (k === i) c.setAttribute('class', 'me'); svg.append(c); });
+  const b = el('b'); b.append(el('i', 'gr', DIPPER[i].gr + ' '), document.createTextNode(DIPPER[i].zh));
+  const em = el('em'); em.append(svg, b); return em;
+}
+function waitNote() {
+  const w = tasks.filter((t) => t.group === 'waiting'); if (!w.length) return '没有等你的事';
+  const late = w.filter((t) => ageText(t)[1]).length;
+  return late ? `${late} 项已超过 ${LATE_DAYS} 天` : `都在 ${LATE_DAYS} 天内`;
+}
+// 等发版 card: merged count, then next-build candidates still held elsewhere (waiting on you, or needing a deploy).
+function releaseNote() {
+  const n = tasks.filter((t) => t.group === 'release').length, nx = board?.app?.next;
+  const held = nx ? tasks.filter((t) => t.targetRelease === nx && t.group !== 'release' && !/^REL/.test(t.code || '')).map((t) => t.code) : [];
+  return [n ? `${n} 项已合入` : '暂无已合入', held.length && `${held.join('、')} 待处理`].filter(Boolean);
+}
+// One line for the app card: the layers that can drift apart, and how much is still unproven.
+function appLine() {
+  const a = board?.app; if (!a) return board?.appNote ? [board.appNote] : [];
+  const unv = tasks.filter((t) => t.unverified).length;
+  return [a.backend && `后端 ${a.backend}`, a.skill && `Skill ${(a.skill.match(/\d+/) || [a.skill])[0]}`, a.model && a.model.split('-')[0], unv && `待实证 ${unv}`].filter(Boolean);
+}
+// A clicked figure card stays lit, with its star in the header Dipper, until clicked again or Esc.
+function markFigs() { document.querySelectorAll('#figures .fig').forEach((f, k) => { f.classList.toggle('pinned', k === figPin); f.setAttribute('aria-pressed', String(k === figPin)); }); }
+// Digest: groups that need attention (each row jumps to its list) and where releases stand (rows open 天枢's panel).
+function renderDigest() {
+  const g = $('dg-g'), r = $('dg-r'); if (!g || !r) return;
+  const by = (k) => tasks.filter((t) => t.group === k), codes = (ts, max = 6) => ts.slice(0, max).map((t) => t.code).join(' · ') + (ts.length > max ? ` 等 ${ts.length} 项` : '');
+  const row = (lane, left, right, onClick) => { const b = cv(el('button', 'dg-row'), lane ? lane.c : '--cyan'); b.type = 'button'; b.append(el('b', null, left), el('span', null, right)); b.title = right; b.addEventListener('click', onClick); return b; };
+  const rows = [];
+  for (const k of ['waiting', 'release', 'risk', 'doing', 'planned']) {
+    const ts = by(k); if (!ts.length) continue; const lane = LANES.find((l) => l.key === k);
+    const right = k === 'waiting' ? waitNote() + ' · ' + codes(ts.sort((a, b) => since(a) - since(b)), 4) : k === 'release' ? codes(ts) + ' 已合入' : codes(ts.sort(byOrder));
+    rows.push(row(lane, `${lane.name} · ${ts.length} 项`, right, () => goLane(k)));
+  }
+  g.replaceChildren(...(rows.length ? rows : [el('p', 'none', '没有需要处理的分组')]));
+  const a = board?.app, rel = [];
+  if (a) {
+    rel.push(row(null, '正式 App', `${a.version || '—'}${a.releasedAt ? ' · ' + fmt(a.releasedAt, true) + ' 上线' : ''}${a.backend && a.backend !== a.version ? ' · 后端 ' + a.backend : ''}`, () => openDip(0)));
+    if (a.next) { const nx = tasks.filter((t) => t.targetRelease === a.next && !/^REL/.test(t.code || '')); rel.push(row({ c: '--amber' }, `下一版 ${a.next}`, `${nx.length} 项候选${a.nextNote ? ' · ' + a.nextNote : ''}`, () => openDip(0))); }
+    const unv = tasks.filter((t) => t.unverified); if (unv.length) rel.push(row({ c: '--amber' }, `待实证 · ${unv.length} 项`, codes(unv), () => openDip(0)));
+    if (a.rollback) rel.push(row(null, '可回滚到', a.rollback, () => openDip(0)));
+  } else if (board?.appVersion && board.appVersion !== '—') rel.push(row(null, '正式 App', board.appVersion, () => openDip(0)));
+  r.replaceChildren(...(rel.length ? rel : [el('p', 'none', '这个系统还没有发版记录')]));
+}
+function renderTop() {
+  if (same('top', [sysSel, tasks, board, query, mineOnly, Math.floor(Date.now() / 3600000)])) return;
+  const n = (g) => tasks.filter((t) => t.group === g).length;
+  const total = tasks.length, done = n('done');
+  const figs = [
+    ['正式 App', 'BUILD', board?.app?.version || board?.appVersion || '—', appLine(), '--cyan', 1],
+    ['待开工', 'QUEUED', n('planned'), ['需求已写好', '排队待执行'], '--slate', total ? n('planned') / total : 0],
+    ['开发中', 'ACTIVE', n('doing'), n('doing') ? '正在推进' : '暂无进行中的任务', '--cyan', total ? n('doing') / total : 0],
+    ['等你回复', 'NEEDS YOU', n('waiting'), waitNote(), '--coral', total ? n('waiting') / total : 0],
+    ['等发版', 'RELEASE', n('release'), releaseNote(), '--amber', total ? n('release') / total : 0],
+    ['已知未验证', 'RISK', n('risk'), '等待实测验证', '--violet', total ? n('risk') / total : 0],
+    ['已完成', 'SHIPPED', done, total ? [`共 ${total} 项`, `完成 ${Math.round(done / total * 100)}%`] : '', '--green', total ? done / total : 0],
+  ];
+  $('figures').replaceChildren(...figs.map(([l, tag, v, s, c, frac], i) => {
+    const f = cv(el('div', 'fig hud' + (booted ? '' : ' boot')), c); f.style.setProperty('--d', i + 2);
+    const lab = el('div', 'lab', l); lab.append(dipperMark(i)); f.title = `北斗${'一二三四五六七'[i]} · ${DIPPER[i].zh}（${DIPPER[i].en}）`;
+    f.addEventListener('pointerenter', () => bg.dipper(i)); f.addEventListener('pointerleave', () => bg.dipper(-1));
+    f.title += ' · 点击点亮北斗里的这颗星，再点一次熄灭'; f.tabIndex = 0; f.setAttribute('role', 'button');
+    const go = (e) => { if (e.target.closest('.clamp')) return; figPin = figPin === i ? -1 : i; bg.pin(figPin); markFigs(); };
+    f.addEventListener('click', go); f.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go({ target: e.target, detail: 0 }); } });
+    const b = el('b'); f.append(lab, b);
+    // Notes are short phrases kept whole: a line may only break between them, at the separator dot.
+    const parts = (Array.isArray(s) ? s : [s]).filter(Boolean);
+    if (parts.length) { const sm = el('small'); parts.forEach((x, k) => { if (k) sm.append(el('span', 'dot', ' · ')); sm.append(el('span', 'sg', x)); }); sm.title = parts.join(' · ') + (i === 0 && board?.app?.model ? `（模型 ${board.app.model}）` : ''); f.append(sm); }
+    const seg = el('div', 'seg'); const on = Math.round(frac * 12);
+    for (let k = 0; k < 12; k++) seg.append(el('i', k < on ? 'on' : '')); f.append(seg);
+    if (typeof v === 'number') countUp(b, l, v); else b.textContent = String(v);
+    return f;
+  }));
+  markFigs();
+  const latest = [board?.updatedAt, ...tasks.map((t) => t.updatedAt)].filter((v) => v && !isNaN(new Date(v))).sort((a, b) => new Date(b) - new Date(a))[0];
+  $('stamp').textContent = latest ? '最近更新 ' + fmt(latest, true) : '';
+  { const at = allTasks.length, ad = allTasks.filter((t) => t.group === 'done').length, pc = at ? Math.round(ad / at * 100) : 0;
+    $('pole-t').textContent = at ? `${pc}%` : '—'; $('pole-s').textContent = at ? `${ad} / ${at} · 全部系统` : '';
+    const me = tasks.filter(needsMe), late = tasks.filter((t) => t.group === 'waiting' && ageText(t)[1]).length;
+    $('w-me-v').textContent = `${me.length} 项`; $('w-me-s').textContent = late ? `${late} 项超 ${LATE_DAYS} 天` : me.length ? `都在 ${LATE_DAYS} 天内` : '没有'; $('w-me').classList.toggle('late', !!late);
+    const a = board?.app, nx = a?.next ? tasks.filter((t) => t.targetRelease === a.next && !/^REL/.test(t.code || '')).length : 0;
+    $('w-next-v').textContent = a?.next || '—'; $('w-next-s').textContent = a?.next ? `${nx} 项候选 · 现为 ${a.version}` : a?.version ? `现为 ${a.version}` : '暂无'; }
+  { const cur = systems().find((x) => x.key === sysSel);
+    $('sys-h').textContent = `${sysSel === 'all' ? '全部系统' : cur ? cur.constellation || cur.name : ''} · 任务概况`;
+    $('ribbon-sub').textContent = `${sysSel === 'all' ? '全部系统' : cur ? cur.constellation || cur.name : ''} · 一格一项`; }
+  renderDigest();
+  if (board?.note) { $('note').textContent = board.note; $('stamp').title = board.note; }
+  // Matrix and legend read as a pipeline, in the same order as the figure cards.
+  const order = FLOW;
+  $('cells').style.setProperty('--n', Math.max(1, tasks.length));
+  const sorted = [...tasks].sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group) || byOrder(a, b));
+  $('cells').classList.toggle('intro', !booted); $('cells').replaceChildren(...sorted.map((t, k) => {
+    const lane = LANES.find((l) => l.key === t.group) || LANES[4];
+    const cls = [t.group === 'doing' ? 'hatch' : '', isOld(t) ? 'old' : '', filtering() && !matches(t) ? 'dim' : ''].filter(Boolean).join(' ');
+    const i = cv(el('i', cls), lane.c); i.style.setProperty('--k', k);
+    i.dataset.id = t.id; i.dataset.tip = `${t.code || ''} ${t.title || ''}`; i.dataset.sub = `${lane.name}${t.status ? ' · ' + t.status : ''}`;
+    i.setAttribute('aria-label', `${i.dataset.tip}，${i.dataset.sub}`); return i;
+  }));
+  const r = $('ratio'); r.replaceChildren(document.createTextNode(`${done}`), el('small', null, `/ ${total} 已完成`));
+  $('legend').replaceChildren(...FLOW.map((k) => LANES.find((l) => l.key === k)).map((l) => { const s = cv(el('span', null, l.name), l.c); s.append(el('b', null, String(n(l.key)))); return s; }));
+}
+
+function refLine(parts, ref) {
+  const text = parts.filter(Boolean).join(' · '); if (!text) return null;
+  const d = el('div', 'ref', text), path = String(ref || '').match(/docs\/[^\s·，,;；]+/)?.[0];
+  if (path) {
+    const b = el('button', 'copy', '复制路径'); b.type = 'button'; b.title = path;
+    b.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(path); b.textContent = '已复制'; b.classList.add('ok'); }
+      catch { const r = document.createRange(); r.selectNodeContents(d.firstChild); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = '已选中，按 ⌘C'; }
+      setTimeout(() => { b.textContent = '复制路径'; b.classList.remove('ok'); }, 1800);
+    });
+    d.append(b);
+  }
+  return d;
+}
+function laneHead(lane, count, hint) {
+  const h = cv(el('h2', 'lane-h'), lane.c);
+  h.append(el('span', 'bar'), el('span', 'name', lane.name), el('span', 'n', String(count)));
+  if (hint) h.append(el('span', 'hint', hint));
+  return h;
+}
+function locBtn(t) {
+  const b = el('button', 'locate', '✦ 星图定位'); b.type = 'button'; b.setAttribute('aria-label', `在星图中定位 ${t.code || ''} ${t.title || ''}`.trim());
+  b.addEventListener('click', () => locateInSky(t.id)); return b;
+}
+function active(t) {
+  const a = el('article', 'active hud' + (changed.has(t.id) ? ' changed' : '')); a.dataset.id = t.id;
+  const steps = Array.isArray(t.steps) ? t.steps : [];
+  const pct = typeof t.progress === 'number' ? t.progress : steps.length ? Math.round(steps.filter((s) => s.state === 'done').length / steps.length * 100) : null;
+  const top = el('div', 'a-top'); top.append(el('span', 'a-code', t.code || ''), el('span', 'a-title', t.title || ''));
+  top.append(locBtn(t));
+  if (pct != null) { const p = el('span', 'a-pct'); const b = el('span'); countUp(b, 'pct:' + t.id, pct); p.append(b, el('small', null, '%')); top.append(p); }
+  a.append(top);
+  if (pct != null) { const m = el('div', 'meter'); const i = el('i'); m.append(i); a.append(m); const prev = lastPct.get(t.id); lastPct.set(t.id, pct); if (prev != null) i.style.setProperty('--p', prev + '%'); if (prev !== pct) requestAnimationFrame(() => requestAnimationFrame(() => i.style.setProperty('--p', pct + '%'))); }
+  if (steps.length) {
+    const s = el('div', 'steps'); const word = { done: 'DONE · 完成', doing: 'RUNNING · 进行中', blocked: 'BLOCKED · 受阻' };
+    steps.forEach((x) => { const st = el('div', 'step ' + (x.state || '')); st.append(el('em', null, word[x.state] || 'QUEUED · 未开始'), el('b', null, x.name)); s.append(st); });
+    a.append(s);
+  }
+  if (t.detail) a.append(clampP('a-detail', t.detail, t.id + ':d', 2));
+  if (t.needs) { const p = el('p', 'needs'); p.append(el('b', null, '需要你：'), document.createTextNode(t.needs)); a.append(p); }
+  const ref = refLine([t.owner, t.ref, fmt(t.updatedAt)], t.ref); if (ref) a.append(ref);
+  return a;
+}
+function row(t, lane) {
+  const [age, late] = lane.key === 'waiting' ? ageText(t) : ['', false];
+  const r = cv(el('div', 'row' + (changed.has(t.id) ? ' changed' : '') + (late ? ' late' : '')), lane.c); r.dataset.id = t.id;
+  r.append(el('div', 'code', t.code || ''));
+  const b = el('div', 'body'); b.append(el('div', 'title', t.title || ''));
+  if (Array.isArray(t.steps) && t.steps.length) b.append(el('p', 'detail', t.steps.map((s) => s.name).join(' → ')));
+  if (t.detail) b.append(clampP('detail', t.detail, t.id + ':d', 2));
+  if (t.needs) { const p = el('p', 'needs'); p.append(el('b', null, '需要你：'), document.createTextNode(t.needs)); b.append(p); }
+  const ref = refLine([t.owner, t.ref], t.ref); if (ref) b.append(ref);
+  const rt = el('div', 'right'); if (t.status) rt.append(cv(el('span', 'chip', t.status), lane.c));
+  if (age) rt.append(el('span', 'age' + (late ? ' late' : ''), age));
+  else if (t.updatedAt) rt.append(el('span', 'when', fmt(t.updatedAt, true)));
+  if (t.unverified) rt.prepend(cv(el('span', 'chip', '待实证'), '--amber'));
+  if (t.shippedIn || t.targetRelease) rt.append(el('span', 'when', t.shippedIn ? `随 ${t.shippedIn}` : `候选 ${t.targetRelease}`));
+  rt.prepend(locBtn(t));
+  r.append(b, rt); return r;
+}
+function renderMain() {
+  if (same('main', [tasks, query, mineOnly, Math.floor(Date.now() / 3600000)])) return;
+  const root = $('main'); root.replaceChildren();
+  if (!tasks.length) { root.append(el('p', 'empty', '还没有任务记录。Claude 写入后会自动出现。')); return; }
+  const shown = tasks.filter(matches);
+  $('hits').textContent = filtering() ? `命中 ${shown.length} / ${tasks.length} 项` : '';
+  if (!shown.length) { root.append(el('p', 'empty', '没有符合条件的任务，换个关键词或关掉“只看需要我的”。')); return; }
+  let d = 9;
+  const lanes = el('div', 'lanes'), colA = el('div'), colB = el('div'); lanes.append(colA, colB);
+  for (const lane of LANES) {
+    const list = shown.filter((t) => t.group === lane.key);
+    // Waiting: longest-waiting first. Done: newest first. Others: planned order.
+    if (lane.key === 'waiting') list.sort((a, b) => since(a) - since(b));
+    else if (lane.key === 'done') list.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+    else list.sort(byOrder);
+    if (!list.length) continue;
+    let body, hint = lane.hint;
+    if (lane.key === 'doing') { body = el('div'); body.style.display = 'grid'; body.style.gap = '1rem'; list.forEach((t) => body.append(active(t))); }
+    else {
+      body = cv(el('div', 'rows hud'), lane.c); body.style.setProperty('--edge-c', `var(${lane.c})`);
+      const recent = lane.key === 'done' ? list.filter((t) => !isOld(t)) : list, older = lane.key === 'done' ? list.filter(isOld) : [];
+      recent.forEach((t) => body.append(row(t, lane)));
+      if (older.length) {
+        const od = el('details', 'older'); if (filtering()) od.open = true;
+        od.append(el('summary', null, `更早完成的 ${older.length} 项（${RECENT_DAYS} 天前）`)); older.forEach((t) => od.append(row(t, lane))); body.append(od);
+      }
+      if (lane.key === 'waiting') { const late = list.filter((t) => ageText(t)[1]).length; hint = late ? `${late} 项已等超过 ${LATE_DAYS} 天 · 最久的排最前` : '最久的排最前'; }
+      if (lane.key === 'done') hint = `最近 ${RECENT_DAYS} 天 ${list.length - older.length} 项`;
+    }
+    let block;
+    if (lane.collapsed) { block = el('details', 'done'); if (filtering()) block.open = true; const s = el('summary'); s.append(laneHead(lane, list.length, hint || '默认收起')); block.append(s, body); }
+    else { block = el('section'); block.append(laneHead(lane, list.length, hint), body); }
+    if (!booted) { block.classList.add('boot'); block.style.setProperty('--d', d++); }
+    if (lane.key === 'doing') { root.append(block); continue; }
+    const weight = lane.collapsed ? 1.5 : list.length + 1.5;
+    if (lane.key === 'waiting' || (colA.weight || 0) <= (colB.weight || 0)) { colA.append(block); colA.weight = (colA.weight || 0) + weight; }
+    else { colB.append(block); colB.weight = (colB.weight || 0) + weight; }
+  }
+  if (!colA.childElementCount) { colA.append(...colB.children); }
+  if (colA.childElementCount || colB.childElementCount) root.append(lanes);
+  fitClamps(root);
+}
+const KINDS = [
+  ['决定', '--coral', /你定|已定|决定|你确认|目视确认|签认|你批准/],
+  ['发版', '--amber', /发版|发布/],
+  ['核对', '--green', /(检查|核对|核验|回归).{0,14}(通过|全过|一致)|^核对/],
+  ['合入', '--cyan', /合入|合并/],
+  ['完成', '--blue', /完成/],
+  ['修复', '--violet', /修复|修好/],
+  ['调整', '--blue', /改为|调整/],
+  ['开始', '--blue', /开始|开通|派出|启动/],
+];
+const kindOf = (text) => KINDS.find(([, , re]) => re.test(text || '')) || ['记录', '--slate'];
+const dayKey = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+function ago(d) {
+  const m = Math.round((Date.now() - d) / 60000);
+  if (m < 1) return '刚刚'; if (m < 60) return `${m} 分钟前`; const h = Math.floor(m / 60);
+  return h < 24 ? `${h} 小时前` : '';
+}
+function renderLog(force) {
+  if (same('log', logItems) && !force) return;
+  const ul = $('log'); ul.replaceChildren();
+  const now = new Date(), today = dayKey(now);
+  const items = logItems.slice(0, 40).map((it) => ({ ...it, d: new Date(it.at) }));
+  const hours = Array(24).fill(0);
+  for (const it of items) if (!isNaN(it.d) && dayKey(it.d) === today) hours[it.d.getHours()]++;
+  const peak = Math.max(1, ...hours), todayN = hours.reduce((a, b) => a + b, 0);
+  $('pulse').replaceChildren(...hours.map((n, h) => { const i = el('i', (n ? 'on' : '') + (h === now.getHours() ? ' now' : '')); i.style.setProperty('--h', n / peak); i.title = `${p2(h)}:00 · ${n} 条`; return i; }));
+  const t = $('today'); t.replaceChildren(document.createTextNode('今日'), el('b', null, String(todayN)), document.createTextNode('条'));
+  if (!items.length) { const li = el('li'); li.append(el('span', 'txt', '还没有动态记录。')); ul.append(li); return; }
+  let lastDay = null;
+  items.forEach((it, k) => {
+    const valid = !isNaN(it.d), dk = valid ? dayKey(it.d) : '';
+    if (k > 0 && dk !== lastDay) ul.append(el('li', 'day', dk === today ? '今天' : dk ? `${p2(it.d.getMonth() + 1)}-${p2(it.d.getDate())}` : '更早'));
+    lastDay = dk;
+    const [name, c] = kindOf(it.text); const li = el('li', k === 0 ? 'latest' : ''); li.style.setProperty('--k', `var(${c})`);
+    const meta = el('div', 'meta'); meta.append(el('span', 'kind', name));
+    const tm = el('time', null, valid ? (dk === today ? `${p2(it.d.getHours())}:${p2(it.d.getMinutes())}` : fmt(it.at, true)) : String(it.at || '')); if (it.at) tm.dateTime = it.at; meta.append(tm);
+    const a = valid ? ago(it.d) : ''; if (a) meta.append(el('span', 'ago', a));
+    if (k === 0) meta.append(el('span', 'new', 'LATEST'));
+    li.append(meta, clampP('txt', it.text || '', 'log:' + it.at + ':' + (it.text || '').slice(0, 24), k === 0 ? 4 : 2)); ul.append(li);
+  });
+  fitClamps(ul);
+}
+setInterval(() => renderLog(true), 60000);
+// Waiting ages and the archive cut-off move with the clock; the hourly key in the render signatures redraws them.
+setInterval(() => { changed.clear(); renderTop(); renderMain(); }, 600000);
+{
+  let tq = 0;
+  $('q').addEventListener('input', (e) => { clearTimeout(tq); tq = setTimeout(() => { query = e.target.value.trim(); changed.clear(); renderTop(); renderMain(); syncSkyFilter(); }, 150); });
+  $('mine').addEventListener('click', (e) => { mineOnly = !mineOnly; e.currentTarget.setAttribute('aria-pressed', String(mineOnly)); changed.clear(); renderTop(); renderMain(); syncSkyFilter(); });
+}
+function render() { renderTop(); renderMain(); renderLog(); }
+render();
+
+// Spotlight and matrix tooltip.
+const tip = el('div', 'tip'); tip.setAttribute('aria-hidden', 'true'); document.body.append(tip);
+document.addEventListener('pointermove', (e) => {
+  const s = e.target.closest?.('.hud');
+  if (s) { const r = s.getBoundingClientRect(); s.style.setProperty('--mx', (e.clientX - r.left) + 'px'); s.style.setProperty('--my', (e.clientY - r.top) + 'px'); }
+  const cell = e.target.closest?.('.cells i');
+  if (cell) { const cr = cell.getBoundingClientRect(); bg.focus(cell.dataset.id, cr.left + cr.width / 2, cr.top + cr.height / 2);
+    tip.replaceChildren(document.createTextNode(cell.dataset.tip), el('small', null, cell.dataset.sub)); tip.classList.add('on');
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 18) + 'px'; }
+  else { bg.focus(null); if (!bg.ownsTip) tip.classList.remove('on'); }
+}, { passive: true });
+
+// Background star chart. Each lane is one constellation: its tasks are stars at stable, id-seeded positions
+// inside the lane's sky region, joined by a minimum spanning tree so every lane reads as one clean figure.
+// A faint celestial graticule and catalogue labels make it a chart rather than noise. Stars carry magnitude by
+// lane, waiting stars that are overdue throb, and a task that changes lane flies to its new constellation.
+// The pointer pulls stars gently and identifies the nearest one; a click on open sky sends a ripple; a comet
+// crosses now and then; matrix hover beams to the task's star; new log entries light the chart.
+const bg = (() => {
+  const api = { setTasks() {}, focus() {}, celebrate() {}, setSky() {}, dipper() {}, zoom() {}, resetView() {}, select() {}, setMatch() {}, reveal() {}, setDip() {}, pin() {}, dipScreen() { return null; }, groupScreen() { return null; }, onPick: null, onDipper: null, onSelect: null, onSelectedMove: null, ownsTip: false };
+  // Filter from the board's search: stars outside it dim; matches keep their labels.
+  let match = null, padMode = false;
+  api.setPad = (on) => { padMode = on; };
+  // Camera for the sky view: pan and zoom act on the chart's stars; the Milky Way, nebulae, dust and comets stay as a far backdrop.
+  const cam = { s: 1, x: 0, y: 0 }, camT = { s: 1, x: 0, y: 0 }, pointers = new Map();
+  let drag = null, selected = null, wpx = -1e4, wpy = -1e4;
+  const toWorld = (X, Y) => [(X - cam.x) / cam.s, (Y - cam.y) / cam.s], toScreen = (x, y) => [x * cam.s + cam.x, y * cam.s + cam.y];
+  function zoomTo(X, Y, ns) { ns = Math.min(5, Math.max(.5, ns)); camT.x = X - (X - camT.x) * (ns / camT.s); camT.y = Y - (Y - camT.y) * (ns / camT.s); camT.s = ns; }
+  let dipLit = -1, dipGlow = 0, dipPin = -1;
+  // Big Dipper stars are clickable: dipHover under the pointer, dipSel the open group panel, dipIds the task stars it links to.
+  let dipPos = [], dipHover = -1, dipSel = -1, dipIds = null;
+  let sky = false;
+  const cvs = $('field'), ctx = cvs.getContext('2d'); if (!ctx) return api;
+  // Zoom keeps marks crisp: inside the camera transform every line width is scaled by lwk, and star sizes by sz,
+  // so a 5x zoom spreads the figures out without turning lines and halos into thick bars.
+  let lwk = 1, sz = 1;
+  try { const LW = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'lineWidth');
+    Object.defineProperty(ctx, 'lineWidth', { get() { return LW.get.call(this) / lwk; }, set(v) { LW.set.call(this, v * lwk); } }); } catch {}
+  const COL = { doing: [46, 230, 255], waiting: [255, 79, 109], release: [255, 176, 46], risk: [176, 124, 255], planned: [140, 160, 195], done: [44, 245, 160] };
+  const MAG = { doing: 3.6, waiting: 3.2, release: 3, risk: 3, planned: 2.4, done: 2.1 };
+  // Sky regions in viewport fractions, chosen so most of each figure shows in the page's open margins.
+  // Eight anchors laid out as one Big Dipper across the whole sky: each group hangs on its Dipper star
+  // (η 摇光 已完成 at the handle's end … β 天璇 待开工 at the bowl's foot), α 天枢 is the app build, and the
+  // pointer line β→α runs on to 北辰 (Polaris), the overview of everything.
+  // Landscape: handle to the left, bowl to the right. Portrait (phones): bowl at the bottom, handle climbing up.
+  // Wide screens: the Dipper keeps its true shape. On the board it is a small figure in the header's open gap; in the
+  // sky view it eases out to fill the screen, each group's cluster hanging just outside its star (等你回复 in the bowl).
+  // side: where each star's label goes in the sky view (-1 left, 1 right, 0 below, 2 above), chosen to miss the clusters.
+  const WIDE = { dip: true, side: [1, 1, 0, -1, -1, 2, 0, -1],
+    done: [.11, .72], risk: [.25, .43], release: [.43, .12], waiting: [.61, .6], doing: [.37, .83], planned: [.86, .85], pole: [.8, .07] };
+  const TALL = { done: [.3, .14], risk: [.66, .28], release: [.28, .42], waiting: [.3, .63], doing: [.28, .86], planned: [.74, .86], app: [.74, .64], pole: [.8, .44] };
+  let ZONE = WIDE;
+  const LATIN = { planned: 'QUEUED', doing: 'ACTIVE', waiting: 'NEEDS YOU', release: 'RELEASE', risk: 'RISK', done: 'SHIPPED' };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
+  const hash = (str, salt) => { let h = 2166136261 ^ salt; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; };
+  // The shipped cluster is too dense to link at full view: its figure fades in as the camera zooms past 1.4x and is whole by 2.4x.
+  const linkFade = (g) => (g === 'done' ? Math.min(1, Math.max(0, (cam.s - 1.4) / 1)) : 1);
+  let w = 0, h = 0, dpr = 1, unit = 1, dust = [], ripples = [], comets = [], pulses = [], trees = new Map(), chart = null;
+  const stars = new Map();
+  let px = -1e4, py = -1e4, mx = 0, my = 0, tx = 0, ty = 0, focus = null, hover = null, lastPulse = 0, nextComet = 0, last = 0, onSky = false;
+  const halo = document.createElement('canvas'); halo.width = halo.height = 64;
+  { const g = halo.getContext('2d'), rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    rg.addColorStop(0, 'rgba(255,255,255,.9)'); rg.addColorStop(.2, 'rgba(255,255,255,.3)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 64, 64); }
+  const tints = new Map();
+  const tint = (c) => { const k = c.join(','); let s = tints.get(k); if (s) return s; s = document.createElement('canvas'); s.width = s.height = 64; const g = s.getContext('2d');
+    g.drawImage(halo, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = `rgb(${k})`; g.fillRect(0, 0, 64, 64); tints.set(k, s); return s; };
+
+  // Home of a star: lane centre + id-seeded polar offset, slowly turning about the centre.
+  // Constellation centre and radius, kept fully on screen.
+  function centre(g) {
+    const z = ZONE[g] || ZONE.planned, n = Math.max(1, laneCount(g)), R = g === 'done' ? unit * (.05 + .01 * Math.sqrt(n)) : unit * (.05 + .016 * Math.sqrt(n)), rx = R * 1.25 + 24, ry = R * .85 + 40;
+    // 等你回复 rides in the Dipper's bowl: centred in it and kept small enough not to spill over the bowl's edges.
+    if (g === 'waiting' && ZONE.dip && bowl) return [bowl[0], bowl[1], Math.min(R, bowl[2])];
+    // On the board the clusters keep clear of the header (the small Dipper lives there); they rise into place with the sky view.
+    const zy = ZONE.dip ? Math.max(z[1], .36) + (z[1] - Math.max(z[1], .36)) * skyK : z[1];
+    return [Math.min(Math.max(z[0] * w, rx), w - rx), Math.min(Math.max(zy * h, ry), h - ry), R];
+  }
+  function home(s, t) {
+    const [cx, cy, R] = centre(s.group), spin = (s.group.length % 2 ? 1 : -1) * t / 1000 * .012;
+    const a = s.ang + spin, r = (s.group === 'done' ? s.rad ** 1.9 : s.rad) * R;
+    return [cx + Math.cos(a) * r * 1.25, cy + Math.sin(a) * r * .85];
+  }
+  const counts = new Map(); const laneCount = (g) => counts.get(g) || 0;
+  // Minimum spanning tree per lane (Prim), on home positions, rebuilt when membership or size changes.
+  function rebuild() {
+    counts.clear(); for (const s of stars.values()) if (!s.dead) counts.set(s.group, (counts.get(s.group) || 0) + 1);
+    trees = new Map();
+    const byLane = new Map(); for (const s of stars.values()) if (!s.dead) (byLane.get(s.group) || byLane.set(s.group, []).get(s.group)).push(s);
+    for (const [g, list] of byLane) {
+      const pts = list.map((s) => home(s, 0)), inT = new Set([0]), edges = [];
+      while (inT.size < list.length) {
+        let best = null;
+        for (const i of inT) for (let j = 0; j < list.length; j++) { if (inT.has(j)) continue; const d = (pts[i][0] - pts[j][0]) ** 2 + (pts[i][1] - pts[j][1]) ** 2; if (!best || d < best[2]) best = [i, j, d]; }
+        inT.add(best[1]); edges.push([list[best[0]], list[best[1]]]);
+      }
+      trees.set(g, edges);
+    }
+  }
+  // Graticule: curved meridians and parallels about the chart centre, with a few catalogue ticks.
+  function drawChart() {
+    chart = document.createElement('canvas'); chart.width = Math.round(w * dpr); chart.height = Math.round(h * dpr);
+    const g = chart.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Milky Way: a soft band from lower left to upper right, clouds plus a dense dust of faint stars, seeded so it never jumps.
+    const band = (u) => [u * w, h * (.98 - .78 * u) + Math.sin(u * 5.2) * h * .05];
+    for (let i = 0; i < 90; i++) {
+      const u = hash('mw' + i, 1), [x, y] = band(u), off = (hash('mw' + i, 2) - .5) * h * .2, r = unit * (.06 + hash('mw' + i, 3) * .12);
+      const hue = hash('mw' + i, 4), col = hue < .55 ? '120,170,255' : hue < .85 ? '170,130,255' : '255,200,150';
+      const rg = g.createRadialGradient(x, y + off, 0, x, y + off, r); rg.addColorStop(0, `rgba(${col},${.045 + hash('mw' + i, 5) * .05})`); rg.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = rg; g.fillRect(x - r, y + off - r, r * 2, r * 2);
+    }
+    for (let i = 0; i < Math.min(2600, w * h / 600); i++) {
+      const u = hash('ms' + i, 1), [x, y] = band(u), gauss = (hash('ms' + i, 2) + hash('ms' + i, 3) + hash('ms' + i, 4) - 1.5) * h * .14;
+      g.fillStyle = `rgba(200,220,255,${.11 + hash('ms' + i, 5) * .3})`; g.fillRect(x + (hash('ms' + i, 6) - .5) * 20, y + gauss, .7, .7);
+    }
+    // Dark lane down the middle of the band, as in the real Milky Way.
+    g.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 46; i++) {
+      const u = hash('dl' + i, 1), [x, y] = band(u), yy = y + (hash('dl' + i, 2) - .5) * h * .03, r = unit * (.02 + hash('dl' + i, 3) * .035);
+      const rg = g.createRadialGradient(x, yy, 0, x, yy, r); rg.addColorStop(0, 'rgba(0,0,0,.22)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(x - r, yy - r, r * 2, r * 2);
+    }
+    g.globalCompositeOperation = 'source-over';
+    const cx = w / 2, cy = h * 1.25, R0 = Math.hypot(w, h) * .45;
+    g.strokeStyle = 'rgba(90,170,255,.095)'; g.lineWidth = .7;
+    for (let k = 0; k < 9; k++) { g.beginPath(); g.arc(cx, cy, R0 + k * unit * .11, Math.PI, 2 * Math.PI); g.stroke(); }
+    for (let k = -8; k <= 8; k++) { const a = -Math.PI / 2 + k * .13; g.beginPath(); g.moveTo(cx + Math.cos(a) * R0 * .55, cy + Math.sin(a) * R0 * .55); g.lineTo(cx + Math.cos(a) * R0 * 3, cy + Math.sin(a) * R0 * 3); g.stroke(); }
+    g.setLineDash([2, 6]); g.strokeStyle = 'rgba(255,176,46,.1)'; g.beginPath(); g.moveTo(0, h * .62); g.bezierCurveTo(w * .3, h * .38, w * .7, h * .5, w, h * .28); g.stroke(); g.setLineDash([]);
+    g.font = `500 ${Math.max(9, unit * .011)}px "JetBrains Mono", monospace`; g.fillStyle = 'rgba(120,170,230,.28)';
+    for (let k = -8; k <= 8; k += 2) { const a = -Math.PI / 2 + k * .13, x = cx + Math.cos(a) * (R0 + unit * .9), y = cy + Math.sin(a) * (R0 + unit * .9); if (x > 8 && x < w - 40 && y > 12) g.fillText(`${p2((k + 8) * 1.5 | 0)}h`, x, y); }
+    g.fillText('ECLIPTIC', w * .5 + 12, h * .455);
+    // Fade the graticule where the panels sit (centre) and keep it crisp in the open margins.
+    const m = g.createRadialGradient(w / 2, h * .55, Math.min(w, h) * .15, w / 2, h * .55, Math.hypot(w, h) * .62);
+    m.addColorStop(0, 'rgba(0,0,0,.26)'); m.addColorStop(1, 'rgba(0,0,0,1)');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.scale(dpr, dpr); g.globalCompositeOperation = 'destination-in'; g.fillStyle = m; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over';
+  }
+  function size() {
+    dpr = Math.min(2, devicePixelRatio || 1); w = innerWidth; h = innerHeight; unit = Math.min(w, h * 1.4); ZONE = h > w * 1.15 ? TALL : WIDE;
+    cvs.width = Math.round(w * dpr); cvs.height = Math.round(h * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dust = Array.from({ length: Math.round(Math.min(220, w * h / 6000)) }, (_, i) => ({ x: hash('d' + i, 1) * w, y: hash('d' + i, 2) * h, m: hash('d' + i, 3), ph: hash('d' + i, 4) * 6.28 }));
+    if (ZONE.dip) { const p = fit([.06 * w, .1 * h, .86 * w, .86 * h]), q = [p[0], p[1], p[2], p[3]], xs = q.map((v) => v[0]), ys = q.map((v) => v[1]);
+      bowl = [xs.reduce((a, b) => a + b) / 4, ys.reduce((a, b) => a + b) / 4, Math.min((Math.max(...xs) - Math.min(...xs)) / 2 / 1.25, (Math.max(...ys) - Math.min(...ys)) / 2 / .85) * .62]; } else bowl = null;
+    rebuild(); drawChart(); measureHeader();
+    for (const s of stars.values()) [s.x, s.y] = home(s, performance.now());
+  }
+  let unvN = 0;
+  api.setTasks = (list) => {
+    unvN = list.filter((t) => t.unverified).length;
+    const seen = new Set(); let moved = false;
+    for (const t of list) {
+      seen.add(t.id); let s = stars.get(t.id);
+      if (!s) { s = { id: t.id, group: t.group, ang: hash(t.id, 7) * 6.2832, rad: .25 + .75 * Math.sqrt(hash(t.id, 11)), ox: 0, oy: 0, vx: 0, vy: 0, alpha: 0, flare: 0, ph: hash(t.id, 13) * 6.28, f: .5 + hash(t.id, 17) * 1.4 }; stars.set(t.id, s); moved = true; }
+      if (s.group !== t.group) { if (booted) { s.flare = 1; if (t.group === 'done') ripple(s.x, s.y, COL.done, .45); } s.group = t.group; moved = true; }
+      s.code = t.code || ''; s.title = t.title || ''; s.late = t.group === 'waiting' && ageText(t)[1]; s.dead = false;
+    }
+    for (const s of stars.values()) if (!seen.has(s.id) && !s.dead) { s.dead = true; moved = true; }
+    if (moved) rebuild();
+    for (const s of stars.values()) if (s.x == null) [s.x, s.y] = home(s, performance.now());
+    if (reduce.matches) frame(performance.now());
+  };
+  api.focus = (id, x, y) => { focus = id ? { id, x, y } : null; };
+  const CARD_LANE = [null, 'planned', 'doing', 'waiting', 'release', 'risk', 'done'];
+  let litGroup = null, cardGroup = null;
+  api.dipper = (i) => { dipLit = i; cardGroup = i >= 0 ? CARD_LANE[i] : null; };
+  api.pin = (i) => { dipPin = i; };
+  api.setDip = (i, ids) => { dipSel = i; dipIds = ids ? ids : null; };
+  api.dipScreen = (i) => (dipPos[i] ? toScreen(...dipPos[i]) : null);
+  api.groupScreen = (g) => (laneCount(g) ? toScreen(...at(...centre(g).slice(0, 2), 14)) : null);
+  const anchor = (z, rx, ry) => [Math.min(Math.max(z[0] * w, rx), w - rx), Math.min(Math.max(z[1] * h, ry), h - ry)];
+  // Screen-world positions of the eight anchors: 0-6 the Dipper stars (card order), 7 北辰.
+  // The figure turned clockwise (the sky turns, the shape never changes). Sky view: 45°, so the pointer line 天璇→天枢
+  // runs up to the right and 北辰 (1.5 pointer-lengths on) lands in the figure's top-right corner. Header: 25°, the
+  // familiar level spoon; there 北辰 sits beside the clock instead and no pointer line is drawn (the header is too short
+  // for the true direction and distance).
+  const shape = (deg, k) => {
+    const c = Math.cos(deg * Math.PI / 180), s0 = Math.sin(deg * Math.PI / 180), p = DIPPER.map((d) => [d.x * c - d.y * s0, d.x * s0 + d.y * c]);
+    if (k) p.push([p[0][0] + (p[0][0] - p[1][0]) * k, p[0][1] + (p[0][1] - p[1][1]) * k]);
+    const x0 = Math.min(...p.map((q) => q[0])), y0 = Math.min(...p.map((q) => q[1]));
+    return { pts: p.map(([x, y]) => [x - x0, y - y0]), w: Math.max(...p.map((q) => q[0])) - x0, h: Math.max(...p.map((q) => q[1])) - y0 };
+  };
+  const BIG = shape(45, 1.5), SMALL = shape(25, 0);
+  // Scale a figure uniformly into a box (never stretched), centred.
+  const fit = ([x0, y0, x1, y1], cap = 1e9, S = BIG) => { const W = Math.min((x1 - x0) / S.w, (y1 - y0) / S.h, cap), ox = x0 + (x1 - x0 - S.w * W) / 2, oy = y0 + (y1 - y0 - S.h * W) / 2; return S.pts.map(([x, y]) => [ox + x * W, oy + y * W]); };
+  // The header gap between the title and the clock, in page coordinates so the small Dipper scrolls with the header.
+  // The spoon keeps above the LIVE/buttons row; 北辰 goes just left of the clock, where a little overlap is fine.
+  let smallBox = null, smallPole = null, bowl = null, veilY = -1;
+  function measureHeader() {
+    const cov = document.querySelector('.cover'), clk = document.getElementById('clock'), row = cov?.querySelector('.side-row'), st = cov?.querySelector('.status'), pole = cov?.querySelector('.watch');
+    if (!cov || !clk || !row || !st || !pole) { smallBox = null; return; }
+    let tr = 0; for (const q of ['.kicker', 'h1 .en', 'h1 .zh', 'h1 .motto']) { const e = cov.querySelector(q); if (!e) continue; const r = document.createRange(); r.selectNodeContents(e); tr = Math.max(tr, r.getBoundingClientRect().right); }
+    { const tk = cov.querySelector('.ticker'); if (tk) tr = Math.max(tr, tk.getBoundingClientRect().right); } // the ticker clips its text, so use its box
+    // The header's middle, between the title and the right column, down to the system tabs: 北辰 sits in its left part
+    // with orbits round it, the 北斗 system's Dipper to its right (room kept below each for its name).
+    const c = clk.getBoundingClientRect(), rw = row.getBoundingClientRect(), sr = st.getBoundingClientRect(), pr = pole.getBoundingClientRect(), Y = scrollY;
+    const top = Math.max(6, cov.getBoundingClientRect().top - 18) + 10, tabs = document.querySelector('.tabbar').getBoundingClientRect();
+    const right = Math.min(c.left, sr.left, pr.left) - 24, bottom = tabs.top - 10;
+    veilY = document.getElementById('figures').getBoundingClientRect().bottom + 20 + Y;
+    if (right - tr < 300 || bottom - top < 110) { smallBox = null; return; }
+    const x0 = tr + 24, bw = right - x0, px = x0 + Math.min(Math.max(bw * .2, 64), 210), py = top + (bottom - top) * .46;
+    smallBox = [px + Math.min(120, bw * .17), top + 14 + Y, right - 54, bottom - 26 + Y]; // 62px kept for the 天枢 name
+    smallPole = [px, py + Y];
+  }
+  let skyK = 0;
+  const hubs = () => {
+    if (!ZONE.dip) return [...DIPPER.map((_, k) => (k ? centre(CARD_LANE[k]) : anchor(ZONE.app, 110, 80))), anchor(ZONE.pole, 120, 70)].map(([x, y]) => at(x, y, 14));
+    const big = fit([.06 * w, .1 * h, .86 * w, .86 * h]), e = skyK * skyK * (3 - 2 * skyK);
+    const small = smallBox ? [...fit([smallBox[0], smallBox[1] - scrollY, smallBox[2], smallBox[3] - scrollY], 360, SMALL), [smallPole[0], smallPole[1] - scrollY]] : big;
+    return big.map(([bx, by], i) => at(small[i][0] + (bx - small[i][0]) * e, small[i][1] + (by - small[i][1]) * e, 14 * e));
+  };
+  const GOLD = [255, 214, 140];
+  // A lit Dipper star takes its own module's colour (天枢 the app's cyan, the rest their group's); 北辰 stays gold.
+  const OWN = (k) => (k === 7 ? GOLD : k === 0 ? COL.doing : COL[CARD_LANE[k]] || GOLD);
+  // 北辰 as a real star seen through air: a white-gold point with layered bloom, four diffraction spikes and four faint
+  // secondary ones, and atmospheric scintillation — irregular brightness flicker with a slight blue/red colour jitter.
+  function drawPolaris(x, y, S, t) {
+    const still = reduce.matches, R = 26 * S;
+    const n = still ? 0 : Math.sin(t / 173) * .5 + Math.sin(t / 97 + 1.3) * .3 + Math.sin(t / 61 + 2.1) * .2; // -1..1, never periodic to the eye
+    const tw = .82 + .18 * n, burst = still ? 0 : Math.max(0, Math.sin(t / 2900) * Math.sin(t / 1700 + 1) - .55) * 2.2;
+    const j = still ? 0 : Math.round(Math.sin(t / 233 + .7) * Math.sin(t / 141) * 3) / 3; // quantised so tints stay cached
+    const col = j > 0 ? [255, Math.round(238 - 26 * j), Math.round(205 - 50 * j)] : [Math.round(255 + 40 * j), Math.round(245 + 6 * j), 255];
+    const glow = (c, r, a) => { ctx.globalAlpha = Math.max(0, Math.min(1, a)); ctx.drawImage(tint(c), x - r, y - r, r * 2, r * 2); };
+    ctx.globalCompositeOperation = 'lighter';
+    glow(GOLD, R * 2.6, .1 + .04 * tw); glow(col, R * 1.2, .3 * tw + .12 * burst); glow([255, 250, 238], R * .5, .8 * tw + .2 * burst);
+    const spike = (a, len, w, al) => { const dx = Math.cos(a) * len, dy = Math.sin(a) * len, g = ctx.createLinearGradient(x - dx, y - dy, x + dx, y + dy);
+      g.addColorStop(0, rgba(col, 0)); g.addColorStop(.45, rgba(col, al * .5)); g.addColorStop(.5, rgba([255, 255, 255], al)); g.addColorStop(.55, rgba(col, al * .5)); g.addColorStop(1, rgba(col, 0));
+      ctx.strokeStyle = g; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x - dx, y - dy); ctx.lineTo(x + dx, y + dy); ctx.stroke(); };
+    ctx.globalAlpha = 1; const Lm = R * (1.9 + .3 * n + .7 * burst);
+    spike(0, Lm, 1.3, .95 * tw); spike(Math.PI / 2, Lm, 1.3, .95 * tw);
+    spike(Math.PI / 4, Lm * .45, .8, .4 * tw); spike(-Math.PI / 4, Lm * .45, .8, .4 * tw);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1; ctx.fillStyle = rgba([255, 253, 245], .95); ctx.beginPath(); ctx.arc(x, y, Math.max(2.2, 2.6 * S * .7), 0, 6.2832); ctx.fill();
+  }
+  function drawDipper(t) {
+    const pos = hubs(), lit = dipLit >= 0 ? dipLit : dipPin >= 0 ? dipPin : dipSel >= 0 ? dipSel : dipHover;
+    dipPos = pos; dipGlow += ((lit >= 0 ? 1 : 0) - dipGlow) * .08;
+    // On the board (wide screens) the small header Dipper is drawn crisp and bright with solid lines; decorations
+    // shrink with it (S). In the sky view it returns to the full-size, dashed, animated figure.
+    const small = !!ZONE.dip && skyK < .5, vis = sky || !!ZONE.dip, S0 = sz * (ZONE.dip ? .55 + .45 * skyK : 1);
+    // The Dipper's figure, star to star, with light creeping along it; the pointer line runs from 天枢 to 北辰.
+    ctx.lineCap = 'round'; ctx.lineWidth = small ? 4 : 6; ctx.strokeStyle = rgba(GOLD, small ? .025 + .04 * dipGlow : sky ? .05 : .025); ctx.beginPath(); for (const [a, b] of DIPPER_LINES) { ctx.moveTo(...pos[a]); ctx.lineTo(...pos[b]); } ctx.stroke(); ctx.lineCap = 'butt';
+    ctx.setLineDash(small ? [] : [4, 6]); ctx.lineDashOffset = reduce.matches ? 0 : -t / 120; ctx.lineWidth = small ? 1.1 : 1.3;
+    // Quiet by default on the board; a hovered or clicked figure card lifts the whole figure and lights its star's edges.
+    ctx.strokeStyle = rgba(GOLD, (small ? .14 + .14 * dipGlow : sky ? .42 : .14) + (small ? 0 : dipGlow * .15)); ctx.beginPath(); for (const [a, b] of DIPPER_LINES) { ctx.moveTo(...pos[a]); ctx.lineTo(...pos[b]); } ctx.stroke();
+    if (small && lit >= 0 && lit < 7) { ctx.lineWidth = 1.6; ctx.strokeStyle = rgba(OWN(lit), .85 * dipGlow); ctx.beginPath(); for (const [a, b] of DIPPER_LINES) if (a === lit || b === lit) { ctx.moveTo(...pos[a]); ctx.lineTo(...pos[b]); } ctx.stroke(); }
+    ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.strokeStyle = rgba(GOLD, ZONE.dip ? .3 * skyK : vis ? .3 : .08); ctx.beginPath(); ctx.moveTo(...pos[0]); ctx.lineTo(...pos[7]); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    // Tethers: a dotted line from each Dipper star out to the cluster of tasks it carries.
+    if (ZONE.dip && skyK > .05) { ctx.setLineDash([2, 4]); ctx.lineWidth = 1.2;
+      for (let k = 1; k < 7; k++) { const g = CARD_LANE[k]; if (!laneCount(g)) continue; const [cx, cy, R] = centre(g), [ex, ey] = at(cx, cy, 14), [x, y] = pos[k], L = Math.hypot(ex - x, ey - y); if (L < R * .6) continue;
+        const k1 = (L - R * .55) / L; ctx.strokeStyle = rgba(COL[g] || COL.planned, .55 * skyK * (k === lit ? 1.5 : 1)); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (ex - x) * k1, y + (ey - y) * k1); ctx.stroke(); }
+      ctx.setLineDash([]); }
+    // Orbits round 北辰 in the header: dotted ellipses reaching out past the 北斗 system, a small body travelling the outer one.
+    if (ZONE.dip && smallBox && skyK < .98) {
+      const [ox, oy] = pos[7], far = Math.max(60, Math.max(...pos.slice(0, 7).map((q) => q[0])) - ox + 40), al = 1 - skyK, still = reduce.matches;
+      [1, .68, .4].forEach((f, i) => { const rx = far * f, ry = rx * .27; ctx.setLineDash(i ? [1.5, 6] : [2, 7]); ctx.lineDashOffset = still ? 0 : (i % 2 ? 1 : -1) * t / (90 + i * 40);
+        ctx.strokeStyle = rgba(i ? [140, 190, 255] : GOLD, (.34 - i * .07) * al); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(ox, oy, rx, ry, -.06, 0, 6.2832); ctx.stroke(); });
+      ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      if (!still) { const a = t / 9000, rx = far, ry = rx * .27, c0 = Math.cos(-.06), s0 = Math.sin(-.06), ex = Math.cos(a) * rx, ey = Math.sin(a) * ry;
+        ctx.globalAlpha = .8 * al; ctx.drawImage(tint([170, 220, 255]), ox + ex * c0 - ey * s0 - 5, oy + ex * s0 + ey * c0 - 5, 10, 10); ctx.globalAlpha = 1; }
+    }
+    const total = [...counts.values()].reduce((a, b) => a + b, 0), done = laneCount('done');
+    const lit7 = 7; // 北辰 keeps gold even when lit
+    pos.forEach(([x, y], k) => {
+      // The header 北辰 is the board's emblem: larger than the Dipper stars, always bright, breathing.
+      const S = k === 7 && small ? S0 * 2.3 : S0;
+      const me = k === lit || (k === 7 && small), tw = .82 + .18 * Math.sin(t / 900 + k * 1.7), pole = k === 7, r = (pole ? 4.4 : 3.1) * S * (me ? 1.2 : 1);
+      const hr = (pole ? 40 : 24) * S * (me ? 1.3 + .08 * Math.sin(t / 220) : 1);
+      const dim = small && !me ? .38 : 1;
+      const emb = pole && small; // the header 北辰 is a quiet emblem, not a metric
+      if (emb) { drawPolaris(x, y, S, t); return; }
+      const hue = me && k !== lit7 ? OWN(k) : GOLD;
+      ctx.globalAlpha = Math.min(1, (small ? (me ? .95 : .16) : (vis ? .6 : .3) * (me ? 1.5 : 1)) * tw); ctx.drawImage(tint(hue), x - hr, y - hr, hr * 2, hr * 2); ctx.globalAlpha = dim;
+      const L = r * (pole ? 5.5 : 3.6) * tw; ctx.strokeStyle = rgba(hue, vis ? .75 : .4); ctx.lineWidth = .8;
+      ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke();
+      if (pole) { const L2 = L * .45; ctx.beginPath(); ctx.moveTo(x - L2, y - L2); ctx.lineTo(x + L2, y + L2); ctx.moveTo(x - L2, y + L2); ctx.lineTo(x + L2, y - L2); ctx.stroke(); }
+      ctx.fillStyle = rgba([255, 246, 225], (small ? (me ? 1 : .5) : vis ? .95 : .6) * tw); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+      if (me) { ctx.strokeStyle = rgba(hue, .85 * dipGlow); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(x, y, (pole ? 34 : 13) * S, 0, 6.2832); ctx.stroke(); }
+      if (k === 0) {
+        // 天枢 · the shipped app: a beacon with two counter-turning orbits.
+        const c = COL.doing, a = reduce.matches ? 0 : t / 1600;
+        ctx.strokeStyle = rgba(c, vis ? .55 : .25); ctx.lineWidth = .9;
+        ctx.beginPath(); ctx.ellipse(x, y, 16 * S, 6 * S, a, 0, 6.2832); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(x, y, 16 * S, 6 * S, -a + 1.2, 0, 6.2832); ctx.stroke();
+        for (const q of [a * 2.3, -a * 1.7 + 2]) { ctx.fillStyle = rgba([220, 250, 255], vis ? .9 : .5); ctx.beginPath(); ctx.arc(x + Math.cos(q) * 16 * S, y + Math.sin(q) * 6 * S, 1.3 * S, 0, 6.2832); ctx.fill(); }
+        // Release track: one small moon per shipped build on a slow outer orbit, the current build brightest.
+        const rel = board?.app?.releases || [], curV = board?.app?.version;
+        rel.forEach((r0, i) => { const q = a * .35 + i * 6.2832 / rel.length, R = 25 * S, me2 = r0.v === curV;
+          ctx.fillStyle = rgba(me2 ? [255, 255, 255] : c, (vis ? .9 : .5) * (me2 ? 1 : .55)); ctx.beginPath(); ctx.arc(x + Math.cos(q) * R, y + Math.sin(q) * R, (me2 ? 2.1 : 1.1) * S, 0, 6.2832); ctx.fill(); });
+        // Shipped but not yet proven in real use: an amber ring that breathes.
+        if (unvN) { const br = .5 + .5 * Math.sin(t / 700); ctx.setLineDash([5, 4]); ctx.lineDashOffset = reduce.matches ? 0 : -t / 60;
+          ctx.strokeStyle = rgba(COL.release, (vis ? .55 : .3) + br * .3); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, 32 * S, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0; }
+      } else if (pole) {
+        // 北辰 · overview: a ring that fills with the share of shipped work, ticks turning slowly round it, an outer
+        // dashed ring turning the other way, a spark circling the progress ring and eight rays that flicker in turn.
+        const R = 26 * S, frac = total ? done / total : 0, still = reduce.matches;
+        const br = still ? .6 : .5 + .5 * Math.sin(t / 1100);
+        if (emb) {
+          // Header emblem: a soft breathing glow, eight fine rays and one slowly turning dotted ring; no progress ring here.
+          ctx.globalAlpha = .16 + .1 * br; ctx.drawImage(tint(GOLD), x - R * 1.6, y - R * 1.6, R * 3.2, R * 3.2); ctx.globalAlpha = 1;
+          for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + Math.PI / 8, f = still ? .5 : .5 + .5 * Math.sin(t / 700 + i * 1.3), L1 = r * 1.6, L2 = r * (2.4 + 1.4 * f);
+            ctx.strokeStyle = rgba(GOLD, .12 + .2 * f); ctx.lineWidth = .6; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * L1, y + Math.sin(a) * L1); ctx.lineTo(x + Math.cos(a) * L2, y + Math.sin(a) * L2); ctx.stroke(); }
+          ctx.setLineDash([1.5, 6]); ctx.lineDashOffset = still ? 0 : t / 90; ctx.strokeStyle = rgba(GOLD, .22 + .1 * br); ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(x, y, R * .95, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+        } else {
+        ctx.globalAlpha = .35 + .3 * br; ctx.drawImage(tint(GOLD), x - R * 1.9, y - R * 1.9, R * 3.8, R * 3.8); ctx.globalAlpha = 1;
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + Math.PI / 8, f = still ? .5 : .5 + .5 * Math.sin(t / 380 + i * 1.3), L1 = r * 2.2, L2 = r * (3.2 + 3 * f);
+          ctx.strokeStyle = rgba(GOLD, .25 + .45 * f); ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * L1, y + Math.sin(a) * L1); ctx.lineTo(x + Math.cos(a) * L2, y + Math.sin(a) * L2); ctx.stroke(); }
+        ctx.setLineDash([2, 5]); ctx.lineDashOffset = still ? 0 : t / 70; ctx.strokeStyle = rgba(GOLD, .3 + .2 * br); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(x, y, R + 17 * S, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+        if (!still) { const a = -Math.PI / 2 + (t / 2400) % 6.2832; ctx.globalAlpha = .95; ctx.drawImage(tint([180, 255, 220]), x + Math.cos(a) * R - 6 * S, y + Math.sin(a) * R - 6 * S, 12 * S, 12 * S); ctx.globalAlpha = 1; }
+        ctx.strokeStyle = rgba(GOLD, vis ? .2 : .1); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.2832); ctx.stroke();
+        ctx.strokeStyle = rgba(COL.done, vis ? .9 : .45); ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(x, y, R, -Math.PI / 2, -Math.PI / 2 + 6.2832 * frac); ctx.stroke(); ctx.lineCap = 'butt';
+        ctx.strokeStyle = rgba(GOLD, vis ? .45 : .2); ctx.lineWidth = .8; const a0 = reduce.matches ? 0 : t / 9000;
+        for (let i = 0; i < 24; i++) { const a = a0 + i * Math.PI / 12, r0 = R + 5 * S, r1 = R + (i % 3 ? 8 : 12) * S; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0); ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1); ctx.stroke(); }
+        }
+      } else if (!laneCount(CARD_LANE[k])) {
+        // Empty group: its star still shows, ringed by a dim turning dash so the eight always read as eight.
+        const c = COL[CARD_LANE[k]] || COL.planned; ctx.setLineDash([2, 6]); ctx.lineDashOffset = reduce.matches ? 0 : t / 80;
+        ctx.strokeStyle = rgba(c, vis ? .45 : .2); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, 30 * S, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+  // Name offsets for the small (level) Dipper, [dx, dy, align]: 天枢 and 天璇 to the right of the bowl, 天玑 to its left,
+  // 天权, 玉衡 and 开阳 above the handle, 摇光 off its end, 北辰 between its star and the clock.
+  const SMALL_LABEL = [[30, 4, 'left'], [10, 5, 'left'], [-9, 4, 'right'], [0, -9, 'center'], [0, -9, 'center'], [0, -9, 'center'], [0, 18, 'center'], [24, 5, 'left']];
+  // Two-line catalogue label for every anchor: star name with the module's code and count, then its Chinese name.
+  function drawHubLabels() {
+    const big = Math.max(10, unit * .0115) * sz, small = Math.max(10, unit * .011) * sz;
+    const total = [...counts.values()].reduce((a, b) => a + b, 0), done = laneCount('done');
+    ctx.textAlign = 'center';
+    dipPos.forEach(([x, y], k) => {
+      let l1, l2, c, y0, on = sky || k === dipLit || k === dipSel || k === dipHover;
+      if (k === 7) { l1 = `北辰 · ALL ${total}`; l2 = `总览 · 完成 ${total ? Math.round(done / total * 100) : 0}%`; c = GOLD; y0 = y + 50 * sz; }
+      else if (k === 0) { l1 = `α 天枢 · BUILD ${board?.appVersion || '—'}`; const nx = board?.app?.next || (board?.nextRelease ? String(board.nextRelease).split(/[:：（(，,\s]/)[0] : '');
+        l1 = `α 天枢 · BUILD ${board?.app?.version || board?.appVersion || '—'}`; l2 = '正式 App' + (nx ? ` · 下个 ${nx}` : '') + (unvN ? ` · 待实证 ${unvN}` : ''); c = COL.doing; y0 = y + 34 * sz; }
+      else {
+        const g = CARD_LANE[k], n = laneCount(g), [zx, zy, R] = centre(g), lane = LANES.find((l) => l.key === g);
+        l1 = `${DIPPER[k].gr} ${DIPPER[k].zh} · ${LATIN[g]} ${n}`; l2 = (lane ? lane.name : g) + (n ? '' : ' · 暂无') + (g === 'done' && n > 12 && sky && cam.s < 1.4 ? ' · 放大看连线' : ''); c = COL[g] || COL.planned;
+        y0 = at(zx, zy + (n ? R * .85 + 22 * sz : 50 * sz), 14)[1]; on = on || litGroup === g || (hover && hover.group === g);
+      }
+      let lx = x;
+      if (ZONE.dip) {
+        // Small header Dipper: just the star's name, placed so neighbours never collide (fades out as the sky view opens).
+        const me = k === dipLit || (dipLit < 0 && k === dipPin) || k === dipSel;
+        if (skyK < .98 && k === 7 && smallBox) {
+          // 北辰's name under its emblem, and the system's name under the Dipper.
+          const Sp = sz * (.55 + .45 * skyK) * 2.3; ctx.globalAlpha = 1 - skyK; ctx.textAlign = 'center';
+          ctx.font = `600 15px "Noto Sans SC", sans-serif`; ctx.fillStyle = rgba(GOLD, .8); ctx.fillText('北辰', x, y + 26 * Sp + 4);
+          // The chosen system's constellation name sits just under the bowl's bottom edge (天玑–天璇).
+          const [gx, gy] = dipPos[2], [bx3, by3] = dipPos[1], cs = systems().find((x) => x.key === sysSel) || systems()[0];
+          ctx.fillStyle = rgba([46, 230, 255], .9); ctx.fillText(sysSel === 'all' ? '全部系统' : cs.constellation || '北斗', (gx + bx3) / 2, Math.max(gy, by3) + 26); ctx.globalAlpha = 1;
+        } else if (skyK < .98 && k !== 7) { const [dx, dy, al] = SMALL_LABEL[k];
+          ctx.globalAlpha = 1 - skyK; ctx.textAlign = al; ctx.font = `${me ? 600 : 500} ${me ? 12 : 11}px "Noto Sans SC", sans-serif`;
+          ctx.shadowColor = 'rgba(4,10,20,.95)'; ctx.shadowBlur = 5; // a dark halo keeps names readable where they cross a line
+          ctx.fillStyle = me ? rgba(OWN(k), 1) : rgba(GOLD, .36 + .12 * dipGlow);
+          const wide = Math.max(...dipPos.slice(0, 7).map((q) => q[0])) - Math.min(...dipPos.slice(0, 7).map((q) => q[0])) > 230; // narrow figure: drop the Greek letter
+          ctx.fillText(wide ? `${DIPPER[k].gr} ${DIPPER[k].zh}` : DIPPER[k].zh, x + dx, y + dy); ctx.shadowBlur = 0; ctx.globalAlpha = 1; }
+        if (skyK < .02) return;
+        // Sky view: the full catalogue entry beside its star (-1 left, 1 right, 0 below, 2 above).
+        const sd = ZONE.side[k], gap = (k === 7 ? 44 : 20) * sz;
+        ctx.textAlign = sd === -1 ? 'right' : sd === 1 ? 'left' : 'center'; lx = sd === -1 || sd === 1 ? x + sd * gap : x;
+        y0 = sd === 0 ? y + 30 * sz : sd === 2 ? y - 34 * sz : y - 2 * sz; ctx.globalAlpha = skyK;
+      } else if (!sky && toScreen(lx, y0)[1] < 150) return; // behind the page header the label would clash with its text and buttons
+      ctx.font = `600 ${big}px "JetBrains Mono", "Noto Sans SC", monospace`; ctx.fillStyle = rgba(c, on ? .95 : .55); ctx.fillText(l1, lx, y0);
+      ctx.font = `500 ${small}px "Noto Sans SC", sans-serif`; ctx.fillStyle = rgba([200, 220, 245], on ? .6 : .35); ctx.fillText(l2, lx, y0 + 15 * sz);
+      ctx.globalAlpha = 1;
+    });
+    ctx.textAlign = 'start';
+  }
+  api.zoom = (f) => zoomTo(w / 2, h / 2, camT.s * f);
+  api.resetView = () => { camT.s = 1; camT.x = 0; camT.y = 0; };
+  api.select = (id) => { selected = id; };
+  api.setMatch = (set) => { match = set; };
+  // Bring a star into view. zoom: fly in and centre it; area: [x0, y0, x1, y1] screen box it must sit in (else centred there).
+  api.reveal = (id, { zoom, area } = {}) => {
+    const s = stars.get(id); if (!s) return false;
+    const [x, y] = at(s.x, s.y, 14), box = area || [w * .12, h * .12, w * .88, h * .78];
+    if (zoom) camT.s = Math.min(5, Math.max(.5, zoom));
+    const sx = x * camT.s + camT.x, sy = y * camT.s + camT.y;
+    if (zoom || sx < box[0] || sx > box[2] || sy < box[1] || sy > box[3]) { camT.x = (box[0] + box[2]) / 2 - x * camT.s; camT.y = (box[1] + box[3]) / 2 - y * camT.s; }
+    s.flare = 1; return true;
+  };
+  api.setSky = (on) => { if (!on) { api.resetView(); selected = null; } sky = on; if (on) ripple(w / 2, h / 2, COL.doing, .5); };
+  api.celebrate = () => { ripple(w / 2, h * .4, COL.doing, .9); for (const s of stars.values()) s.flare = Math.max(s.flare, .55); };
+  function ripple(x, y, c, power = .6) { ripples.push({ x, y, c, t0: performance.now(), power, hit: new Set() }); if (ripples.length > 6) ripples.shift(); }
+  const at = (x, y, k) => [x + mx * k, y + my * k];
+  // Drifting nebula: three soft colour clouds on slow Lissajous paths, added light.
+  const NEB = [[.2, .75, [120, 90, 255], 13], [.78, .3, [40, 200, 255], 17], [.6, .82, [255, 90, 140], 21]];
+  function drawNebula(t) {
+    if (reduce.matches) return;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [fx, fy, c, sp] of NEB) {
+      const x = (fx + Math.sin(t / (sp * 1000)) * .08) * w, y = (fy + Math.cos(t / (sp * 1300)) * .06) * h, r = unit * (.36 + .05 * Math.sin(t / (sp * 700)));
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(c, .065)); g.addColorStop(1, rgba(c, 0)); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  // Work flows between constellations along faint arcs; packets travel them in the source lane's colour.
+  const FLOW_ARCS = [['planned', 'doing'], ['doing', 'waiting'], ['doing', 'release'], ['doing', 'risk'], ['release', 'done'], ['risk', 'done'], ['waiting', 'doing']];
+  let packets = [], nextPacket = 0;
+  function arcs() {
+    const list = FLOW_ARCS.filter(([a, b]) => laneCount(a) && laneCount(b));
+    if (!laneCount('release') && laneCount('doing') && laneCount('done')) list.push(['doing', 'done']);
+    return list;
+  }
+  function arcPoint(a, b, k) {
+    const [ax, ay] = centre(a), [bx, by] = centre(b), mxp = (ax + bx) / 2, myp = (ay + by) / 2, nx = -(by - ay), ny = bx - ax, bend = .22;
+    const cx = mxp + nx * bend, cy = myp + ny * bend, u = 1 - k;
+    return at(u * u * ax + 2 * u * k * cx + k * k * bx, u * u * ay + 2 * u * k * cy + k * k * by, 14);
+  }
+  function drawFlows(t) {
+    const list = arcs();
+    ctx.setLineDash([1, 7]); ctx.lineWidth = .8;
+    for (const [a, b] of list) {
+      ctx.strokeStyle = rgba(COL[a], sky ? .22 : .11); ctx.beginPath();
+      for (let k = 0; k <= 1.001; k += .05) { const [x, y] = arcPoint(a, b, k); k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    if (!reduce.matches && list.length && t > nextPacket) { nextPacket = t + 900 + Math.random() * 1400; const [a, b] = list[Math.floor(Math.random() * list.length)]; packets.push({ a, b, t0: t, dur: 2600 + Math.random() * 1600 }); }
+    packets = packets.filter((q) => t - q.t0 < q.dur);
+    for (const q of packets) {
+      const k = Math.max(0, t - q.t0) / q.dur, e = k * k * (3 - 2 * k), fade = Math.sin(Math.PI * k), ca = COL[q.a], cb = COL[q.b];
+      const c = ca.map((v, i) => Math.round(v + (cb[i] - v) * e));
+      for (let j = 6; j >= 0; j--) { const [x, y] = arcPoint(q.a, q.b, Math.max(0, e - j * .012)); ctx.fillStyle = rgba(c, fade * (1 - j / 7) * .8); ctx.beginPath(); ctx.arc(x, y, (1.6 - j * .15) * sz, 0, 6.2832); ctx.fill(); }
+      const [x, y] = arcPoint(q.a, q.b, e); ctx.globalAlpha = fade; ctx.drawImage(tint(c), x - 8 * sz, y - 8 * sz, 16 * sz, 16 * sz); ctx.globalAlpha = 1;
+    }
+  }
+  // Constellation trace: every few seconds a light runs through each figure, edge by edge, lanes staggered.
+  const LANE_ORDER = ['planned', 'doing', 'waiting', 'release', 'risk', 'done'];
+  function drawTraces(t) {
+    if (reduce.matches) return;
+    for (const [g, edges] of trees) {
+      if (!edges.length || linkFade(g) < .5) continue;
+      const cyc = 9000, local = (t + LANE_ORDER.indexOf(g) * 1500) % cyc, run = 2400; if (local > run + 700) continue;
+      const prog = Math.min(1, local / run) * edges.length, fade = local > run ? 1 - (local - run) / 700 : 1, c = COL[g] || COL.planned;
+      ctx.lineWidth = 1.4;
+      edges.forEach(([a, b], i) => {
+        if (prog <= i) return; const part = Math.min(1, prog - i), [ax, ay] = at(a.x, a.y, 14), [bx, by] = at(b.x, b.y, 14);
+        const x = ax + (bx - ax) * part, y = ay + (by - ay) * part, head = prog - i < 1.2;
+        ctx.strokeStyle = rgba(c, (head ? .8 : .35) * fade * (g === 'done' ? .6 : 1)); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(x, y); ctx.stroke();
+        if (head && part < 1) { ctx.globalAlpha = .9 * fade; ctx.drawImage(tint(c), x - 6 * sz, y - 6 * sz, 12 * sz, 12 * sz); ctx.globalAlpha = 1; }
+      });
+    }
+  }
+  function frame(t) {
+    const dt = Math.min(48, last ? t - last : 16); last = t;
+    ctx.clearRect(0, 0, w, h);
+    if (w < 2 || h < 2) return; // zero-size frame: nothing to draw until a resize gives it room
+    mx += (tx - mx) * .05; my += (ty - my) * .05;
+    if (drag?.moved) Object.assign(cam, camT); else { cam.s += (camT.s - cam.s) * .18; cam.x += (camT.x - cam.x) * .18; cam.y += (camT.y - cam.y) * .18; }
+    [wpx, wpy] = px > -1e3 ? toWorld(px, py) : [-1e4, -1e4];
+    skyK += ((sky ? 1 : 0) - skyK) * (reduce.matches ? 1 : .07); if (Math.abs(skyK - (sky ? 1 : 0)) < .002) skyK = sky ? 1 : 0;
+    litGroup = cardGroup ?? (dipPin > 0 ? CARD_LANE[dipPin] : dipSel > 0 ? CARD_LANE[dipSel] : dipHover > 0 ? CARD_LANE[dipHover] : null);
+    if (chart?.width && chart.height) ctx.drawImage(chart, mx * 3, my * 3, w, h);
+    drawNebula(t);
+    // Field stars: tiny, twinkling, magnitude-weighted.
+    for (const d of dust) { const [x, y] = at(d.x, d.y, 4), tw = .55 + .45 * Math.sin(t / 1300 * (.5 + d.m) + d.ph); ctx.fillStyle = rgba(d.m < .14 ? [255, 214, 175] : d.m > .9 ? [215, 232, 255] : [150, 205, 255], (.16 + d.m * .38) * tw); const r = d.m > .93 ? 1.3 : .8; ctx.fillRect(x, y, r, r); }
+    ctx.setTransform(dpr * cam.s, 0, 0, dpr * cam.s, dpr * cam.x, dpr * cam.y); sz = cam.s ** -.6; lwk = sz;
+    drawDipper(t);
+    // Physics: offsets spring back home; pointer pulls; ripples push once.
+    const list = [...stars.values()];
+    ripples = ripples.filter((r) => t - r.t0 < 1800);
+    for (const s of list) {
+      const [hx, hy] = home(s, t);
+      // A star being dragged sits under the pointer; on release the spring below pulls it home with a little overshoot.
+      if (drag?.star === s && drag.moved && px > -1e3) { s.x = wpx - mx * 14; s.y = wpy - my * 14; s.ox = s.x - hx; s.oy = s.y - hy; s.vx = s.vy = 0; s.alpha += (1 - s.alpha) * .1; continue; }
+      if (px > -1e3 && !drag) { const dx = wpx - s.x, dy = wpy - s.y, d = Math.hypot(dx, dy); if (d < 180 && d > 6) { const f = (1 - d / 180) * .05; s.vx += dx / d * f; s.vy += dy / d * f; } }
+      for (const r of ripples) { if (r.hit.has(s)) continue; const R = Math.max(0, t - r.t0) / 1800 * Math.max(w, h) * .7, dx = s.x - r.x, dy = s.y - r.y, d = Math.hypot(dx, dy);
+        if (Math.abs(d - R) < 18 && d > 1) { r.hit.add(s); s.vx += dx / d * 4 * r.power; s.vy += dy / d * 4 * r.power; s.flare = Math.max(s.flare, .45); } }
+      s.vx += -s.ox * .02; s.vy += -s.oy * .02; s.vx *= .9; s.vy *= .9; s.ox += s.vx * dt / 16; s.oy += s.vy * dt / 16;
+      // Lane changes fly: the star eases toward its (possibly new) home instead of jumping.
+      s.x += (hx + s.ox - s.x) * .045 * dt / 16; s.y += (hy + s.oy - s.y) * .045 * dt / 16;
+      // On the board the task stars stay faint behind the header and figure cards (the band above veilY), so they don't read as specks on the panels.
+      const veil = ZONE.dip && skyK < .5 && veilY > 0 && s.y < veilY - scrollY ? .18 : 1;
+      s.alpha += ((s.dead ? 0 : (match && !match.has(s.id) ? .14 : 1) * veil) - s.alpha) * .06; s.flare *= .975;
+    }
+    for (const [id, s] of stars) if (s.dead && s.alpha < .02) { stars.delete(id); rebuild(); }
+    // Constellation bodies: a soft cloud in the lane's colour follows each figure, breathing slowly.
+    ctx.globalCompositeOperation = 'lighter';
+    for (const st of list) {
+      const c = COL[st.group] || COL.planned, lit = (hover && hover.group === st.group) || litGroup === st.group, [x, y] = at(st.x, st.y, 14);
+      const R = unit * (st.group === 'done' ? .045 : .075) * (1 + .12 * Math.sin(t / 2600 + st.ph)), a = (st.group === 'done' ? .08 : .11) * (sky ? 1.5 : 1) * (lit ? 1.8 : 1) * st.alpha;
+      ctx.globalAlpha = a; ctx.drawImage(tint(c), x - R, y - R, R * 2, R * 2);
+    }
+    // The shipped cluster gets a bright core, like a globular cluster.
+    if (laneCount('done')) { const [cx0, cy0, R0] = centre('done'), [x, y] = at(cx0, cy0, 14), Rc = R0 * (1.1 + .06 * Math.sin(t / 3000));
+      ctx.globalAlpha = (sky ? .32 : .22) * (litGroup === 'done' || (hover && hover.group === 'done') ? 1.6 : 1); ctx.drawImage(tint(COL.done), x - Rc, y - Rc, Rc * 2, Rc * 2); }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    // Constellation figures as neon tubes: a wide soft glow under a bright core; lines stop short of each star.
+    const live = [];
+    for (const [g, edges] of trees) {
+      const fade = linkFade(g); if (fade < .01) continue;
+      const lit = (hover && hover.group === g) || litGroup === g, c = COL[g] || COL.planned, base = .5 * (sky ? 1.4 : 1) * (lit ? 1.6 : 1) * fade;
+      for (const [a, b] of edges) {
+        const [ax, ay] = at(a.x, a.y, 14), [bx, by] = at(b.x, b.y, 14), L = Math.hypot(bx - ax, by - ay); if (L < 1) continue;
+        const ux = (bx - ax) / L, uy = (by - ay) / L, gap = 8 * sz, al = Math.min(a.alpha, b.alpha), x0 = ax + ux * gap, y0 = ay + uy * gap, x1 = bx - ux * gap, y1 = by - uy * gap;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = rgba(c, .1 * base * al); ctx.lineWidth = lit ? 9 : 7; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.strokeStyle = rgba(c, .22 * base * al); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.strokeStyle = rgba(c, .75 * base * al); ctx.lineWidth = lit ? 1.6 : 1.2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.lineCap = 'butt';
+        if (fade > .5) live.push([a, b]);
+      }
+    }
+    drawFlows(t);
+    drawTraces(t);
+    drawHubLabels();
+    // Pointer: threads to nearby stars, a reticle, and the nearest star identified.
+    hover = null;
+    if (px > -1e3) {
+      let best = 1e9;
+      for (const s of list) { const [x, y] = at(s.x, s.y, 14), d = Math.hypot(x - wpx, y - wpy) * cam.s; if (d < 170 && !drag?.moved) { ctx.strokeStyle = rgba(COL[s.group] || COL.planned, .3 * (1 - d / 170) * s.alpha); ctx.lineWidth = .6; ctx.beginPath(); ctx.moveTo(wpx, wpy); ctx.lineTo(x, y); ctx.stroke(); } if (onSky && !drag?.moved && d < best && d < 26) { best = d; hover = s; } }
+    }
+    // Anchor stars: picked when the pointer is on one (they sit at a group's centre, so a close hit beats a task star).
+    dipHover = -1;
+    if (onSky && px > -1e3 && !drag?.moved) { let bd = hover ? 12 : 20; dipPos.forEach(([x, y], k) => { const d = Math.hypot(x - wpx, y - wpy) * cam.s; if (d < bd) { bd = d; dipHover = k; } }); if (dipHover >= 0) hover = null; }
+    if (drag?.star) hover = drag.star;
+    // Group panel open: beams run from its Dipper star to each listed task star, with a spark travelling each one.
+    if (dipSel >= 1 && dipIds && dipPos[dipSel]) {
+      // 北辰 links to the seven anchors in their own colours; a group star links to its listed tasks.
+      const ends = dipSel === 7 ? dipPos.slice(0, 7).map(([x, y], k) => [x, y, k ? COL[CARD_LANE[k]] : COL.doing, 1])
+        : dipIds.map((o) => (typeof o === 'string' ? { id: o, dash: true } : o)).map((o) => [stars.get(o.id), o.dash !== false && (dipSel !== 0 || o.dash)]).filter(([s]) => s)
+          .map(([s, dash]) => [...at(s.x, s.y, 14), dipSel === 0 ? COL[s.group] || COL.doing : COL[CARD_LANE[dipSel]] || COL.doing, s.alpha, dash]);
+      const [ox, oy] = dipPos[dipSel], n = ends.length, al = Math.min(.6, 1.8 / Math.sqrt(n + 1));
+      ctx.lineDashOffset = -t / 45;
+      ends.forEach(([x, y, c, alpha, dash = true], k) => {
+        ctx.setLineDash(dash ? [3, 5] : []);
+        const s = { alpha }, bx = (ox + x) / 2 + (y - oy) * .12, by = (oy + y) / 2 - (x - ox) * .12;
+        ctx.strokeStyle = rgba(c, al * s.alpha); ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.quadraticCurveTo(bx, by, x, y); ctx.stroke();
+        const u = ((t / 2200) + k * .137) % 1, v = 1 - u, qx = v * v * ox + 2 * v * u * bx + u * u * x, qy = v * v * oy + 2 * v * u * by + u * u * y;
+        ctx.globalAlpha = Math.sin(Math.PI * u) * .9; ctx.drawImage(tint(c), qx - 5 * sz, qy - 5 * sz, 10 * sz, 10 * sz); ctx.globalAlpha = 1;
+      });
+      ctx.setLineDash([]);
+      ctx.strokeStyle = rgba([255, 214, 140], .7 + .2 * Math.sin(t / 300)); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(ox, oy, (11 + Math.sin(t / 260) * 2) * sz, 0, 6.2832); ctx.stroke();
+    }
+    const labels = [];
+    // Stars: halo, core, diffraction spikes on bright ones, a slow orbit ring on active work, a throb on overdue asks.
+    for (const s of list) {
+      const c = COL[s.group] || COL.planned, [x, y] = at(s.x, s.y, 14), r = (MAG[s.group] || 1.7) * sz, q = sz;
+      const tw = .75 + .25 * Math.sin(t / 1000 * s.f + s.ph), throb = s.late ? .5 + .5 * Math.sin(t / 420 + s.ph) : 0, a0 = (s.group === 'done' ? .85 : 1) * s.alpha;
+      const hr = r * (5.5 + throb * 5 + s.flare * 10 + (hover === s ? 4 : 0));
+      ctx.globalAlpha = Math.min(1, ((s.group === 'done' ? .3 : .5) + throb * .4 + s.flare * .9 + (hover === s ? .4 : 0)) * s.alpha); ctx.drawImage(tint(c), x - hr, y - hr, hr * 2, hr * 2); ctx.globalAlpha = 1;
+      if (r >= 2.2 * q || hover === s) {
+        const L = r * (3.2 + s.flare * 4 + (hover === s ? 3 : 0)) * tw; ctx.strokeStyle = rgba(c, .55 * a0); ctx.lineWidth = .7;
+        ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke();
+      }
+      ctx.fillStyle = rgba([255, 255, 255], .85 * a0 * tw); ctx.beginPath(); ctx.arc(x, y, r * .55, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = rgba(c, a0 * tw * .9); ctx.beginPath(); ctx.arc(x, y, r + s.flare * 1.5, 0, 6.2832); ctx.fill();
+      if (s.group === 'doing') {
+        ctx.strokeStyle = rgba(c, .5 * s.alpha); ctx.lineWidth = .8; ctx.beginPath(); ctx.ellipse(x, y, r + 6 * q, (r + 6 * q) * .45, -.4, t / 700 + s.ph, t / 700 + s.ph + 4.4); ctx.stroke();
+        // Two satellites on the orbit.
+        for (const off of [0, Math.PI]) { const a = t / 900 + s.ph + off, ex = Math.cos(a) * (r + 6 * q), ey = Math.sin(a) * (r + 6 * q) * .45, rx = ex * Math.cos(-.4) - ey * Math.sin(-.4), ry = ex * Math.sin(-.4) + ey * Math.cos(-.4);
+          ctx.fillStyle = rgba([220, 250, 255], .85 * s.alpha); ctx.beginPath(); ctx.arc(x + rx, y + ry, .9 * q, 0, 6.2832); ctx.fill(); }
+      } else if (s.group === 'waiting' && !reduce.matches) {
+        // Sonar: rings go out on a beat; overdue asks beat faster.
+        const per = s.late ? 1400 : 2600, k = ((t + s.ph * 500) % per) / per;
+        ctx.strokeStyle = rgba(c, .55 * (1 - k) * s.alpha); ctx.lineWidth = .9; ctx.beginPath(); ctx.arc(x, y, r + (2 + k * (s.late ? 26 : 18)) * q, 0, 6.2832); ctx.stroke();
+      } else if (s.group === 'release') {
+        const a = t / 2400 + s.ph, d = r + 6 * q; ctx.strokeStyle = rgba(c, .5 * s.alpha); ctx.lineWidth = .8; ctx.beginPath();
+        for (let k = 0; k <= 4; k++) { const q = a + k * Math.PI / 2; k ? ctx.lineTo(x + Math.cos(q) * d, y + Math.sin(q) * d) : ctx.moveTo(x + Math.cos(q) * d, y + Math.sin(q) * d); } ctx.stroke();
+      } else if (s.group === 'risk') {
+        const fl = .45 + .35 * Math.sin(t / 170 + s.ph) * Math.sin(t / 530 + s.ph * 2); ctx.setLineDash([2, 3]); ctx.lineDashOffset = t / 90;
+        ctx.strokeStyle = rgba(c, fl * s.alpha); ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(x, y, r + 5 * q, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]);
+      } else if (s.group === 'done' && !reduce.matches) {
+        // An occasional glint: a four-point sparkle that opens and closes.
+        const k = ((t / 1000 + s.ph * 3.1) % 13) / .5;
+        if (k < 1) { const L = Math.sin(Math.PI * k) * 9 * q; ctx.strokeStyle = rgba([220, 255, 235], .8 * Math.sin(Math.PI * k) * s.alpha); ctx.lineWidth = .8;
+          ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke(); }
+      }
+      // Codes show once there is room for them: wide screens at full view, phones and the shipped cluster when zoomed in.
+      const roomy = unit * cam.s > 640, named = s.group !== 'done' || cam.s > 2.2;
+      if (s.code && (hover === s || (sky && roomy && named) || (((hover && hover.group === s.group) || litGroup === s.group) && roomy) || (sky && r >= 2.9 * q && roomy && named) || (match && match.has(s.id))))
+        labels.push({ text: s.code, x: x + r + 6 * q, y: y - r - 3 * q, c, a: (hover === s ? 1 : sky ? .7 : .5) * s.alpha, pri: hover === s ? 99 : r / q + (match && match.has(s.id) ? 5 : 0) });
+    }
+    // Place star labels without overlaps: hovered star first, then brighter stars.
+    ctx.font = `500 ${Math.max(10, unit * .0098) * sz}px "JetBrains Mono", monospace`;
+    const placed = []; labels.sort((p, q) => q.pri - p.pri);
+    for (const L of labels) {
+      const wd = ctx.measureText(L.text).width, box = [L.x - 2 * sz, L.y - 11 * sz, L.x + wd + 2 * sz, L.y + 3 * sz];
+      if (L.pri < 99 && placed.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+      placed.push(box); ctx.fillStyle = rgba(L.c, L.a); ctx.fillText(L.text, L.x, L.y);
+    }
+    // Signal pulses along live figure lines.
+    if (live.length && t - lastPulse > 550 && pulses.length < 7) { lastPulse = t; const [a, b] = live[Math.floor(Math.random() * live.length)]; pulses.push(Math.random() < .5 ? { a, b, t0: t, dur: 1100 + Math.random() * 700 } : { a: b, b: a, t0: t, dur: 1100 + Math.random() * 700 }); }
+    pulses = pulses.filter((q) => t - q.t0 < q.dur && stars.has(q.a.id) && stars.has(q.b.id));
+    for (const q of pulses) {
+      const k = Math.max(0, t - q.t0) / q.dur, e = k * k * (3 - 2 * k), [ax, ay] = at(q.a.x, q.a.y, 14), [bx, by] = at(q.b.x, q.b.y, 14), c = COL[q.a.group] || COL.doing;
+      const x = ax + (bx - ax) * e, y = ay + (by - ay) * e, k0 = Math.max(0, e - .16), x0 = ax + (bx - ax) * k0, y0 = ay + (by - ay) * k0, fade = Math.sin(Math.PI * k);
+      const gr = ctx.createLinearGradient(x0, y0, x, y); gr.addColorStop(0, rgba(c, 0)); gr.addColorStop(1, rgba(c, .9 * fade));
+      ctx.strokeStyle = gr; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
+      ctx.globalAlpha = fade; ctx.drawImage(tint(c), x - 7 * sz, y - 7 * sz, 14 * sz, 14 * sz); ctx.globalAlpha = 1;
+    }
+    for (const r of ripples) {
+      const k = Math.max(0, t - r.t0) / 1800, R = k * Math.max(w, h) * .7;
+      ctx.strokeStyle = rgba(r.c, .45 * (1 - k) * r.power); ctx.lineWidth = 1.4 * (1 - k) + .4; ctx.beginPath(); ctx.arc(r.x, r.y, R, 0, 6.2832); ctx.stroke();
+      ctx.strokeStyle = rgba(r.c, .16 * (1 - k) * r.power); ctx.lineWidth = .6; ctx.beginPath(); ctx.arc(r.x, r.y, R * .84, 0, 6.2832); ctx.stroke();
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); lwk = 1;
+    // Pointer reticle (screen space).
+    if (px > -1e3 && onSky) {
+      ctx.strokeStyle = 'rgba(46,230,255,.35)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(px, py, 9 + Math.sin(t / 300) * 1.5, 0, 6.2832); ctx.stroke();
+      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; ctx.beginPath(); ctx.moveTo(px + Math.cos(a) * 13, py + Math.sin(a) * 13); ctx.lineTo(px + Math.cos(a) * 17, py + Math.sin(a) * 17); ctx.stroke(); }
+    }
+    // Selected star: a target ring, and the detail card follows it while the sky moves.
+    if (selected) {
+      const s = stars.get(selected);
+      if (!s) { selected = null; api.onSelect?.(null); }
+      else { const c = COL[s.group] || COL.doing, [x, y] = toScreen(...at(s.x, s.y, 14)), R = 14 + Math.sin(t / 260) * 2;
+        ctx.strokeStyle = rgba(c, .9); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.2832); ctx.stroke();
+        for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + t / 1500; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (R + 3), y + Math.sin(a) * (R + 3)); ctx.lineTo(x + Math.cos(a) * (R + 8), y + Math.sin(a) * (R + 8)); ctx.stroke(); }
+        api.onSelectedMove?.(x, y); }
+    }
+    if (!reduce.matches && t > nextComet) {
+      // Mostly single meteors; now and then a short shower from one radiant.
+      const shower = Math.random() < .22, n = shower ? 4 + Math.floor(Math.random() * 4) : 1, L = Math.random() < .5;
+      const ox = L ? -40 : w * (.3 + Math.random() * .6), oy = L ? h * Math.random() * .4 : -40, vx = .5 + Math.random() * .35, vy = .2 + Math.random() * .25;
+      for (let i = 0; i < n; i++) comets.push({ x: ox + (Math.random() - .5) * 160, y: oy + (Math.random() - .5) * 120, vx: vx * (.85 + Math.random() * .3), vy: vy * (.85 + Math.random() * .3), delay: i * (180 + Math.random() * 260) });
+      nextComet = t + (shower ? 14000 : 6000) + Math.random() * 7000;
+    }
+    comets = comets.filter((c) => c.x < w + 200 && c.y < h + 200);
+    for (const c of comets) {
+      if (c.delay > 0) { c.delay -= dt; continue; }
+      c.x += c.vx * dt; c.y += c.vy * dt; const n = Math.hypot(c.vx, c.vy), x0 = c.x - c.vx / n * 150, y0 = c.y - c.vy / n * 150;
+      const gr = ctx.createLinearGradient(x0, y0, c.x, c.y); gr.addColorStop(0, 'rgba(160,240,255,0)'); gr.addColorStop(1, 'rgba(225,250,255,.8)');
+      ctx.strokeStyle = gr; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(c.x, c.y); ctx.stroke();
+      ctx.globalAlpha = .9; ctx.drawImage(tint([190, 245, 255]), c.x - 6, c.y - 6, 12, 12); ctx.globalAlpha = 1;
+    }
+    if (focus) {
+      const s = stars.get(focus.id);
+      if (s) {
+        const c = COL[s.group] || COL.doing, [x, y] = toScreen(...at(s.x, s.y, 14)), gr = ctx.createLinearGradient(focus.x, focus.y, x, y);
+        gr.addColorStop(0, rgba(c, .05)); gr.addColorStop(1, rgba(c, .85));
+        ctx.strokeStyle = gr; ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.lineDashOffset = -t / 40; ctx.beginPath(); ctx.moveTo(focus.x, focus.y); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = rgba(c, .85); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, 13 + Math.sin(t / 200) * 2, 0, 6.2832); ctx.stroke();
+        ctx.globalAlpha = .9; ctx.drawImage(tint(c), x - 24, y - 24, 48, 48); ctx.globalAlpha = 1;
+      }
+    }
+    // Identify the hovered star in the shared tooltip, only over open sky.
+    api.ownsTip = !!(onSky && (hover || dipHover >= 0) && !focus);
+    document.body.style.cursor = drag?.moved ? 'grabbing' : hover || dipHover >= 0 ? 'pointer' : sky && onSky ? 'grab' : '';
+    if (api.ownsTip && !hover) {
+      const d = DIPPER[dipHover], g = CARD_LANE[dipHover], lane = LANES.find((l) => l.key === g), total = [...counts.values()].reduce((a, b) => a + b, 0);
+      if (dipHover === 7) tip.replaceChildren(document.createTextNode('北辰 · 总览'), el('small', null, `六组任务共 ${total} 项 · 点击看全局`));
+      else tip.replaceChildren(document.createTextNode(`${d.gr} ${d.zh} · ${lane ? lane.name : '正式 App'}`), el('small', null, lane ? `${laneCount(g)} 项 · 点击看这一组` : `${board?.appVersion || ''} · 点击看版本`));
+      tip.classList.add('on'); tip.style.left = Math.min(px + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (py + 18) + 'px';
+    } else if (api.ownsTip) {
+      const lane = LANES.find((l) => l.key === hover.group);
+      tip.replaceChildren(document.createTextNode(`${hover.code} ${hover.title}`), el('small', null, `${lane ? lane.name : hover.group} · 点击看详情 · 可拖动`)); tip.classList.add('on');
+      tip.style.left = Math.min(px + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (py + 18) + 'px';
+    } else if (onSky && !focus) tip.classList.remove('on');
+  }
+  // A frame that opens at zero size (collapsed pane, thumbnail) must not stop the page script.
+  const safeFrame = () => { try { frame(performance.now()); } catch (e) { console.warn('star chart frame skipped', e); } };
+  size(); safeFrame();
+  // The header can reflow without a window resize (fonts arriving, 大字 mode): re-measure its gap when it does.
+  document.fonts?.ready.then(measureHeader);
+  try { new ResizeObserver(measureHeader).observe(document.querySelector('.cover')); } catch {}
+  addEventListener('resize', () => { size(); safeFrame(); });
+  if (reduce.matches) return api;
+  addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; tx = (e.clientX / w - .5) * -1; ty = (e.clientY / h - .5) * -1; onSky = !e.target.closest?.('.hud, button, input, a, summary, .tip, .skybar, .cover > div'); }, { passive: true });
+  document.addEventListener('pointerleave', () => { px = py = -1e4; onSky = false; tip.classList.remove('on'); });
+  addEventListener('blur', () => { px = py = -1e4; });
+  const blocked = (e) => e.target.closest?.('.hud, button, input, a, summary, .cells, .tip, .skybar, .starcard, .cover > div');
+  addEventListener('pointerdown', (e) => {
+    if (blocked(e) || e.button > 0) return;
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pointers.size === 2 && sky) { const [a, b] = [...pointers.values()]; drag = { pinch: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, s0: camT.s, moved: true }; return; }
+    drag = { x0: e.clientX, y0: e.clientY, cx: camT.x, cy: camT.y, moved: false, star: hover || null };
+  });
+  addEventListener('pointermove', (e) => {
+    if (!drag || !pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    if (drag.pinch) { if (pointers.size < 2) return; const [a, b] = [...pointers.values()]; zoomTo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, drag.s0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / drag.pinch); return; }
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (!drag.moved && Math.hypot(dx, dy) > 5 && (sky || drag.star)) drag.moved = true;
+    if (drag.moved && !drag.star) { camT.x = drag.cx + dx; camT.y = drag.cy + dy; }
+  }, { passive: true });
+  const release = (e) => {
+    if (!pointers.delete(e.pointerId)) return;
+    if (pointers.size) return;
+    const d = drag; drag = null;
+    if (d?.star && d.moved) { d.star.flare = Math.max(d.star.flare, .7); return; }
+    if (!d || d.moved || d.pinch || e.type === 'pointercancel') return;
+    if (dipHover >= 0 && !hover) { api.onDipper?.(dipHover); return; }
+    if (hover) { hover.flare = 1; selected = hover.id; api.onSelect?.(hover.id); return; }
+    const [x, y] = toWorld(e.clientX, e.clientY); ripple(x, y, COL.doing, .8);
+    if (selected) { selected = null; api.onSelect?.(null); }
+  };
+  addEventListener('pointerup', release); addEventListener('pointercancel', release);
+  addEventListener('wheel', (e) => {
+    if (!sky || e.target.closest?.('.skybar, .starcard, .dipcard')) return;
+    e.preventDefault();
+    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? h : 1;
+    api.onWheel?.(e);
+    // Trackpad: two-finger slide pans, pinch (sent as ctrl+wheel) zooms. Mouse: the wheel zooms about the pointer.
+    if (padMode && !e.ctrlKey) { camT.x -= e.deltaX * k; camT.y -= e.deltaY * k; return; }
+    zoomTo(e.clientX, e.clientY, camT.s * Math.exp(-e.deltaY * k * (e.ctrlKey ? .012 : .0018)));
+  }, { passive: false });
+  const loop = (t) => { requestAnimationFrame(loop); if (document.hidden) { last = 0; return; } try { frame(t); } catch (e) { console.warn('star chart frame skipped', e); } }; requestAnimationFrame(loop);
+  return api;
+})();
+
+// Star detail card.
+const card = $('starcard'), sr = $('sr');
+let cardId = null;
+const narrow = () => innerWidth <= 560;
+// On phones the card docks at the bottom, so the picked star is kept in the open top part of the sky.
+const topArea = () => {
+  // With the group panel docked at the top too, the star goes in the gap between the two.
+  const d = document.getElementById('dipcard'), y0 = d && !d.hidden ? d.getBoundingClientRect().bottom + 24 : innerHeight * .12;
+  return [innerWidth * .15, y0, innerWidth * .85, Math.max(y0 + 40, d && !d.hidden ? innerHeight * .6 : innerHeight * .4)];
+};
+function fillCard(id) {
+  const t = tasks.find((x) => x.id === id); if (!t) { hideCard(); return; }
+  const lane = LANES.find((l) => l.key === t.group) || LANES[4]; cv(card, lane.c);
+  const top = el('div', 'sc-top'); top.append(el('span', 'sc-code', t.code || ''), el('span', 'sc-lane', lane.name));
+  const x = el('button', 'sc-x', '×'); x.type = 'button'; x.setAttribute('aria-label', '关闭'); x.addEventListener('click', hideCard); top.append(x);
+  const meta = el('div', 'sc-meta'); if (t.status) meta.append(el('span', null, t.status));
+  if (t.group === 'waiting') { const [a, late] = ageText(t); if (a) meta.append(el('span', late ? 'late' : '', a)); }
+  else if (t.updatedAt) meta.append(el('span', null, '更新 ' + fmt(t.updatedAt, true)));
+  if (t.shippedIn) meta.append(el('span', null, `随 ${t.shippedIn} 上线`));
+  if (t.targetRelease) meta.append(el('span', null, `候选 ${t.targetRelease}`));
+  if (t.unverified) meta.append(el('span', 'late', `待实证：${t.unverified}`));
+  const parts = [top, el('h3', null, t.title || ''), meta];
+  if (t.detail) parts.push(el('p', 'sc-detail', t.detail));
+  if (t.needs) { const p = el('p', 'needs'); p.append(el('b', null, '需要你：'), document.createTextNode(t.needs)); parts.push(p); }
+  const go = el('button', 'btn sc-go', '在看板中查看 →'); go.type = 'button'; go.addEventListener('click', () => { const i = cardId; hideCard(); bg.onPick(i); }); parts.push(go);
+  card.replaceChildren(...parts);
+}
+function hideCard() {
+  const hadFocus = card.contains(document.activeElement);
+  card.hidden = true; cardId = null; bg.select(null);
+  if (hadFocus && document.documentElement.classList.contains('sky')) $('skyback').focus();
+}
+// key: opened from the keyboard, so focus moves onto the card's action and the reader announces the task.
+function openCard(id, { key = false } = {}) {
+  cardId = id; fillCard(id); if (!cardId) return;
+  card.hidden = false; tip.classList.remove('on'); bg.select(id);
+  const t = tasks.find((x) => x.id === id), lane = LANES.find((l) => l.key === t?.group);
+  sr.textContent = t ? `${t.code || ''} ${t.title || ''}，${lane ? lane.name : ''}${t.status ? '，' + t.status : ''}${t.needs ? '，需要你：' + t.needs : ''}` : '';
+  if (narrow()) bg.reveal(id, { area: topArea() });
+  if (key) card.querySelector('.sc-go')?.focus({ preventScroll: true });
+  if (!dip.hidden) markDip();
+}
+bg.onSelect = (id) => { if (!id) { card.hidden = true; cardId = null; return; } openCard(id); };
+bg.onSelectedMove = (x, y) => {
+  if (card.hidden) return;
+  // Docked on phones: sits just above the sky bar (offsetTop ignores the bar's slide-in transform).
+  if (narrow()) { card.style.visibility = ''; card.style.bottom = (innerHeight - document.querySelector('.skybar').offsetTop + 10) + 'px'; return; }
+  card.style.bottom = '';
+  // While the star is panned out of view, the card steps aside and comes back with it.
+  card.style.visibility = x < -10 || y < -10 || x > innerWidth + 10 || y > innerHeight + 10 ? 'hidden' : '';
+  const cw = card.offsetWidth, ch = card.offsetHeight, m = 16;
+  let left = x + 26, top = y - 24; if (left + cw > innerWidth - m) left = x - 26 - cw; left = Math.max(m, Math.min(left, innerWidth - cw - m)); top = Math.max(m, Math.min(top, innerHeight - ch - 90));
+  card.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+};
+
+// Dipper group panel. Each Dipper star stands for one figure card: 天枢 is the app build, the rest are the six groups.
+const FIG_LANE = [null, 'planned', 'doing', 'waiting', 'release', 'risk', 'done'], DIP_SHOW = 8;
+const dip = $('dipcard');
+let dipI = -1, dipAll = false, dipXY = null;
+function laneTasks(g) {
+  const list = tasks.filter((t) => t.group === g);
+  if (g === 'waiting') list.sort((a, b) => since(a) - since(b)); else if (g === 'done') list.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)); else list.sort(byOrder);
+  return list;
+}
+function fillDip() {
+  if (dipI < 0) return;
+  const i = dipI, g = FIG_LANE[i], lane = g ? LANES.find((l) => l.key === g) : null, list = g ? laneTasks(g) : [];
+  if (i === 7) { fillPole(); return; }
+  cv(dip, lane ? lane.c : '--cyan');
+  const head = el('div', 'dc-head'); head.append(dipperMark(i), el('span', 'dc-name', lane ? lane.name : '正式 App'));
+  if (lane) head.append(el('span', 'dc-n', String(list.length)));
+  const x = el('button', 'dc-x', '×'); x.type = 'button'; x.setAttribute('aria-label', '关闭'); x.addEventListener('click', closeDip); head.append(x);
+  const parts = [head];
+  if (!g) {
+    // 天枢 is the formal App as the user runs it: its four layers, what this build shipped, what is still unproven
+    // in real use, the next build's candidates and the release track. Older boards without board.app fall back to the note.
+    const a = board?.app, cur = a?.version || board?.appVersion || '—', isPlan = (t) => /^REL/.test(t.code || '');
+    const body = el('div', 'dc-body');
+    const sec = (title, ...nodes) => { const x = el('section', 'dc-sec'); x.append(el('h4', null, title), ...nodes.filter(Boolean)); body.append(x); };
+    if (a) {
+      const kv = el('dl', 'dc-kv'), row = (k, v, warn) => kv.append(el('dt', null, k), el('dd', warn ? 'warn' : null, v));
+      row('App', `${cur}${a.build ? ' · ' + a.build : ''}${a.releasedAt ? ' · ' + fmt(a.releasedAt, true) + ' 上线' : ''}`);
+      const lag = a.backend && a.backend !== cur;
+      if (a.backend) row(a.backendLabel || '后端', `${a.backend}${a.backendBuild ? '（' + a.backendBuild + '）' : ''}${lag ? ' · 这版没换' : ''}`, lag);
+      if (a.skill) row('Skill', a.skill); if (a.model) row('模型', a.model);
+      sec('现在跑的是什么', kv);
+    } else if (board?.appNote) sec('现在跑的是什么', el('p', 'dc-sub', board.appNote));
+    const ship = tasks.filter((t) => t.shippedIn === cur && !isPlan(t)), plan = tasks.find((t) => t.shippedIn === cur && isPlan(t));
+    sec(`这一版带了什么 · ${ship.length} 项`, ship.length ? dipList(ship, { right: (t) => (t.unverified ? '待实证' : '已上线'), cls: (t) => (t.unverified ? 'warn' : '') }) : el('p', 'dc-sub', '还没有任务标记为随这一版上线'),
+      plan && el('p', 'dc-sub', `发版计划 ${plan.code} · ${plan.status || ''}`));
+    const unv = tasks.filter((t) => t.unverified);
+    if (unv.length) sec(`上线后待实证 · ${unv.length} 项`, dipList(unv, { text: (t) => t.unverified, right: (t) => (t.shippedIn ? '随 ' + t.shippedIn : ''), cls: () => 'warn' }));
+    let next = [];
+    if (a?.next) {
+      next = tasks.filter((t) => t.targetRelease === a.next && !isPlan(t)); const np = tasks.find((t) => t.targetRelease === a.next && isPlan(t));
+      const gname = (t) => (LANES.find((l) => l.key === t.group)?.name || '').replace('已合入、', '');
+      sec(`下一版 ${a.next} 候选 · ${next.length} 项`, next.length ? dipList(next, { right: gname }) : null,
+        el('p', 'dc-sub', [a.nextNote, np && `发版计划 ${np.code} · ${np.status || ''}`].filter(Boolean).join(' · ')));
+    } else if (board?.nextRelease) sec('下一版', el('p', 'dc-sub', board.nextRelease));
+    if (a?.releases?.length) {
+      const tl = el('ol', 'dc-tl');
+      a.releases.forEach((r) => { const li = el('li', r.v === cur ? 'cur' : ''); li.append(el('b', null, r.v), el('span', null, fmt(r.at, true).slice(0, 5))); li.title = [r.v, fmt(r.at, true), r.ref, r.note].filter(Boolean).join(' · '); tl.append(li); });
+      sec(`发版轨迹 · ${a.releases.length} 版${a.rollback ? ' · 可回滚到 ' + a.rollback : ''}`, tl);
+    }
+    parts.push(el('p', 'dc-sub', '你现在实际在用的正式 App · 星图上实线连这一版、虚线连下一版'), body);
+    bg.setDip(0, [...ship.map((t) => ({ id: t.id })), ...next.map((t) => ({ id: t.id, dash: true }))]);
+  } else {
+    const shown = dipAll ? list : list.slice(0, DIP_SHOW);
+    parts.push(el('p', 'dc-sub', list.length ? (dipAll || list.length <= DIP_SHOW ? `星图上连着这一组全部 ${list.length} 颗星 · 点一项看详情` : `先连前 ${shown.length} 项 · 展开后连到全部 ${list.length} 颗星`) : '这一组现在没有任务'));
+    const ul = el('ul');
+    for (const t of shown) {
+      const b = el('button'); b.type = 'button'; b.dataset.id = t.id; if (t.id === cardId) b.classList.add('on');
+      const [age, late] = g === 'waiting' ? ageText(t) : ['', false];
+      b.append(el('span', 'k', t.code || ''), el('span', 't', t.title || ''), el('span', 'r' + (late ? ' late' : ''), age ? age.replace('已等', '') : t.status || ''));
+      b.title = `${t.code || ''} ${t.title || ''}`;
+      b.addEventListener('click', (e) => { bg.reveal(t.id, narrow() ? { area: topArea() } : {}); openCard(t.id, { key: e.detail === 0 }); markDip(); });
+      const li = el('li'); li.append(b); ul.append(li);
+    }
+    parts.push(ul);
+    bg.setDip(i, shown.map((t) => t.id));
+  }
+  const foot = el('div', 'dc-foot');
+  if (list.length > DIP_SHOW) { const m = el('button', 'btn', dipAll ? '收起' : `展开全部 ${list.length} 项`); m.type = 'button'; m.setAttribute('aria-expanded', String(dipAll)); m.addEventListener('click', () => { dipAll = !dipAll; fillDip(); dip.querySelector('.dc-foot .btn')?.focus(); }); foot.append(m); }
+  const go = el('button', 'btn', '在看板中查看 →'); go.type = 'button'; go.addEventListener('click', () => goLane(g)); foot.append(go);
+  parts.push(foot);
+  dip.replaceChildren(...parts);
+  head.addEventListener('pointerdown', dragDip);
+}
+// 北辰 panel: the whole board in one place — share shipped, then the seven modules (each opens its own panel).
+function fillPole() {
+  cv(dip, '--amber');
+  const total = allTasks.length, done = allTasks.filter((t) => t.group === 'done').length, today = new Date().toDateString();
+  const sysUl = el('ul');
+  for (const x of systems()) { const ts = allTasks.filter((t) => sysOf(t) === x.key), d = ts.filter((t) => t.group === 'done').length;
+    const b = cv(el('button', x.key === sysSel ? 'on' : ''), '--amber'); b.type = 'button';
+    b.append(el('span', 'k', x.constellation || '星座'), el('span', 't', x.name || x.key), el('span', 'r', ts.length ? `${d}/${ts.length} · ${Math.round(d / ts.length * 100)}%` : '暂无'));
+    b.addEventListener('click', () => { if (sysSel !== x.key) { sysSel = x.key; try { localStorage.setItem('board-system', x.key); } catch {} refreshAll(); } });
+    const li = el('li'); li.append(b); sysUl.append(li); }
+  const cur = systems().find((x) => x.key === sysSel);
+  const head = el('div', 'dc-head'); const em = el('em', null, '✦ 北辰'); head.append(em, el('span', 'dc-name', '总览'), el('span', 'dc-n', String(total)));
+  const x = el('button', 'dc-x', '×'); x.type = 'button'; x.setAttribute('aria-label', '关闭'); x.addEventListener('click', closeDip); head.append(x);
+  const todayN = logItems.filter((it) => new Date(it.at).toDateString() === today).length;
+  const sub = el('p', 'dc-sub', `${systems().length} 个系统共 ${total} 项 · 已完成 ${total ? Math.round(done / total * 100) : 0}% · 今日动态 ${todayN} 条`);
+  const sub2 = el('p', 'dc-sub', `${cur ? `${cur.constellation || ''} · ${cur.name}` : '全部系统'} 的七个模块 · 点一组展开`);
+  const ul = el('ul');
+  DIPPER.forEach((d, k) => {
+    const g = FIG_LANE[k], lane = g ? LANES.find((l) => l.key === g) : null, n = g ? tasks.filter((t) => t.group === g).length : null;
+    const b = cv(el('button'), lane ? lane.c : '--cyan'); b.type = 'button';
+    b.append(el('span', 'k', `${d.gr} ${d.zh}`), el('span', 't', lane ? lane.name : '正式 App'), el('span', 'r', n == null ? board?.appVersion || '—' : n ? `${n} 项` : '暂无'));
+    b.addEventListener('click', (e) => openDip(k, { key: e.detail === 0 }));
+    const li = el('li'); li.append(b); ul.append(li);
+  });
+  const latest = logItems.slice(0, 3).map((it) => el('p', 'dc-sub', `${fmt(it.at, true)} · ${(it.text || '').slice(0, 60)}${(it.text || '').length > 60 ? '…' : ''}`));
+  const foot = el('div', 'dc-foot'); const go = el('button', 'btn', '回到看板顶部 →'); go.type = 'button'; go.addEventListener('click', () => goLane(null)); foot.append(go);
+  const body = el('div', 'dc-body'); body.append(sysUl, sub2, ul, ...latest);
+  dip.replaceChildren(head, sub, body, foot);
+  head.addEventListener('pointerdown', dragDip);
+  bg.setDip(7, []);
+}
+// A clickable task list for the Dipper panels: code, text (title by default) and a right-hand note.
+function dipList(items, { text = (t) => t.title || '', right = () => '', cls = () => '' } = {}) {
+  const ul = el('ul');
+  for (const t of items) {
+    const b = el('button', cls(t)); b.type = 'button'; b.dataset.id = t.id; if (t.id === cardId) b.classList.add('on');
+    b.append(el('span', 'k', t.code || ''), el('span', 't', text(t)), el('span', 'r', right(t)));
+    b.title = `${t.code || ''} ${t.title || ''}${t.unverified ? ' · 待实证：' + t.unverified : ''}`;
+    b.addEventListener('click', (e) => { bg.reveal(t.id, narrow() ? { area: topArea() } : {}); openCard(t.id, { key: e.detail === 0 }); markDip(); });
+    const li = el('li'); li.append(b); ul.append(li);
+  }
+  return ul;
+}
+function markDip() { dip.querySelectorAll('li button').forEach((b) => b.classList.toggle('on', b.dataset.id === cardId)); }
+function placeDip() {
+  if (narrow()) return;
+  const W = innerWidth, H = innerHeight, cw = dip.offsetWidth, ch = dip.offsetHeight, m = 16;
+  let x, y;
+  if (dipXY) [x, y] = dipXY;
+  else {
+    // Open on the side away from the group's constellation so the beams to its stars stay in view.
+    const p = bg.dipScreen(dipI) || [W * .4, 60], gp = FIG_LANE[dipI] && bg.groupScreen(FIG_LANE[dipI]), left = gp ? gp[0] > p[0] : p[0] + 28 + cw > W - m;
+    x = left ? p[0] - 28 - cw : p[0] + 28; y = p[1] + 18;
+    if (x < m && left) x = p[0] + 28;
+  }
+  x = Math.max(m, Math.min(x, W - cw - m)); y = Math.max(m, Math.min(y, H - ch - 90));
+  dip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`; dipXY = [x, y];
+}
+function openDip(i, { key = false } = {}) {
+  if (dipI !== i) { dipAll = false; dipXY = null; }
+  dipI = i; fillDip(); dip.hidden = false; placeDip(); tip.classList.remove('on');
+  const g = FIG_LANE[i], lane = g ? LANES.find((l) => l.key === g) : null;
+  sr.textContent = i === 7 ? `北辰 · 总览，共 ${tasks.length} 项` : `${DIPPER[i].zh} · ${lane ? `${lane.name}，${laneTasks(g).length} 项` : `正式 App ${board?.appVersion || ''}`}`;
+  if (key) (dip.querySelector('li button') || dip.querySelector('.dc-foot .btn'))?.focus({ preventScroll: true });
+}
+function closeDip() {
+  const hadFocus = dip.contains(document.activeElement);
+  dip.hidden = true; dipI = -1; dipXY = null; bg.setDip(-1, null);
+  if (hadFocus && document.documentElement.classList.contains('sky')) $('skyback').focus();
+}
+// The panel moves by its header; where it is dropped it stays until closed.
+function dragDip(e) {
+  if (e.target.closest('button') || narrow() || e.button > 0) return;
+  const [x0, y0] = dipXY || [0, 0], sx = e.clientX, sy = e.clientY;
+  dip.classList.add('dragging'); e.currentTarget.setPointerCapture?.(e.pointerId);
+  const move = (ev) => { dipXY = [x0 + ev.clientX - sx, y0 + ev.clientY - sy]; placeDip(); };
+  const up = () => { dip.classList.remove('dragging'); removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up); };
+  addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+}
+function goLane(g) {
+  closeDip(); setSkyView(false);
+  const lane = g ? LANES.find((l) => l.key === g) : null;
+  const head = lane ? [...document.querySelectorAll('#main .lane-h')].find((h) => h.querySelector('.name')?.textContent === lane.name) : $('figures');
+  if (!head) return;
+  const d = head.closest('details'); if (d) d.open = true;
+  setTimeout(() => head.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' }), 200);
+}
+// 关注 rows: 需要你 turns on the "only mine" filter and jumps to the lists; 下一版 opens 天枢's panel.
+$('w-me').addEventListener('click', () => { if (!mineOnly) { mineOnly = true; $('mine').setAttribute('aria-pressed', 'true'); changed.clear(); renderTop(); renderMain(); syncSkyFilter(); }
+  document.querySelector('.tools')?.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' }); });
+$('w-next').addEventListener('click', () => (dipI === 0 && !dip.hidden ? closeDip() : openDip(0)));
+$('ticker').addEventListener('click', () => document.querySelector('aside')?.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' }));
+// 北辰 (top-right) and the matrix ratio both open the overview on the board itself, not the sky view.
+for (const id of ['pole', 'ratio']) $(id).addEventListener('click', (e) => (dipI === 7 && !dip.hidden ? closeDip() : openDip(7, { key: e.detail === 0 })));
+$('pole').addEventListener('pointerenter', () => bg.dipper(7)); $('pole').addEventListener('pointerleave', () => bg.dipper(-1));
+bg.onDipper = (k) => (dipI === k && !dip.hidden ? closeDip() : openDip(k));
+addEventListener('resize', () => { if (!dip.hidden) placeDip(); });
+
+// Sky view and star picking.
+function setSkyView(on) {
+  document.documentElement.classList.toggle('sky', on); bg.setSky(on);
+  $('skybtn').setAttribute('aria-pressed', String(on)); if (on) $('skyback').focus(); else { tip.classList.remove('on'); hideCard(); closeDip(); }
+}
+// Board filter mirrored on the chart: matches stay lit, the rest dim; the sky bar says so.
+function syncSkyFilter() {
+  const on = filtering(), hit = on ? tasks.filter(matches) : [];
+  bg.setMatch(on ? new Set(hit.map((t) => t.id)) : null);
+  const f = $('skyfilter'); f.hidden = !on; f.textContent = on ? `按看板筛选 · 亮 ${hit.length} / ${tasks.length}` : '';
+}
+// Keyboard walk through the stars in flow order (待开工 → 已完成), limited to the board filter.
+function stepStar(dir) {
+  const list = tasks.filter((t) => !filtering() || matches(t)).sort((a, b) => FLOW.indexOf(a.group) - FLOW.indexOf(b.group) || byOrder(a, b));
+  if (!list.length) return;
+  let i = list.findIndex((t) => t.id === cardId);
+  i = i < 0 ? (dir > 0 ? 0 : list.length - 1) : (i + dir + list.length) % list.length;
+  bg.reveal(list[i].id, narrow() ? { area: topArea() } : {}); openCard(list[i].id, { key: true });
+}
+// From a board row: open the chart, fly to the task's star and open its card.
+function locateInSky(id) {
+  setSkyView(true);
+  if (bg.reveal(id, { zoom: 2.2, area: narrow() ? topArea() : undefined })) openCard(id, { key: true });
+}
+// Mouse or trackpad: remembered per viewer; with no choice saved, the first wheel gesture that looks like a trackpad switches it.
+let padChosen = false;
+function setPad(on, save) {
+  bg.setPad(on); $('m-mouse').setAttribute('aria-pressed', String(!on)); $('m-pad').setAttribute('aria-pressed', String(on));
+  $('skyhint').textContent = on ? '双指滑动平移 · 双指捏合缩放 · 点星或按 ← → 看详情' : '拖动平移 · 滚轮缩放 · 点星或按 ← → 看详情';
+  if (save) { padChosen = true; try { localStorage.setItem('board-input', on ? 'pad' : 'mouse'); } catch {} }
+}
+try { const v = localStorage.getItem('board-input'); if (v) { padChosen = true; setPad(v === 'pad'); } } catch {}
+bg.onWheel = (e) => { if (!padChosen && !e.ctrlKey && e.deltaMode === 0 && (e.deltaX !== 0 || !Number.isInteger(e.deltaY))) { padChosen = true; setPad(true); } };
+$('m-mouse').addEventListener('click', () => setPad(false, true));
+$('m-pad').addEventListener('click', () => setPad(true, true));
+$('zin').addEventListener('click', () => bg.zoom(1.35));
+$('zout').addEventListener('click', () => bg.zoom(1 / 1.35));
+$('zreset').addEventListener('click', () => bg.resetView());
+$('skybtn').setAttribute('aria-pressed', 'false');
+$('skybtn').addEventListener('click', () => setSkyView(true));
+$('skyback').addEventListener('click', () => setSkyView(false));
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest?.('input, textarea')) return;
+  const inSky = document.documentElement.classList.contains('sky');
+  if (e.key === 'Escape' && !card.hidden) hideCard();
+  else if (e.key === 'Escape' && !dip.hidden) closeDip();
+  else if (e.key === 'Escape' && !inSky && figPin >= 0) { figPin = -1; bg.pin(-1); markFigs(); }
+  else if (e.key === 'Escape' && inSky) setSkyView(false);
+  else if (inSky && (e.key === '+' || e.key === '=')) bg.zoom(1.35);
+  else if (inSky && (e.key === '-' || e.key === '_')) bg.zoom(1 / 1.35);
+  else if (inSky && e.key === '0') bg.resetView();
+  else if (inSky && (e.key === 'ArrowRight' || e.key === 'ArrowDown')) { e.preventDefault(); stepStar(1); }
+  else if (inSky && (e.key === 'ArrowLeft' || e.key === 'ArrowUp')) { e.preventDefault(); stepStar(-1); }
+  else if ((e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey && !e.altKey) setSkyView(!document.documentElement.classList.contains('sky'));
+});
+bg.onPick = (id) => {
+  setSkyView(false);
+  const find = () => document.querySelector(`#main [data-id="${CSS.escape(id)}"]`);
+  let node = find();
+  if (!node && filtering()) { query = ''; mineOnly = false; $('q').value = ''; $('mine').setAttribute('aria-pressed', 'false'); renderTop(); renderMain(); syncSkyFilter(); node = find(); }
+  if (!node) return;
+  for (let d = node.parentElement?.closest('details'); d; d = d.parentElement?.closest('details')) d.open = true;
+  setTimeout(() => {
+    node.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'center' });
+    node.classList.remove('pinged'); void node.offsetWidth; node.classList.add('pinged');
+    setTimeout(() => node.classList.remove('pinged'), 2600);
+  }, 250);
+};
+
+// Projection: fullscreen plus a screen wake lock while shown; both optional.
+let lock = null;
+async function keepAwake() { try { lock = await navigator.wakeLock?.request('screen'); } catch { lock = null; } }
+$('full').addEventListener('click', async () => {
+  try { if (document.fullscreenElement) await document.exitFullscreen(); else { await document.documentElement.requestFullscreen(); keepAwake(); } }
+  catch { $('full').textContent = '此处不支持全屏'; }
+});
+function setProj(on) { document.documentElement.classList.toggle('proj', on); $('proj').setAttribute('aria-pressed', String(on)); try { localStorage.setItem('board-proj', on ? '1' : ''); } catch {} }
+try { if (localStorage.getItem('board-proj')) setProj(true); } catch {}
+$('proj').addEventListener('click', () => setProj(!document.documentElement.classList.contains('proj')));
+let projBefore = false;
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) { projBefore = document.documentElement.classList.contains('proj'); setProj(true); } else setProj(projBefore);
+  $('full').textContent = document.fullscreenElement ? '⛶ 退出全屏' : '⛶ 投屏全屏'; if (!document.fullscreenElement) { try { lock?.release(); } catch {} lock = null; } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && document.fullscreenElement) keepAwake(); });
+
+// Where the data comes from, each shaped like the Artifact database's onSnapshot API so the rest of the page is the same:
+// a mirror carries a copy inline (window.POLARIS_DATA, written by polaris.py mirror); `polaris.py serve` hands out
+// ./data.json from the local data folder, polled for changes; otherwise the Artifact's own database.
+function snapshotSource(read) {
+  const subs = [];
+  const emit = (d) => subs.forEach(({ path, f }) => {
+    if (path === 'tasks') f({ metadata: { fromCache: false }, docs: (d.tasks || []).map((t) => ({ id: t.id, data: () => t })) });
+    else { const v = path === 'meta/log' ? d.log : d.board; f({ metadata: { fromCache: false }, exists: !!v, data: () => v }); }
+  });
+  const on = (path) => ({ onSnapshot: (f, fail) => { subs.push({ path, f, fail }); read.attach(emit, (e) => subs.forEach((x) => x.fail?.(e))); } });
+  return { collection: (p) => on(p), doc: (p) => on(p) };
+}
+function inlineSource(d) { let done = false; return snapshotSource({ attach: (emit) => { if (!done) { done = true; queueMicrotask(() => emit(d)); } } }); }
+function localSource() {
+  let started = false, last = '';
+  return snapshotSource({ attach: (emit, fail) => {
+    if (started) return; started = true;
+    const pull = async () => {
+      try { const r = await fetch('data.json', { cache: 'no-store' }); if (!r.ok) throw { code: 'HTTP ' + r.status }; const text = await r.text(); if (text !== last) { last = text; emit(JSON.parse(text)); } }
+      catch (e) { fail(e?.code ? e : { code: 'unavailable' }); }
+    };
+    pull(); setInterval(() => { if (document.visibilityState === 'visible') pull(); }, 3000);
+  } });
+}
+async function openSource() {
+  if (window.POLARIS_DATA) return { kind: 'mirror', db: inlineSource(window.POLARIS_DATA), label: 'MIRROR · ' + (window.POLARIS_DATA.generatedAt ? fmt(window.POLARIS_DATA.generatedAt, true) : '镜像') };
+  if (!window.claude?.use) return { kind: 'local', db: localSource(), label: 'LOCAL · 本机' };
+  const db = await window.claude.use('db');
+  return db ? { kind: 'db', db, label: 'LIVE · 实时' } : null;
+}
+(async () => {
+  const state = $('state');
+  const src = await openSource(), db = src?.db;
+  if (!db) { state.hidden = false; state.textContent = '这个视图读不到进度数据。请登录 claude.ai 后在浏览器或 Claude App 中打开。'; $('stamp').textContent = ''; $('live-t').textContent = 'OFFLINE'; return; }
+  if (src.kind === 'mirror') $('live').title = '线上镜像：本机数据在这个时间的副本，不会自动更新';
+  let confirmed = false;
+  const timer = setTimeout(() => { if (!confirmed) { state.hidden = false; state.textContent = '暂时连不上进度数据，显示的内容可能不是最新的。'; } }, 10000);
+  const ok = (snap) => { if (!snap.metadata.fromCache) { confirmed = true; clearTimeout(timer); state.hidden = true; $('live').classList.add('on'); $('live-t').textContent = src.label; } };
+  const fail = (e) => { clearTimeout(timer); $('live').classList.remove('on'); $('live-t').textContent = 'LINK LOST'; state.hidden = false; state.textContent = '进度数据读取中断（' + (e?.code || 'unavailable') + '），刷新页面可重试。'; };
+  let first = true;
+  const settle = () => { if (first) { first = false; setTimeout(() => { booted = true; }, 1500); } };
+  db.collection('tasks').onSnapshot((snap) => { allTasks = snap.docs.map((d) => ({ id: d.id, ...d.data() })); ok(snap); refreshAll(); settle(); }, fail);
+  db.doc('meta/board').onSnapshot((snap) => { boardRaw = snap.exists ? snap.data() : null; ok(snap); refreshAll(); }, fail);
+  db.doc('meta/log').onSnapshot((snap) => { const items = snap.exists ? snap.data().items : []; const top = logItems[0]?.at + '|' + logItems[0]?.text; logItems = Array.isArray(items) ? items : [];
+    if (booted && logItems.length && logItems[0].at + '|' + logItems[0].text !== top) { bg.celebrate(); const tk = $('ticker'); tk.classList.remove('new'); void tk.offsetWidth; tk.classList.add('new'); }
+    { const it = logItems[0], d = it ? new Date(it.at) : null; $('tk-time').textContent = d && !isNaN(d) ? fmt(it.at, true) : ''; $('tk-text').textContent = it ? it.text || '' : '还没有动态'; $('ticker').title = it ? it.text : ''; }
+    ok(snap); renderLog(); if (dipI === 7 && !dip.hidden) fillDip(); }, fail);
+})();
+</script>

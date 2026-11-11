@@ -1,0 +1,23 @@
+{
+  "code": "LOGIN",
+  "group": "doing",
+  "title": "登录页改版",
+  "status": "开发中",
+  "order": 1,
+  "updatedAt": "2026-11-11T09:00:00+08:00",
+  "progress": 60,
+  "steps": [
+    {
+      "name": "方案",
+      "state": "done"
+    },
+    {
+      "name": "开发",
+      "state": "doing"
+    },
+    {
+      "name": "验收",
+      "state": ""
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "code": "EXPORT",
+  "group": "waiting",
+  "title": "导出格式要你定",
+  "status": "等你回复",
+  "order": 2,
+  "updatedAt": "2026-11-11T09:00:00+08:00",
+  "needs": "选 Excel 还是 CSV",
+  "waitingSince": "2026-11-07T10:00:00+08:00"
+}

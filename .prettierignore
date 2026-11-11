@@ -1,0 +1,10 @@
+node_modules
+pnpm-lock.yaml
+history
+/data/
+build
+plugin/assets
+plugin/bin
+*.md
+packages/web/dist
+plugin/skills/polaris/assets/sample
