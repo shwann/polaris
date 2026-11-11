@@ -74,3 +74,17 @@ it('keeps wheel input and click picking active with reduced motion enabled', asy
   engine.destroy();
   registry.dispose();
 });
+it('clears hover synchronously on keyboard selection changes and closing the card', () => {
+  const registry = new LayoutRegistry(),
+    tooltip = vi.fn();
+  const engine = new SkyEngine(document.createElement('canvas'), registry, { onTooltip: tooltip });
+  uiStore.setState({ sky: true, selected: 'EXPORT' });
+  expect(tooltip.mock.calls.at(-1)?.[0]).toBe('');
+  const next = dataStore.getState().snapshot!.tasks.find((t) => t.id !== 'EXPORT')!.id;
+  uiStore.setState({ selected: next });
+  expect(tooltip.mock.calls.at(-1)?.[0]).toBe('');
+  uiStore.setState({ selected: null });
+  expect(tooltip.mock.calls.at(-1)?.[0]).toBe('');
+  engine.destroy();
+  registry.dispose();
+});

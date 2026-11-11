@@ -1,8 +1,15 @@
+import { layoutHomes } from './geometry/clusters';
 import { cameraMoving } from './motion/cameraMotion';
 import { spring } from './motion/spring';
 import type { SkyState, Star } from './types';
 
 export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
+  if (
+    state.sky &&
+    state.w > 560 &&
+    state.layoutScale !== Math.max(0.5, Math.floor(Math.min(1, state.camT.s) * 10) / 10)
+  )
+    layoutHomes(state);
   const reduced = state.reduce.matches,
     d = state.drag;
   const root = d?.moved ? d.star : null;

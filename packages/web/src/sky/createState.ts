@@ -90,6 +90,9 @@ export function createState(
     pulses: [],
     packets: [],
     chart: null,
+    chartPattern: null,
+    layoutScale: 1,
+    tooltipGate: null,
     tints: new Map(),
     halo: makeHalo(),
     nextPacket: 0,
@@ -99,7 +102,7 @@ export function createState(
     onSky: false,
     api: {
       onSelect: (id: string | null) => events.onPickStar?.(id),
-      onSelectedMove: (x: number, y: number) => events.onSelectedMove?.(x, y),
+      onSelectedMove: (x: number, y: number, cluster?: import('./types').Box) => events.onSelectedMove?.(x, y, cluster),
     },
   } as unknown as SkyState;
   Object.assign(s, {

@@ -11,10 +11,14 @@ import { uiStore } from '../../store/uiStore';
 import { pickOnBoard } from '../../hooks/skyBridge';
 import { Needs } from '../Shared/Shared';
 
+import { placeCard, type CardSide } from '../../sky/geometry/cardPlacement';
+import type { Box } from '../../sky/types';
 import { vars } from '../../styles/style';
-export function moveStarCard(x: number, y: number) {
+export function moveStarCard(x: number, y: number, cluster: Box = [x, y, x, y]) {
   const card = document.getElementById('starcard');
   if (!card || card.hidden) return;
+  card.style.maxHeight = innerWidth > 560 ? Math.max(120, innerHeight - 148) + 'px' : '';
+  card.style.overflow = innerWidth > 560 ? 'auto' : '';
   if (innerWidth <= 560) {
     card.style.visibility = '';
     const bar = document.getElementById('skybar');
@@ -23,15 +27,25 @@ export function moveStarCard(x: number, y: number) {
   }
   card.style.bottom = '';
   card.style.visibility = x < -10 || y < -10 || x > innerWidth + 10 || y > innerHeight + 10 ? 'hidden' : '';
-  const cw = card.offsetWidth,
-    ch = card.offsetHeight,
-    m = 16;
-  let left = x + 26,
-    top = y - 24;
-  if (left + cw > innerWidth - m) left = x - 26 - cw;
-  left = Math.max(m, Math.min(left, innerWidth - cw - m));
-  top = Math.max(m, Math.min(top, innerHeight - ch - 90));
-  card.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  const same = card.dataset.layoutId === card.dataset.starId;
+  const placement = placeCard(
+    [x, y],
+    cluster,
+    [card.offsetWidth, card.offsetHeight],
+    [innerWidth, innerHeight - 74],
+    same ? (card.dataset.side as CardSide | undefined) : undefined,
+  );
+  card.dataset.layoutId = card.dataset.starId;
+  card.dataset.side = placement.side;
+  card.style.transform = `translate(${Math.round(placement.left)}px, ${Math.round(placement.top)}px)`;
+  if (
+    x > placement.left - 26 &&
+    x < placement.left + card.offsetWidth + 26 &&
+    y > placement.top - 26 &&
+    y < placement.top + card.offsetHeight + 26
+  )
+    card.style.visibility = 'hidden';
+  return placement.pan;
 }
 export function StarCard() {
   const { view, ui } = useBoard(),
@@ -52,6 +66,7 @@ export function StarCard() {
       aria-label="任务详情"
       tabIndex={-1}
       style={vars({ '--c': `var(${l.c})` })}
+      data-star-id={t.id}
       data-sky-block
     >
       <div className={styles['sc-top']}>

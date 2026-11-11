@@ -1,13 +1,34 @@
 import { DIPPER, FIG_LANE, LANES } from '../domain/lanes';
+import { cameraMoving } from './motion/cameraMotion';
 import type { SkyState } from './types';
+/** Require a fresh hover after selection, dragging or camera navigation. */
+export function clearTooltip(s: SkyState) {
+  s.tooltipGate = { x: s.px, y: s.py, id: s.hover?.id ?? null };
+  s.events.onTooltip?.('', '', s.px, s.py);
+}
+export function tooltipAllowed(s: SkyState): boolean {
+  const gate = s.tooltipGate;
+  const moved = !gate || s.px !== gate.x || s.py !== gate.y;
+  return !!(
+    s.onSky &&
+    !s.drag &&
+    !s.focus &&
+    !cameraMoving(s) &&
+    Math.abs(s.cam.s - s.camT.s) < 0.001 &&
+    Math.hypot(s.cam.x - s.camT.x, s.cam.y - s.camT.y) < 0.5 &&
+    (!s.selected || (s.hover && s.hover.id !== s.selected)) &&
+    (!gate || (moved && s.hover?.id !== gate.id))
+  );
+}
 export function emitTooltip(s: SkyState) {
   s.events.onCursor?.(s.drag ? 'grabbing' : s.hover || s.dipHover >= 0 ? 'pointer' : s.sky && s.onSky ? 'grab' : '');
-  if (s.drag) {
+  if (!tooltipAllowed(s)) {
     s.events.onTooltip?.('', '', s.px, s.py);
     return;
   }
-  if (!(s.onSky && (s.hover || s.dipHover >= 0) && !s.focus)) {
-    if (s.onSky && !s.focus) s.events.onTooltip?.('', '', s.px, s.py);
+  s.tooltipGate = null;
+  if (!s.hover && s.dipHover < 0) {
+    s.events.onTooltip?.('', '', s.px, s.py);
     return;
   }
   if (s.hover) {

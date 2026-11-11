@@ -1,7 +1,8 @@
 import { FIG_LANE as CARD_LANE } from '../domain/lanes';
+import { drawBackgroundChart } from './draw/background';
 import { DEPTH } from './constants';
 import { advanceCamera, cameraMoving } from './motion/cameraMotion';
-import { rgba } from './palette';
+import { drawDust } from './draw/dust';
 import type { SkyState } from './types';
 
 export function frame(state: SkyState, t: number) {
@@ -52,22 +53,11 @@ export function frame(state: SkyState, t: number) {
     );
   };
   layer(DEPTH.chart);
-  if (state.chart?.width && state.chart.height)
-    state.ctx.drawImage(state.chart, state.mx * 3, state.my * 3, state.w, state.h);
+  drawBackgroundChart(state);
   layer(DEPTH.nebula);
   state.drawNebula(t);
   layer(DEPTH.dust);
-  // Field stars: tiny, twinkling, magnitude-weighted.
-  for (const d of state.dust) {
-    const [x, y] = state.at(d.x, d.y, 4),
-      tw = 0.55 + 0.45 * Math.sin((t / 1300) * (0.5 + d.m) + d.ph);
-    state.ctx.fillStyle = rgba(
-      d.m < 0.14 ? [255, 214, 175] : d.m > 0.9 ? [215, 232, 255] : [150, 205, 255],
-      (0.16 + d.m * 0.38) * tw,
-    );
-    const r = d.m > 0.93 ? 1.3 : 0.8;
-    state.ctx.fillRect(x, y, r, r);
-  }
+  drawDust(state, t);
   state.ctx.setTransform(
     state.dpr * state.cam.s,
     0,

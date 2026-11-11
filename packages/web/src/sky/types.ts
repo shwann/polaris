@@ -11,6 +11,8 @@ export interface Star {
   group: Lane;
   ang: number;
   rad: number;
+  layoutX?: number;
+  layoutY?: number;
   baseX?: number;
   baseY?: number;
   ox: number;
@@ -56,7 +58,7 @@ export interface Zone extends Record<Lane | 'pole', Point> {
 export interface SkyEvents {
   onPickStar?(id: string | null): void;
   onPickDipper?(index: number): void;
-  onSelectedMove?(x: number, y: number): void;
+  onSelectedMove?(x: number, y: number, cluster?: Box): Point | void;
   onTooltip?(text: string, detail: string, x: number, y: number): void;
   onCursor?(cursor: string): void;
   isBlocked?(target: EventTarget | null, wheel?: boolean): boolean;
@@ -161,6 +163,9 @@ export interface SkyState extends SkyMethods {
   pulses: { a: Star; b: Star; t0: number; dur: number }[];
   packets: { a: Lane; b: Lane; t0: number; dur: number }[];
   chart: HTMLCanvasElement | null;
+  chartPattern: CanvasPattern | null;
+  layoutScale: number;
+  tooltipGate: { x: number; y: number; id: string | null } | null;
   tints: Map<string, HTMLCanvasElement>;
   halo: HTMLCanvasElement;
   nextPacket: number;
@@ -168,5 +173,5 @@ export interface SkyState extends SkyMethods {
   nextComet: number;
   last: number;
   onSky: boolean;
-  api: { onSelect: (id: string | null) => void; onSelectedMove: (x: number, y: number) => void };
+  api: { onSelect: (id: string | null) => void; onSelectedMove: (x: number, y: number, cluster?: Box) => Point | void };
 }

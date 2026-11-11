@@ -1,5 +1,7 @@
+import { clearTooltip } from './tooltip';
 import { COL } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
+import { hitDoneLabel, zoomDone } from './draw/doneOverview';
 import { pickAt } from './draw/picking';
 import { constrain, rubberPoint } from './motion/bounds';
 import { cameraBounds, cameraMoving, stopCamera } from './motion/cameraMotion';
@@ -12,6 +14,7 @@ export function attachInput(s: SkyState) {
     signal = abort.signal;
   const blocked = (target: EventTarget | null, wheel = false) => s.events.isBlocked?.(target, wheel) || false;
   const pick = (star: ReturnType<typeof pickAt>['star'], dip: number) => {
+    clearTooltip(s);
     if (star) {
       star.flare = 1;
       s.selected = star.id;
@@ -19,8 +22,13 @@ export function attachInput(s: SkyState) {
     } else if (dip >= 0) s.events.onPickDipper?.(dip);
   };
   const double = (x: number, y: number) => {
+    if (hitDoneLabel(s, x, y)) {
+      zoomDone(s, x, y);
+      return;
+    }
     const hit = pickAt(s, x, y);
     if (hit.star || hit.dip >= 0) pick(hit.star, hit.dip);
+    else if (zoomDone(s, x, y)) return;
     else if (s.sky) s.zoomTo(x, y, s.camT.s * 1.6);
   };
   let touchDoubleAt = -Infinity;
@@ -84,6 +92,7 @@ export function attachInput(s: SkyState) {
     'pointerdown',
     (e) => {
       if (blocked(e.target) || e.button > 0 || s.pointers.size >= 2) return;
+      clearTooltip(s);
       stopCamera(s);
       Object.assign(s.camT, s.cam);
       s.px = e.clientX;
@@ -188,10 +197,16 @@ export function attachInput(s: SkyState) {
       }
       lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     }
+    if (hitDoneLabel(s, e.clientX, e.clientY)) {
+      zoomDone(s, e.clientX, e.clientY);
+      return;
+    }
     if (d.star || d.dip >= 0) {
       pick(d.star, d.dip);
       return;
     }
+    clearTooltip(s);
+    if (zoomDone(s, e.clientX, e.clientY)) return;
     const [x, y] = s.toWorld(e.clientX, e.clientY);
     if (!s.reduce.matches) s.ripple(x, y, COL.doing, 0.8);
     if (s.selected) {
@@ -216,6 +231,7 @@ export function attachInput(s: SkyState) {
     (e) => {
       if (!s.sky || s.drag || blocked(e.target, true)) return;
       e.preventDefault();
+      clearTooltip(s);
       stopCamera(s);
       const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? s.h : 1;
       if (

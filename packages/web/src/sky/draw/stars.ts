@@ -1,7 +1,7 @@
 import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
-import { labelLines } from './starLabels';
+import { labelLines, placeLabel } from './starLabels';
 
 export function drawStars(state: SkyState, t: number, list: Star[]) {
   const labels = [];
@@ -107,10 +107,13 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       }
     }
     // Codes show once there is room for them: wide screens at full view, phones and the shipped cluster when zoomed in.
+    const [sx, sy] = state.toScreen(x, y);
+    const visible = sx >= 0 && sx <= state.w && sy >= 0 && sy <= state.h;
     const roomy = state.unit * state.cam.s > 640,
       named = s.group !== 'done' || state.cam.s > 2.2;
     if (
       s.code &&
+      visible &&
       (state.hover === s ||
         (state.sky && roomy && named) ||
         (((state.hover && state.hover.group === s.group) || state.litGroup === s.group) && roomy) ||
@@ -119,7 +122,8 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     )
       labels.push({
         lines: labelLines(s.code, s.title, state.cam.s, state.sky),
-        x: x + r + 6 * q,
+        x,
+        gap: r + 6 * q,
         y: y - r - 3 * q,
         c,
         a: (state.hover === s ? 1 : state.sky ? 0.7 : 0.5) * s.alpha,
@@ -137,25 +141,33 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     let wd = state.ctx.measureText(L.lines[0]!).width;
     state.ctx.font = `400 ${size * 0.92}px "Noto Sans SC", sans-serif`;
     for (const line of L.lines.slice(1)) wd = Math.max(wd, state.ctx.measureText(line).width);
-    const box: [number, number, number, number] = [
-      L.x - 2 * state.sz,
-      L.y - 11 * state.sz,
-      L.x + wd + 2 * state.sz,
-      L.y + 3 * state.sz + (L.lines.length - 1) * lineH,
-    ];
+    const [x0, y0] = state.toWorld(8, 8),
+      [x1, y1] = state.toWorld(state.w - 8, state.h - 8);
+    const placement = placeLabel(
+      L.x,
+      L.y,
+      L.gap,
+      wd,
+      14 * state.sz + (L.lines.length - 1) * lineH,
+      [x0, y0, x1, y1],
+      11 * state.sz,
+      2 * state.sz,
+    );
+    const { box, x, y, width, align } = placement;
     if (L.pri < 99 && placed.some((b) => box[0]! < b[2]! && box[2]! > b[0]! && box[1]! < b[3]! && box[3]! > b[1]!))
       continue;
     placed.push(box);
     // A dark halo keeps text readable where it crosses link lines and constellation names.
     state.ctx.save();
+    state.ctx.textAlign = align;
     state.ctx.shadowColor = 'rgba(4,10,20,.95)';
     state.ctx.shadowBlur = 5 * state.sz;
     state.ctx.font = `500 ${size}px "JetBrains Mono", monospace`;
     state.ctx.fillStyle = rgba(L.c, L.a);
-    state.ctx.fillText(L.lines[0]!, L.x, L.y);
+    state.ctx.fillText(L.lines[0]!, x, y, width);
     state.ctx.font = `400 ${size * 0.92}px "Noto Sans SC", sans-serif`;
     state.ctx.fillStyle = rgba([214, 228, 245], L.a * 0.85);
-    L.lines.slice(1).forEach((line, i) => state.ctx.fillText(line, L.x, L.y + (i + 1) * lineH));
+    L.lines.slice(1).forEach((line, i) => state.ctx.fillText(line, x, y + (i + 1) * lineH, width));
     state.ctx.restore();
   }
 }

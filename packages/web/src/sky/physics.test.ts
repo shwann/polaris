@@ -23,13 +23,13 @@ it('elastically carries only tree neighbors, then rebounds without migration eas
   expect(c.ox).toBeLessThan(b.ox);
   expect(other.ox).toBe(0);
   expect(other.x).toBe(600);
-  for (let t = 56; t < 500; t += 16) s.frame(t);
+  for (let t = 56; t < 1500; t += 16) s.frame(t);
   expect(b.ox).toBeCloseTo(70, 0);
   expect(c.ox).toBeCloseTo(30, 0);
-  pointer('pointerup', 600, 400, 501);
+  pointer('pointerup', 600, 400, 1501);
   s.px = s.py = -1e4;
   let minimum = 0;
-  for (let t = 516; t <= 1700; t += 16) {
+  for (let t = 1516; t <= 3500; t += 16) {
     s.frame(t);
     minimum = Math.min(minimum, a.ox);
   }

@@ -44,20 +44,16 @@ describe('inertia', () => {
 });
 
 describe('spring', () => {
-  it('overshoots by 8–15% and settles within 1.2 seconds', () => {
-    let x = 100,
-      v = 0,
-      minimum = 100;
-    for (let i = 0; i < 120; i++) {
-      const next = spring(x, v, 0, 10);
-      x = next.x;
-      v = next.v;
-      minimum = Math.min(minimum, x);
-    }
+  it('keeps visible travel at 150ms, overshoots 10–15%, and settles to 2% in 600–800ms', () => {
+    expect(spring(100, 0, 0, 150).x).toBeGreaterThan(40);
+    const samples = Array.from({ length: 201 }, (_, i) => spring(100, 0, 0, i * 10).x);
+    const minimum = Math.min(...samples);
     expect(minimum).toBeGreaterThan(-15);
-    expect(minimum).toBeLessThan(-8);
-    expect(Math.abs(x)).toBeLessThan(0.05);
-    expect(Math.abs(v)).toBeLessThan(0.2);
+    expect(minimum).toBeLessThan(-10);
+    const lastOutside = samples.findLastIndex((x) => Math.abs(x) > 2) * 10;
+    expect(lastOutside).toBeGreaterThanOrEqual(600);
+    expect(lastOutside).toBeLessThanOrEqual(800);
+    expect(Math.abs(samples.at(-1)!)).toBeLessThan(0.05);
   });
   it('has identical solutions across frame rates, including long frames', () => {
     const expected = spring(100, 23, 0, 1000);

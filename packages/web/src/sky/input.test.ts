@@ -81,7 +81,11 @@ describe('pointer input', () => {
     pointer('pointerup', 400, 400, 10);
     s.hover = s.stars.get('a')!;
     s.emitTooltip();
-    expect(events.onTooltip.mock.calls.at(-1)?.[0]).toContain('a');
+    expect(events.onTooltip.mock.calls.at(-1)?.[0]).toBe('');
+    star('b', 500, 400);
+    pointer('pointermove', 500, 400, 20);
+    s.frame(20);
+    expect(events.onTooltip.mock.calls.at(-1)?.[0]).toContain('b');
     dispose();
   });
   it('zooms blank double clicks around the clicked point, but opens stars and anchors', () => {

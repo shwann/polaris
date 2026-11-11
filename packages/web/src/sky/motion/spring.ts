@@ -1,5 +1,16 @@
+// First overshoot at 421ms, 12% amplitude; 2% settling at about 650ms.
+export const RETURN_OMEGA = 9;
+export const RETURN_DAMPING = 0.56;
+
 /** Exact solution of a unit-mass damped spring. Time is in ms, velocity in units/s. */
-export function spring(x: number, v: number, target: number, dt: number, omega = 14, damping = 0.56) {
+export function spring(
+  x: number,
+  v: number,
+  target: number,
+  dt: number,
+  omega = RETURN_OMEGA,
+  damping = RETURN_DAMPING,
+) {
   const t = Math.max(0, dt) / 1000,
     y = x - target,
     a = omega * damping;

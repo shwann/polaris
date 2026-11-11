@@ -1,3 +1,6 @@
+import { drawDoneOverview } from './doneOverview';
+import { boundsOf } from '../geometry/cardPlacement';
+import { clearTooltip } from '../tooltip';
 import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
@@ -5,6 +8,7 @@ import type { SkyState } from '../types';
 export function drawEffects(state: SkyState, t: number, dt: number) {
   state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
   state.lwk = 1;
+  drawDoneOverview(state);
   // Pointer reticle (screen space).
   if (state.px > -1e3 && state.onSky) {
     state.ctx.strokeStyle = 'rgba(46,230,255,.35)';
@@ -42,7 +46,15 @@ export function drawEffects(state: SkyState, t: number, dt: number) {
         state.ctx.lineTo(x + Math.cos(a) * (R + 8), y + Math.sin(a) * (R + 8));
         state.ctx.stroke();
       }
-      state.api.onSelectedMove?.(x, y);
+      const points = [...state.stars.values()]
+        .filter((star) => !star.dead && star.group === s.group)
+        .map((star) => state.toScreen(...state.at(star.x, star.y, 14)));
+      const pan = state.api.onSelectedMove?.(x, y, boundsOf(points.length ? points : [[x, y]]));
+      if (pan && state.sky && state.w > 560 && !state.drag && Math.hypot(...pan) > 0.75) {
+        clearTooltip(state);
+        state.camT.x = state.cam.x + pan[0];
+        state.camT.y = state.cam.y + pan[1];
+      }
     }
   }
   if (!state.reduce.matches && t > state.nextComet) {

@@ -9,6 +9,7 @@ import { attachInput } from './input';
 import { stopCamera } from './motion/cameraMotion';
 import { topArea } from './layout';
 import type { Box, SkyEvents, SkyState } from './types';
+import { clearTooltip } from './tooltip';
 import { updateTasks } from './updateTasks';
 export class SkyEngine {
   private state: SkyState | null = null;
@@ -38,6 +39,7 @@ export class SkyEngine {
       s.cardGroup = u.hovered >= 0 ? FIG_LANE[u.hovered] || null : null;
       s.dipPin = u.pinned;
       s.dipSel = u.dip;
+      if (s.selected !== u.selected) clearTooltip(s);
       s.selected = u.selected;
       const g = FIG_LANE[u.dip];
       s.dipIds =
@@ -115,6 +117,7 @@ export class SkyEngine {
   resetView() {
     const s = this.state;
     if (s) {
+      clearTooltip(s);
       stopCamera(s);
       s.drag = null;
       s.pointers.clear();

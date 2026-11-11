@@ -38,3 +38,29 @@ export function labelLines(code: string, title: string, zoom: number, sky: boole
   if (zoom < FULL_FROM) return [code, clip(text, shortLength(zoom))];
   return [code, ...wrapTitle(text)];
 }
+
+/** Final world-space text bounds, including padding, before collision detection. */
+export function placeLabel(
+  x: number,
+  y: number,
+  gap: number,
+  width: number,
+  height: number,
+  view: import('../types').Box,
+  ascent: number,
+  padding: number,
+) {
+  const [left, top, right, bottom] = view;
+  const w = Math.min(width, Math.max(0, right - left - padding * 2));
+  const align = x + gap + w + padding <= right ? 'left' : 'right';
+  const preferred = align === 'left' ? x + gap : x - gap - w;
+  const bx = Math.max(left + padding, Math.min(preferred, right - w - padding));
+  const by = Math.max(top + padding, Math.min(y - ascent, bottom - height - padding));
+  return {
+    x: align === 'left' ? bx : bx + w,
+    y: by + ascent,
+    align: align as CanvasTextAlign,
+    width: w,
+    box: [bx - padding, by - padding, bx + w + padding, by + height + padding] as import('../types').Box,
+  };
+}

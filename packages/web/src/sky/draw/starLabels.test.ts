@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FULL_FROM, TITLE_FROM, labelLines, shortLength, wrapTitle } from './starLabels';
+import { placeLabel } from './starLabels';
 
 const title = 'UX8 点“查看执行对话”后能用后退回到评审页，并保留抽屉与表单';
 
@@ -28,4 +29,22 @@ describe('star label semantic zoom', () => {
     expect(long).toHaveLength(3);
     expect(long[2]!.endsWith('…')).toBe(true);
   });
+});
+
+it('flips right-edge labels to left with right alignment and keeps every vertical bound visible', () => {
+  const right = placeLabel(970, 200, 12, 180, 50, [8, 8, 992, 792], 11, 2);
+  expect(right.align).toBe('right');
+  expect(right.x).toBeLessThan(970);
+  const left = placeLabel(30, 200, 12, 180, 50, [8, 8, 992, 792], 11, 2);
+  expect(left.align).toBe('left');
+  for (const y of [-10, 0, 790, 900]) {
+    const p = placeLabel(980, y, 12, 180, 60, [8, 8, 992, 792], 11, 2);
+    expect(p.box[0]).toBeGreaterThanOrEqual(8);
+    expect(p.box[1]).toBeGreaterThanOrEqual(8);
+    expect(p.box[2]).toBeLessThanOrEqual(992);
+    expect(p.box[3]).toBeLessThanOrEqual(792);
+    expect(p.x).toBe(p.box[2] - 2);
+  }
+  const long = placeLabel(500, 500, 12, 2000, 50, [8, 8, 992, 792], 11, 2);
+  expect(long.box).toEqual([8, 489 - 2, 992, 489 + 52]);
 });
