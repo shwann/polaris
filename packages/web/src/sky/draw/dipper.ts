@@ -2,6 +2,7 @@ import { FIG_LANE as CARD_LANE, COL, DIPPER_LINES, GOLD } from '../../domain/lan
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
 import { drawHub } from './hub';
+import { tetherEnd, type TetherStar } from '../geometry/tether';
 
 export function drawDipper(state: SkyState, t: number) {
   const pos = state.hubs(),
@@ -65,24 +66,30 @@ export function drawDipper(state: SkyState, t: number) {
   state.ctx.stroke();
   state.ctx.setLineDash([]);
   state.ctx.lineDashOffset = 0;
-  // Tethers: a dotted line from each Dipper star out to the cluster of tasks it carries.
+  // Tethers: a dotted line from each Dipper star to the nearest task star of the cluster it carries, as drawn this
+  // frame, ending at that star's halo with a small node so it reads as connected.
   if (state.ZONE.dip && state.skyK > 0.05) {
     state.ctx.setLineDash([2, 4]);
     state.ctx.lineWidth = 1.2;
     for (let k = 1; k < 7; k++) {
       const g = CARD_LANE[k]!;
       if (!state.laneCount(g)) continue;
-      const [cx, cy, R] = state.centre(g),
-        [ex, ey] = state.at(cx, cy, 14),
-        [x, y] = pos[k]!,
-        L = Math.hypot(ex - x, ey - y);
-      if (L < R * 0.6) continue;
-      const k1 = (L - R * 0.55) / L;
-      state.ctx.strokeStyle = rgba(COL[g]! || COL.planned, 0.55 * state.skyK * (k === lit ? 1.5 : 1));
+      const stars: TetherStar[] = [];
+      for (const s of state.stars.values())
+        if (s.group === g && !s.dead) stars.push({ point: state.at(s.x, s.y, 14), alpha: s.alpha });
+      const end = tetherEnd(pos[k]!, stars, 7 * state.sz);
+      if (!end) continue;
+      const c = COL[g]! || COL.planned,
+        a = Math.min(1, 0.55 * state.skyK * (k === lit ? 1.5 : 1));
+      state.ctx.strokeStyle = rgba(c, a);
       state.ctx.beginPath();
-      state.ctx.moveTo(x, y);
-      state.ctx.lineTo(x + (ex - x) * k1, y + (ey - y) * k1);
+      state.ctx.moveTo(...pos[k]!);
+      state.ctx.lineTo(...end);
       state.ctx.stroke();
+      state.ctx.fillStyle = rgba(c, a);
+      state.ctx.beginPath();
+      state.ctx.arc(end[0], end[1], 1.6 * state.sz, 0, 6.2832);
+      state.ctx.fill();
     }
     state.ctx.setLineDash([]);
   }
