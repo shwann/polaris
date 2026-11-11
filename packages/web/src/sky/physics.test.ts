@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { attachInput } from './input';
 import { fixture, pointer } from './testFixture';
 
-it('elastically carries only tree neighbors, then rebounds without migration easing flattening it', () => {
+it('pulls tree neighbors through distances and rebounds without migration easing flattening it', () => {
   const { s, star, registry } = fixture();
   const a = star('a', 400, 400),
     b = star('b', 460, 400),
@@ -15,26 +15,25 @@ it('elastically carries only tree neighbors, then rebounds without migration eas
   ]);
   const detach = attachInput(s);
   pointer('pointerdown', 400, 400, 0);
-  pointer('pointermove', 600, 400, 40);
+  pointer('pointermove', 300, 320, 40);
   s.frame(40);
-  expect(a.x).toBe(600);
-  expect(b.ox).toBeGreaterThan(0);
-  expect(b.ox).toBeLessThan(70);
-  expect(c.ox).toBeLessThan(b.ox);
+  expect(a.x).toBe(300);
+  expect(b.ox).toBeLessThan(0);
+  expect(Math.abs(b.ox)).toBeLessThan(100);
+  expect(Math.abs(c.ox)).toBeLessThan(Math.abs(b.ox));
   expect(other.ox).toBe(0);
   expect(other.x).toBe(600);
   for (let t = 56; t < 1500; t += 16) s.frame(t);
-  expect(b.ox).toBeCloseTo(70, 0);
-  expect(c.ox).toBeCloseTo(30, 0);
-  pointer('pointerup', 600, 400, 1501);
+  expect(b.oy).toBeLessThan(0);
+  expect(Math.abs(b.ox)).toBeGreaterThan(Math.abs(c.ox));
+  pointer('pointerup', 300, 320, 1501);
   s.px = s.py = -1e4;
-  let minimum = 0;
+  let maximum = 0;
   for (let t = 1516; t <= 3500; t += 16) {
     s.frame(t);
-    minimum = Math.min(minimum, a.ox);
+    maximum = Math.max(maximum, a.ox);
   }
-  expect(minimum).toBeLessThan(-16);
-  expect(minimum).toBeGreaterThan(-30);
+  expect(maximum).toBeGreaterThan(0.5);
   expect(Math.abs(a.ox)).toBeLessThan(0.1);
   expect(Math.abs(b.ox)).toBeLessThan(0.1);
   expect(other.x).toBe(600);

@@ -1,12 +1,14 @@
-/** Breadth-first traversal only follows the supplied tree, never another group. */
-export function tetherWeights<T>(root: T, edges: [T, T][]): Map<T, number> {
-  const neighbors = new Map<T, T[]>();
+import type { Star } from '../types';
+
+/** Keep the existing mobile gesture response; the desktop soft-body change does not alter touch behavior. */
+export function mobileWeights(root: Star, edges: [Star, Star][]) {
+  const neighbors = new Map<Star, Star[]>();
   for (const [a, b] of edges) {
     neighbors.set(a, [...(neighbors.get(a) || []), b]);
     neighbors.set(b, [...(neighbors.get(b) || []), a]);
   }
-  const weights = new Map<T, number>([[root, 1]]),
-    queue: [T, number][] = [[root, 0]];
+  const weights = new Map<Star, number>([[root, 1]]),
+    queue: [Star, number][] = [[root, 0]];
   for (let i = 0; i < queue.length; i++) {
     const [node, hops] = queue[i]!;
     for (const next of neighbors.get(node) || []) {

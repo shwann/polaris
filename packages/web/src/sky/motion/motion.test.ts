@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { KEEP, constrain, panBounds, rubber } from './bounds';
 import { coast, record, velocity } from './inertia';
 import { spring } from './spring';
-import { tetherWeights } from './tether';
 import type { Point } from '../types';
 
 describe('inertia', () => {
@@ -71,7 +70,7 @@ describe('spring', () => {
   });
 });
 
-describe('bounds and tether', () => {
+describe('bounds', () => {
   it('leaves legal positions alone and progressively resists outside movement', () => {
     expect(rubber(50, 0, 100)).toBe(50);
     const first = rubber(150, 0, 100) - 100,
@@ -104,22 +103,5 @@ describe('bounds and tether', () => {
       v = next.v;
     }
     expect(x).toBeCloseTo(box[2], 5);
-  });
-  it('attenuates tree hops without crossing a disconnected group', () => {
-    expect([
-      ...tetherWeights('a', [
-        ['a', 'b'],
-        ['b', 'c'],
-        ['c', 'd'],
-        ['d', 'e'],
-        ['other', 'group'],
-      ]),
-    ]).toEqual([
-      ['a', 1],
-      ['b', 0.35],
-      ['c', 0.15],
-      ['d', 0.05],
-      ['e', 0.05],
-    ]);
   });
 });

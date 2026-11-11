@@ -38,7 +38,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       const [ax, ay] = state.at(a.x, a.y, 14),
         [bx, by] = state.at(b.x, b.y, 14),
         L = Math.hypot(bx - ax, by - ay);
-      if (L < 1) continue;
+      if (L <= 16 * state.sz) continue;
       const ah = state.home(a, t),
         bh = state.home(b, t);
       const rest = Math.max(24, Math.hypot(bh[0] - ah[0], bh[1] - ah[1]));
@@ -57,24 +57,18 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
         x1 = bx - ux * gap,
         y1 = by - uy * gap;
       state.ctx.lineCap = 'round';
-      state.ctx.strokeStyle = rgba(color, 0.1 * base * al * brightness);
-      state.ctx.lineWidth = (lit ? 9 : 7) * thin;
-      state.ctx.beginPath();
-      state.ctx.moveTo(x0, y0);
-      state.ctx.lineTo(x1, y1);
-      state.ctx.stroke();
-      state.ctx.strokeStyle = rgba(color, 0.22 * base * al * brightness);
-      state.ctx.lineWidth = 3 * thin;
-      state.ctx.beginPath();
-      state.ctx.moveTo(x0, y0);
-      state.ctx.lineTo(x1, y1);
-      state.ctx.stroke();
-      state.ctx.strokeStyle = rgba(color, 0.75 * base * al * brightness);
-      state.ctx.lineWidth = (lit ? 1.6 : 1.2) * thin;
-      state.ctx.beginPath();
-      state.ctx.moveTo(x0, y0);
-      state.ctx.lineTo(x1, y1);
-      state.ctx.stroke();
+      for (const [opacity, width] of [
+        [0.1, lit ? 9 : 7],
+        [0.22, 3],
+        [0.75, lit ? 1.6 : 1.2],
+      ]) {
+        state.ctx.strokeStyle = rgba(color, opacity! * base * al * brightness);
+        state.ctx.lineWidth = width! * thin;
+        state.ctx.beginPath();
+        state.ctx.moveTo(x0, y0);
+        state.ctx.lineTo(x1, y1);
+        state.ctx.stroke();
+      }
       state.ctx.lineCap = 'butt';
       if (fade > 0.5) live.push([a, b]);
     }

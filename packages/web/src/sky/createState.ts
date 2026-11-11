@@ -70,6 +70,8 @@ export function createState(
     dipPin: -1,
     dipPos: [],
     tetherHub: new Map(),
+    hubParticles: [],
+    soft: { remainder: 0 },
     dipHover: -1,
     dipSel: -1,
     dipIds: null,

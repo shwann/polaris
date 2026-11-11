@@ -1,3 +1,4 @@
+import type { Particle, SoftBody } from './motion/softbody';
 import type { Sample } from './motion/inertia';
 import type { Color } from '../domain/lanes';
 import type { BoardView, Lane } from '../domain/types';
@@ -45,7 +46,7 @@ export interface Drag {
   samples: Sample[];
   grab: Point;
   dip: number;
-  weights: Map<Star, number>;
+  mobileWeights?: Map<Star, number>;
   pinch?: number;
   anchor?: Point;
   s0?: number;
@@ -144,6 +145,8 @@ export interface SkyState extends SkyMethods {
   dipPos: Point[];
   /** Star each Dipper tether is attached to, kept between frames so it does not hop between equal candidates. */
   tetherHub: Map<Lane, string>;
+  hubParticles: Particle[];
+  soft: SoftBody;
   dipHover: number;
   dipSel: number;
   dipIds: (string | { id: string; dash?: boolean })[] | null;

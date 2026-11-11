@@ -69,10 +69,9 @@ export function frame(state: SkyState, t: number) {
   );
   state.sz = state.cam.s ** -0.6;
   state.lwk = state.sz;
-  state.drawDipper(t);
-
   const list = [...state.stars.values()];
   state.physics(t, dt, list);
+  state.drawDipper(t);
   const live = state.drawClusters(t, list);
   state.drawFlows(t);
   state.drawTraces(t);
