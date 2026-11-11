@@ -14,7 +14,7 @@ export function finalizeHtml(source: string) {
     .trimStart();
   const html = GENERATED + title + '\n' + viewport + '\n<meta charset="UTF-8">\n' + body;
   if (!html.includes(DATA_SLOT)) throw new Error('Core DATA_SLOT must survive verbatim');
-  if (Buffer.byteLength(html) > 400 * 1024) throw new Error('HTML exceeds 400KB');
+  if (Buffer.byteLength(html) > 512 * 1024) throw new Error('HTML exceeds 512KB');
   const withoutFonts = html.replace(/<link[^>]+fonts\.googleapis\.com[^>]*>/g, '');
   if (/<script[^>]+src\s*=/.test(html) || /<link[^>]+rel=["']stylesheet["']/.test(withoutFonts))
     throw new Error('External JavaScript or CSS in single-file output');

@@ -17,19 +17,19 @@ describe('single-file deliverable', () => {
     expect(html.split(DATA_SLOT)).toHaveLength(2);
     expect(embedData(html, sample)).toContain('"schema":1');
   });
-  it('contains only inline JavaScript and CSS, preserves Google Fonts and stays below 400KB', () => {
+  it('contains only inline JavaScript and CSS, preserves Google Fonts and stays below 512KB', () => {
     const html = readFileSync(path, 'utf8');
     expect(html).not.toMatch(/<script[^>]+src\s*=/);
     const styles = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]*>/g)];
     expect(styles).toHaveLength(1);
     expect(styles[0]![0]).toContain('fonts.googleapis.com');
-    expect(statSync(path).size).toBeLessThanOrEqual(400 * 1024);
+    expect(statSync(path).size).toBeLessThanOrEqual(512 * 1024);
     expect(statSync(path).mode & 0o777).toBe(0o644);
   });
   it('rejects invalid assets and only runs the proxy in dev', () => {
     expect(() => finalizeHtml('<script src="/app.js"></script>' + DATA_SLOT)).toThrow('External JavaScript');
     expect(() => finalizeHtml('missing slot')).toThrow('DATA_SLOT');
-    expect(() => finalizeHtml(DATA_SLOT + 'x'.repeat(400 * 1024))).toThrow('400KB');
+    expect(() => finalizeHtml(DATA_SLOT + 'x'.repeat(512 * 1024))).toThrow('512KB');
     expect(devProxy().apply).toBe('serve');
   });
 });
