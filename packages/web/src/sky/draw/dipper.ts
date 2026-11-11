@@ -76,9 +76,14 @@ export function drawDipper(state: SkyState, t: number) {
       if (!state.laneCount(g)) continue;
       const stars: TetherStar[] = [];
       for (const s of state.stars.values())
-        if (s.group === g && !s.dead) stars.push({ point: state.at(s.x, s.y, 14), alpha: s.alpha });
-      const end = tetherEnd(pos[k]!, stars, 7 * state.sz);
-      if (!end) continue;
+        if (s.group === g && !s.dead) stars.push({ id: s.id, point: state.at(s.x, s.y, 14), alpha: s.alpha });
+      const hit = tetherEnd(pos[k]!, stars, 7 * state.sz, state.tetherHub.get(g));
+      if (!hit) {
+        state.tetherHub.delete(g);
+        continue;
+      }
+      state.tetherHub.set(g, hit.id);
+      const end = hit.end;
       const c = COL[g]! || COL.planned,
         a = Math.min(1, 0.55 * state.skyK * (k === lit ? 1.5 : 1));
       state.ctx.strokeStyle = rgba(c, a);

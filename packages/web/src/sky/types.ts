@@ -142,6 +142,8 @@ export interface SkyState extends SkyMethods {
   dipGlow: number;
   dipPin: number;
   dipPos: Point[];
+  /** Star each Dipper tether is attached to, kept between frames so it does not hop between equal candidates. */
+  tetherHub: Map<Lane, string>;
   dipHover: number;
   dipSel: number;
   dipIds: (string | { id: string; dash?: boolean })[] | null;

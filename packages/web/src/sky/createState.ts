@@ -69,6 +69,7 @@ export function createState(
     dipGlow: 0,
     dipPin: -1,
     dipPos: [],
+    tetherHub: new Map(),
     dipHover: -1,
     dipSel: -1,
     dipIds: null,
