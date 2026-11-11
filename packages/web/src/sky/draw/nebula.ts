@@ -1,6 +1,6 @@
 import { DEPTH, NEB } from '../constants';
 import { rgba } from '../palette';
-import type { Color, SkyState } from '../types';
+import type { Color, Point, SkyState } from '../types';
 import { backgroundView, tileOrigins } from './background';
 
 /** Cache the soft cloud profile; animation only changes its position and size. */
@@ -24,7 +24,9 @@ export function drawNebula(state: SkyState, t: number) {
   if (state.reduce.matches) t = 0;
   const view = backgroundView(state, DEPTH.nebula);
   state.ctx.globalCompositeOperation = 'lighter';
-  for (const [dx, dy] of tileOrigins(view, state.w, state.h, state.unit * 0.5))
+  for (const [dx, dy] of state.skyK === 0
+    ? ([[0, 0]] as Point[])
+    : tileOrigins(view, state.w, state.h, state.unit * 0.5))
     for (const [fx, fy, c, sp] of NEB) {
       const x = (fx + Math.sin(t / (sp * 1000)) * 0.08) * state.w + dx,
         y = (fy + Math.cos(t / (sp * 1300)) * 0.06) * state.h + dy,

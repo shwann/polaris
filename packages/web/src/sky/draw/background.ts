@@ -1,4 +1,5 @@
 import { DEPTH } from '../constants';
+import { layerScale } from './chartGeometry';
 import type { Box, Point, SkyState } from '../types';
 
 /** Visible world rectangle for one independently translated background layer. */
@@ -6,7 +7,7 @@ export function layerView(w: number, h: number, scale: number, x: number, y: num
   return [-x / scale, -y / scale, (w - x) / scale, (h - y) / scale];
 }
 export function backgroundView(s: SkyState, depth: number): Box {
-  return layerView(s.w, s.h, 1 + (s.cam.s - 1) * s.skyK, s.cam.x * depth * s.skyK, s.cam.y * depth * s.skyK);
+  return layerView(s.w, s.h, layerScale(s.cam.s, depth, s.skyK), s.cam.x * depth * s.skyK, s.cam.y * depth * s.skyK);
 }
 
 /** Include neighboring tiles whose soft clouds or drifting dust can cross a tile edge. */
@@ -19,15 +20,48 @@ export function tileOrigins(view: Box, w: number, h: number, margin = 0): Point[
 }
 
 export function drawBackgroundChart(s: SkyState) {
-  if (!s.chart || !s.chartPattern) return;
-  const b = backgroundView(s, DEPTH.chart),
-    dx = s.mx * 3,
+  if (!s.chart || !s.boardChart) return;
+  const dx = s.mx * 3,
     dy = s.my * 3;
-  s.ctx.save();
-  s.ctx.translate(dx, dy);
-  // The cached tile is in device pixels; the layer transform remains in CSS pixels.
-  s.ctx.scale(1 / s.dpr, 1 / s.dpr);
-  s.ctx.fillStyle = s.chartPattern;
-  s.ctx.fillRect((b[0] - dx) * s.dpr, (b[1] - dy) * s.dpr, (b[2] - b[0]) * s.dpr, (b[3] - b[1]) * s.dpr);
-  s.ctx.restore();
+  if (s.skyK === 0) {
+    s.ctx.drawImage(s.boardChart, dx, dy, s.w, s.h);
+    return;
+  }
+  const view = backgroundView(s, DEPTH.chart),
+    box = s.chartBox,
+    x = Math.max(box[0], view[0] - dx),
+    y = Math.max(box[1], view[1] - dy),
+    right = Math.min(box[2], view[2] - dx),
+    bottom = Math.min(box[3], view[3] - dy),
+    rx = s.chart.width / (box[2] - box[0]),
+    ry = s.chart.height / (box[3] - box[1]);
+  if (right <= x || bottom <= y) return;
+  s.ctx.drawImage(
+    s.chart,
+    (x - box[0]) * rx,
+    (y - box[1]) * ry,
+    (right - x) * rx,
+    (bottom - y) * ry,
+    x + dx,
+    y + dy,
+    right - x,
+    bottom - y,
+  );
+  if (!s.chartCore) return;
+  const cx = Math.max(0, view[0] - dx),
+    cy = Math.max(0, view[1] - dy),
+    cw = Math.min(s.w, view[2] - dx) - cx,
+    ch = Math.min(s.h, view[3] - dy) - cy;
+  if (cw > 0 && ch > 0)
+    s.ctx.drawImage(
+      s.chartCore,
+      (cx * s.chartCore.width) / s.w,
+      (cy * s.chartCore.height) / s.h,
+      (cw * s.chartCore.width) / s.w,
+      (ch * s.chartCore.height) / s.h,
+      cx + dx,
+      cy + dy,
+      cw,
+      ch,
+    );
 }
