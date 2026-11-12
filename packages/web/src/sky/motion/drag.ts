@@ -18,6 +18,7 @@ export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
   const depth = d.star ? 14 : 0;
   d.grab = [p.baseX! + p.ox + s.mx * depth - wx, p.baseY! + p.oy + s.my * depth - wy];
   p.vx = p.vy = 0;
+  s.soft.releases?.clear();
   s.soft.pin = { particle: p, point: [p.ox, p.oy] };
 }
 
@@ -29,7 +30,14 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
   if (point) [p.ox, p.oy] = point;
   if (restore) resetParticle(p);
   else if (s.w <= 560) p.vx = p.vy = 0;
-  else launch(p, velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp), s.cam.s);
+  else
+    launch(
+      p,
+      velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp),
+      s.cam.s,
+      s.soft,
+      d.star ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group) : s.hubParticles,
+    );
   s.soft.pin = undefined;
   if (!d.star) return;
   if (restore) [d.star.x, d.star.y] = [p.baseX!, p.baseY!];

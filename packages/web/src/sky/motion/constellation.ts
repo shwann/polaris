@@ -2,7 +2,8 @@ import { DIPPER_LINES, FIG_LANE } from '../../domain/lanes';
 import { tetherEnd } from '../geometry/tether';
 import { hubHomes } from '../layout';
 import type { Drag, Point, SkyState, Star } from '../types';
-import { advance, resetParticle, type Constraint } from './softbody';
+import { advance, resetParticle, type Constraint, type Particle } from './softbody';
+import { MIN_SEPARATION } from './separation';
 
 export const hubDraggable = (s: SkyState) => s.sky && s.w > 560 && !s.reduce.matches;
 export const draggedParticle = (s: SkyState, d: Drag) =>
@@ -53,7 +54,21 @@ export function constellation(s: SkyState, list: Star[], dt: number) {
     if (particle && point) [particle.ox, particle.oy] = point;
     s.soft.remainder = 0;
     s.soft.pin = undefined;
-  } else advance(s.soft, [...list, ...hubs], edges, dt, particle && point ? { particle, point } : undefined);
+  } else {
+    const groups: Particle[][] = [...new Set(list.filter((p) => !p.dead).map((p) => p.group))].map((g) =>
+      list.filter((p) => !p.dead && p.group === g),
+    );
+    if (hubDraggable(s)) groups.push(hubs);
+    advance(
+      s.soft,
+      [...list, ...hubs],
+      edges,
+      dt,
+      particle && point ? { particle, point } : undefined,
+      groups,
+      MIN_SEPARATION / s.cam.s,
+    );
+  }
   for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
 }
 

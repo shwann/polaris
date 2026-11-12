@@ -1,7 +1,7 @@
 import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
-import { labelLines, placeLabel } from './starLabels';
+import { drawStarLabels, labelLines, placeLabel } from './starLabels';
 
 export function drawStars(state: SkyState, t: number, list: Star[]) {
   const labels = [];
@@ -115,6 +115,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       s.code &&
       visible &&
       (state.hover === s ||
+        (state.w > 560 && state.selected === s.id) ||
         (state.sky && roomy && named) ||
         (((state.hover && state.hover.group === s.group) || state.litGroup === s.group) && roomy) ||
         (state.sky && r >= 2.9 * q && roomy && named) ||
@@ -127,8 +128,17 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         y: y - r - 3 * q,
         c,
         a: (state.hover === s ? 1 : state.sky ? 0.7 : 0.5) * s.alpha,
-        pri: state.hover === s ? 99 : r / q + (state.match && state.match.has(s.id) ? 5 : 0),
+        pri:
+          state.hover === s
+            ? 99
+            : state.w > 560 && state.selected === s.id
+              ? 98
+              : r / q + (state.match?.has(s.id) ? 5 : 0),
       });
+  }
+  if (state.w > 560) {
+    drawStarLabels(state, labels);
+    return;
   }
   // Place star labels without overlaps: hovered star first, then brighter stars. Title lines sit under the code,
   // a little smaller and paler.

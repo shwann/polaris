@@ -1,4 +1,4 @@
-import { separatePoints, STAR_SPACING } from './spacing';
+import { DONE_SPACING, separatePoints, STAR_SPACING } from './spacing';
 import type { Point, SkyState, Star } from '../types';
 
 export function centre(state: SkyState, g: import('../../domain/types').Lane): [number, number, number] {
@@ -41,7 +41,7 @@ export function layoutHomes(state: SkyState) {
       const r = (group === 'done' ? s.rad ** 1.9 : s.rad) * R;
       return [Math.cos(s.ang) * r * 1.25, Math.sin(s.ang) * r * 0.85];
     });
-    const spaced = separatePoints(points, STAR_SPACING / state.layoutScale);
+    const spaced = separatePoints(points, (group === 'done' ? DONE_SPACING : STAR_SPACING) / state.layoutScale);
     list.forEach((s, i) => {
       [s.layoutX, s.layoutY] = spaced[i]!;
     });
