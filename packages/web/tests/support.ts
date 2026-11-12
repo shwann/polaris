@@ -7,6 +7,7 @@ import { layoutRegistry } from '../src/layout/LayoutRegistry';
 export function canvasContext() {
   const gradient = { addColorStop: vi.fn() },
     methods: Record<string, unknown> = {
+      globalAlpha: 1,
       measureText: () => ({ width: 40 }),
       createLinearGradient: () => gradient,
       createRadialGradient: () => gradient,

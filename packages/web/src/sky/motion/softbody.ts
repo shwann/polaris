@@ -20,6 +20,7 @@ export interface Constraint {
 }
 export interface SoftBody {
   remainder: number;
+  time?: number;
   hubDrag?: number;
   releases?: Map<Particle, number>;
   throws?: Map<Particle, number>;

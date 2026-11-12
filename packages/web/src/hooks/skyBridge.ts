@@ -2,7 +2,8 @@ import sharedStyles from '../components/Shared/Shared.module.css';
 import type { SkyEngine } from '../sky/SkyEngine';
 import { uiStore, setSky, setView } from '../store/uiStore';
 import { dataStore } from '../store/dataStore';
-import { flowTasks, searchTasks, selectView } from '../domain/selectors';
+import { flowTasks, laneTasks, searchTasks, selectView } from '../domain/selectors';
+import { FIG_LANE } from '../domain/lanes';
 import type { Lane } from '../domain/types';
 let engine: SkyEngine | null = null;
 export const attachEngine = (value: SkyEngine | null) => {
@@ -10,14 +11,14 @@ export const attachEngine = (value: SkyEngine | null) => {
 };
 export const getEngine = () => engine;
 export function selectStar(id: string | null, keyboard = false) {
-  uiStore.setState({ selected: id });
+  uiStore.setState({ selected: id, ...(id ? { dip: -1 } : {}) });
   if (id) {
     engine?.reveal(id);
     if (keyboard) requestAnimationFrame(() => document.getElementById('star-go')?.focus({ preventScroll: true }));
   }
 }
 export function selectFromSky(id: string | null) {
-  uiStore.setState({ selected: id });
+  uiStore.setState({ selected: id, ...(id ? { dip: -1 } : {}) });
   if (id && innerWidth <= 560) engine?.reveal(id);
 }
 export function locateStar(id: string) {
@@ -28,7 +29,8 @@ export function locateStar(id: string) {
 export function stepStar(dir: number) {
   const u = uiStore.getState(),
     v = selectView(dataStore.getState().snapshot, u.system),
-    list = flowTasks(searchTasks(v.tasks, u));
+    group = FIG_LANE[u.dip],
+    list = group ? laneTasks(v.tasks, group) : flowTasks(searchTasks(v.tasks, u));
   if (!list.length) return;
   const i = list.findIndex((t) => t.id === u.selected),
     index = i < 0 ? (dir > 0 ? 0 : list.length - 1) : (i + dir + list.length) % list.length;

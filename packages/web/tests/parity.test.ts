@@ -157,6 +157,9 @@ it('matches the same key elements to real CSS rules in the original and built pa
     click(old, '#dipcard li button');
     click(next, '#dipcard li button');
     await ready(next, '.p-StarCard-starcard');
+    // Select keyboard modality before verifying focus-visible rules after the group is replaced.
+    for (const page of [old, next])
+      page.document.dispatchEvent(new page.dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     (old.document.querySelector('.sc-go') as HTMLElement).focus();
     (next.document.querySelector('#star-go') as HTMLElement).focus();
     checkPair('.starcard', '.p-StarCard-starcard');

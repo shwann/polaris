@@ -12,8 +12,8 @@ export function hitsHalo(box: Box, { point: [x, y], radius }: Halo) {
     dy = y - Math.max(box[1], Math.min(y, box[3]));
   return dx * dx + dy * dy < radius * radius;
 }
-export function labelFits(box: Box, boxes: Box[], halos: Halo[], owner?: string) {
-  return !boxes.some((b) => intersects(box, b)) && !halos.some((h) => h.id !== owner && hitsHalo(box, h));
+export function labelFits(box: Box, boxes: Box[], halos: Halo[]) {
+  return !boxes.some((b) => intersects(box, b)) && !halos.some((h) => hitsHalo(box, h));
 }
 export function haloRadius(s: SkyState, star: Star, t: number) {
   const held = s.drag?.star === star,
@@ -37,20 +37,23 @@ export function labelObstacles(s: SkyState, t = s.last) {
       })),
   };
 }
-/** Opaque ink-shaped underlay covers links without introducing a rectangular backdrop. */
+/** One alpha controls fill, outline and shadow together, including fully hidden labels. */
 export function outlinedText(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
   y: number,
   scale: number,
+  alpha = 1,
   width?: number,
 ) {
+  if (alpha <= 0 || ctx.globalAlpha <= 0) return;
   ctx.save();
+  ctx.globalAlpha *= alpha;
   ctx.strokeStyle = 'rgba(4,10,20,.98)';
   ctx.lineWidth = 3 * scale;
   ctx.lineJoin = 'round';
   ctx.strokeText(text, x, y, width);
-  ctx.restore();
   ctx.fillText(text, x, y, width);
+  ctx.restore();
 }

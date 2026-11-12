@@ -3,7 +3,7 @@ import { required, write, type Context } from '../service/context.js';
 import { changeTask } from '../service/tasks.js';
 import { changeRequirement, checkRequirement } from '../service/requirements.js';
 import { changeSystem } from '../service/systems.js';
-import { recordRelease } from '../service/releases.js';
+import { recordRelease, setNextRelease } from '../service/releases.js';
 import { undo } from '../service/undo.js';
 import { readLegacy, importSnapshot } from '../export/importer.js';
 import { patch, string, multi, type Parsed } from './args.js';
@@ -93,6 +93,9 @@ export function executeWrite(ctx: Context, args: Parsed) {
       patch(args, ['constellation', 'name', 'note', 'sort']),
     );
     apply = () => changeSystem(ctx, action!, id, patch(args, ['constellation', 'name', 'note', 'sort']));
+  } else if (command === 'release' && action === 'next') {
+    text = `设置系统 ${ctx.config.system || ''} 下一版 ${string(args, 'version') || ''}${note === undefined ? '' : `：${note || '清空说明'}`}`;
+    apply = () => setNextRelease(ctx, string(args, 'version'), note);
   } else if (command === 'release') {
     text = releaseText(ctx.config.system || '', string(args, 'version') || '', multi(args, 'tasks') || []);
     apply = () =>
@@ -121,5 +124,5 @@ export function executeWrite(ctx: Context, args: Parsed) {
       : command === 'undo'
         ? { ...ctx, config: { ...ctx.config, system: undefined } }
         : ctx;
-  return write(eventContext, note || text, apply, preserveEvents);
+  return write(eventContext, command === 'release' && action === 'next' ? text : note || text, apply, preserveEvents);
 }

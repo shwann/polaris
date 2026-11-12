@@ -56,6 +56,7 @@
 | `task move ID --lane waiting --status …`、`task step ID --seq 1 --name --state` | 换分组、设置步骤（`--seq` 从 1 开始，连续编号） |
 | `task link ID --req REQ`、`task list\|show`、`task delete ID` | 关联需求、查看、删除；删除也能 undo |
 | `release record --version --build --tasks A,B --ref` | 发版登记 |
+| `release next --version VERSION [--note TEXT]` | 仅更新当前系统 App 的下一版及说明，不新增发版记录；省略 note 保留说明，`--note ""` 清空；须已有 App 记录 |
 | `log add --text` | 手写一条动态 |
 | `doctor [--json]`、`hook session-start` | 只读环境诊断；会话摘要（最多 4 行，系统多时合并到第三行） |
 | `status`、`check` | 摘要；整库检查（含完整性和外键） |

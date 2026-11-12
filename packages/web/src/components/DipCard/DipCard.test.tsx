@@ -22,12 +22,12 @@ it('shows Polaris global totals and switches into any of the seven modules', () 
   fireEvent.click(screen.getByRole('button', { name: /α\s*天枢\s*正式 App/ }));
   expect(uiStore.getState().dip).toBe(0);
 });
-it('shows a group waiting age and opens a task without closing the group', () => {
+it('shows a group waiting age and replaces the group with a task', () => {
   uiStore.setState({ dip: 3 });
   render(<DipCard />);
   expect(screen.getByText('星图上连着这一组全部 1 颗星 · 点一项看详情')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: /EXPORT\s*导出格式要你定/ }));
-  expect(uiStore.getState()).toMatchObject({ selected: 'EXPORT', dip: 3 });
+  expect(uiStore.getState()).toMatchObject({ selected: 'EXPORT', dip: -1 });
   act(() => openDip(1));
   expect(screen.getByText('待开工')).toBeTruthy();
 });

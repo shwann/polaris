@@ -29,3 +29,17 @@ export function recordRelease(ctx: Context, patch: Row, tasks: string[], note?: 
     update(ctx.db, 'tasks', { id }, { shipped_in: version, target_release: null, updated_at: ctx.at });
   }
 }
+
+/** Update release planning without creating a release or changing the shipped app. */
+export function setNextRelease(ctx: Context, version: string | undefined, note?: string): void {
+  const system = required(ctx.config.system, '--system');
+  existing(ctx, 'systems', system);
+  const next = required(version, '--version');
+  if (!appRow(ctx.db, system)) throw new Error(`系统 ${system} 尚无 App 记录，请先登记正式发版（release record）`);
+  update(
+    ctx.db,
+    'system_apps',
+    { system_key: system },
+    { next, ...(note !== undefined ? { next_note: note || null } : {}) },
+  );
+}

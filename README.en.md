@@ -63,6 +63,8 @@ Use a writable local directory outside cloud-sync folders. Changing the setting 
 | `/polaris:sync` | Record actual progress, decisions, and releases from the current conversation |
 | `/polaris:mirror` | Export a read-only snapshot and help publish when tools are available |
 
+CLI: `polaris release next --system KEY --version VERSION [--note TEXT]` updates next-release planning without recording a release. Omit `--note` to keep the note; use `--note ""` to clear it. Requires an existing app record and includes activity, audit, backup, and undo.
+
 Existing databases provide a read-only session summary of up to four lines. No database means no output. Set `POLARIS_HOOK=off` to disable it.
 
 ## Local dashboard

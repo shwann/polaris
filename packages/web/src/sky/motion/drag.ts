@@ -1,9 +1,9 @@
 import { COL } from '../../domain/lanes';
 import type { Drag, SkyState } from '../types';
-import { draggedParticle, moveHeld, syncHubs } from './constellation';
+import { constellation, draggedParticle, moveHeld, syncHubs } from './constellation';
 import { mobileWeights } from './mobile';
 import { record, velocity } from './inertia';
-import { launch, resetParticle } from './softbody';
+import { launch, resetParticle, THROW_FROM } from './softbody';
 
 export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
   if (!d.star && d.dip >= 0) s.soft.hubDrag = d.dip;
@@ -27,19 +27,26 @@ export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
 export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
   const p = draggedParticle(s, d);
   if (!p) return;
+  if (s.w > 560 && !s.reduce.matches && e.type !== 'pointercancel') {
+    constellation(s, [...s.stars.values()], Math.max(0, e.timeStamp - (s.soft.time ?? s.last)), e.timeStamp);
+  }
   const point = e.type === 'pointercancel' ? undefined : moveHeld(s, d, e.clientX, e.clientY),
     restore = s.reduce.matches || (s.w > 560 && e.type === 'pointercancel');
   if (point) [p.ox, p.oy] = point;
   if (restore) resetParticle(p);
   else if (s.w <= 560) p.vx = p.vy = 0;
-  else
+  else {
+    const v = velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp);
+    // Slow task releases return immediately; a sub-frame launch must not creep past the pointer.
+    const slow = d.star && Math.hypot(...v) / s.cam.s < THROW_FROM;
     launch(
       p,
-      velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp),
+      slow ? [0, 0] : v,
       s.cam.s,
       s.soft,
       d.star ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group) : s.hubParticles,
     );
+  }
   s.soft.pin = undefined;
   if (!d.star) return;
   if (restore) [d.star.x, d.star.y] = [p.baseX!, p.baseY!];

@@ -68,7 +68,7 @@ export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
       }
     }
   }
-  constellation(state, list, dt);
+  constellation(state, list, dt, t);
   for (const s of list) {
     const veil = state.ZONE.dip && state.skyK < 0.5 && state.veilY > 0 && s.y < state.veilY - scrollY ? 0.18 : 1;
     s.alpha +=

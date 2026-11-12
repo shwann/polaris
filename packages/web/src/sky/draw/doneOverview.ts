@@ -46,12 +46,13 @@ export function doneLabel(s: SkyState) {
 export function drawDoneOverview(s: SkyState) {
   if (!s.sky || s.w <= 560 || !s.laneCount('done')) return;
   const label = doneLabel(s);
+  if (label.alpha <= 0) return;
   s.ctx.save();
   s.ctx.textAlign = 'left';
-  s.ctx.fillStyle = rgba(COL.done, label.alpha * 0.95);
+  s.ctx.fillStyle = rgba(COL.done, 1);
   s.ctx.shadowColor = 'rgba(4,10,20,.95)';
   s.ctx.shadowBlur = 5;
-  outlinedText(s.ctx, label.text, label.left, label.top, 1);
+  outlinedText(s.ctx, label.text, label.left, label.top, 1, label.alpha * 0.95);
   s.ctx.restore();
 }
 

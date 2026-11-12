@@ -6,7 +6,7 @@ import { hubs } from '../layout';
 import { syncHubs } from './constellation';
 import type { Point, Star } from '../types';
 
-function fling(hz: number, duration: number, dip = false) {
+function fling(hz: number, duration: number, dip = false, phase?: number) {
   const { s, star, registry } = fixture();
   s.w = 1440;
   s.h = 900;
@@ -47,27 +47,32 @@ function fling(hz: number, duration: number, dip = false) {
   const root = dip ? s.hubParticles[3]! : list[0]!,
     [x, y] = dip ? s.hubs()[3]! : points[0]!,
     detach = attachInput(s);
-  let frame = 1000 / hz,
+  let frame = phase === undefined ? 1000 / hz : phase + 1000 / hz,
     last = 0;
   pointer('pointerdown', x, y, 0);
-  for (let i = 1; i <= 7; i++) {
-    const time = (duration * i) / 7;
+  const moves = phase === undefined ? 7 : duration / 10;
+  for (let i = 1; i <= moves; i++) {
+    const time = (duration * i) / moves;
     while (frame < time - 1e-8) {
-      s.physics(frame, frame - last, list);
+      if (phase === undefined) s.physics(frame, frame - last, list);
+      else s.frame(frame);
       last = frame;
       frame += 1000 / hz;
     }
-    pointer('pointermove', x + (160 * i) / 7, y - (dip ? (60 * i) / 7 : 0), time);
+    pointer('pointermove', x + (160 * i) / moves, y - (dip ? (60 * i) / moves : 0), time);
   }
-  s.physics(duration, duration - last, list);
+  if (phase === undefined) s.physics(duration, duration - last, list);
+  const lag = x + 160 - (dip ? x + root.ox : list[0]!.x);
   pointer('pointerup', x + 160, y - (dip ? 60 : 0), duration);
   if (!dip && duration === 70) expect(root.vx).toBeCloseTo(1400);
+  if (phase !== undefined) expect(list[0]!.x).toBeCloseTo(x + 160);
   const peaks = s.hubParticles.map((p) => Math.hypot(p.ox, p.oy));
   let peak = 0,
     own = Math.hypot(root.ox, root.oy),
     carried = 0;
   for (let i = 1; i <= hz * 4; i++) {
-    s.physics(duration + (i * 1000) / hz, 1000 / hz, list);
+    if (phase === undefined) s.physics(duration + (i * 1000) / hz, 1000 / hz, list);
+    else s.frame(frame + ((i - 1) * 1000) / hz);
     peak = Math.max(peak, root.ox - 160);
     carried = Math.max(carried, ...list.slice(1).map((p) => Math.hypot(p.ox, p.oy)));
     own = Math.max(own, Math.hypot(root.ox, root.oy));
@@ -80,7 +85,7 @@ function fling(hz: number, duration: number, dip = false) {
   detach();
   registry.dispose();
   expect(Math.max(0, ...list.map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(0.5);
-  return { peak, own, peaks, carried };
+  return { peak, own, peaks, carried, lag };
 }
 it('keeps a seven-event 160px/70ms outward fling visible with a nine-star risk tree at every refresh rate', () => {
   const runs = [30, 60, 144].map((hz) => fling(hz, 70));
@@ -100,4 +105,18 @@ it.each([30, 60, 144])('attenuates the real Dipper/polar topology after a 60ms T
       expect(peak).toBeLessThanOrEqual(r.own * 0.6);
     }
   expect(Math.max(...r.peaks.filter((_, k) => k !== 3))).toBeGreaterThan(3);
+});
+
+it.each([0, 4, 8, 12, 16])(
+  'replays independent 10ms pointer timestamps through full 60Hz frames at phase %sms',
+  (phase) => {
+    const run = fling(60, 70, false, phase);
+    expect(run.lag).toBeGreaterThan(20);
+    expect(run.peak).toBeGreaterThanOrEqual(40);
+    expect(run.peak).toBeLessThanOrEqual(90);
+  },
+);
+
+it('does not overshoot when independent 10ms inputs slowly drag 160px over one second', () => {
+  expect(fling(60, 1000, false, 12).peak).toBe(0);
 });

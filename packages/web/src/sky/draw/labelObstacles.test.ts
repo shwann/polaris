@@ -6,10 +6,10 @@ import { placeSummary } from './summaryPlacement';
 import { drawStarLabels, overlaps } from './starLabels';
 import type { Box } from '../types';
 
-it('rejects every title line intersecting another halo while allowing the owner and empty circle corners', () => {
+it('rejects every title line intersecting every halo including the owner while allowing empty circle corners', () => {
   const halo = { id: 'other', point: [200, 200] as [number, number], radius: 18 };
-  expect(labelFits([180, 150, 240, 210], [], [halo], 'self')).toBe(false);
-  expect(labelFits([180, 150, 240, 210], [], [halo], 'other')).toBe(true);
+  expect(labelFits([180, 150, 240, 210], [], [halo])).toBe(false);
+  expect(labelFits([180, 150, 240, 210], [], [halo])).toBe(false);
   expect(hitsHalo([180, 180, 185, 185], halo)).toBe(false);
   expect(labelFits([350, 835, 500, 860], [[357, 832, 1083, 877]], [])).toBe(false);
 });
@@ -54,7 +54,7 @@ it('falls back or hides labels that cannot fit beside the toolbar and every othe
       lines: ['DASH1', 'A long title', 'Third line'],
     },
   ]);
-  for (const box of boxes) expect(labelFits(box, labelObstacles(s).boxes, labelObstacles(s).halos, 'self')).toBe(true);
+  for (const box of boxes) expect(labelFits(box, labelObstacles(s).boxes, labelObstacles(s).halos)).toBe(true);
   registry.dispose();
 });
 it.each([0.5, 1])('places the done summary outside the cluster and away from all star halos at zoom %s', (zoom) => {

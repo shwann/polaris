@@ -96,13 +96,14 @@ export function drawHubLabels(state: SkyState) {
     } else if (!state.sky && state.toScreen(lx, y0)[1]! < 150) return; // behind the page header the label would clash with its text and buttons
     state.ctx.font = `600 ${big}px "JetBrains Mono", "Noto Sans SC", monospace`;
     labelBoxes[k] = [textBox(state.ctx, l1, lx, y0)];
-    state.ctx.fillStyle = rgba(c, on ? 0.95 : 0.55);
-    if (state.sky && state.w > 560) outlinedText(state.ctx, l1, lx, y0, 1);
+    const outlined = state.sky && state.w > 560;
+    state.ctx.fillStyle = rgba(c, outlined ? 1 : on ? 0.95 : 0.55);
+    if (outlined) outlinedText(state.ctx, l1, lx, y0, 1, on ? 0.95 : 0.55);
     else state.ctx.fillText(l1, lx, y0);
     state.ctx.font = `500 ${small}px "Noto Sans SC", sans-serif`;
     labelBoxes[k]!.push(textBox(state.ctx, l2, lx, y0 + 15 * state.sz));
-    state.ctx.fillStyle = rgba([200, 220, 245], on ? 0.6 : 0.35);
-    if (state.sky && state.w > 560) outlinedText(state.ctx, l2, lx, y0 + 15 * state.sz, 1);
+    state.ctx.fillStyle = rgba([200, 220, 245], outlined ? 1 : on ? 0.6 : 0.35);
+    if (outlined) outlinedText(state.ctx, l2, lx, y0 + 15 * state.sz, 1, on ? 0.6 : 0.35);
     else state.ctx.fillText(l2, lx, y0 + 15 * state.sz);
     state.ctx.globalAlpha = 1;
   });

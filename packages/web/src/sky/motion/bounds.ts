@@ -7,8 +7,15 @@ export const clamp = (n: number, min: number, max: number) => Math.min(max, Math
  * the far edge of the content may travel in until it sits KEEP of the viewport from the opposite side.
  */
 export const KEEP = 0.38;
-export const CENTER_REGION = 0.6;
-export function panBounds(points: Point[], width: number, height: number, scale: number, compact = true): Box {
+export const CONTENT_MARGIN = 24;
+export function panBounds(
+  points: Point[],
+  width: number,
+  height: number,
+  scale: number,
+  compact = true,
+  bottomInset = 0,
+): Box {
   if (!points.length) return [0, 0, 0, 0];
   const xs = points.map((p) => p[0]),
     ys = points.map((p) => p[1]);
@@ -16,13 +23,15 @@ export function panBounds(points: Point[], width: number, height: number, scale:
     x1 = width * (1 - KEEP) - Math.min(...xs) * scale,
     y0 = height * KEEP - Math.max(...ys) * scale,
     y1 = height * (1 - KEEP) - Math.min(...ys) * scale;
-  const axis = (lo: number, hi: number, viewport: number, a: number, b: number): Point => {
+  const axis = (lo: number, hi: number, viewport: number, a: number, b: number, inset = 0): Point => {
     if (!compact || (hi - lo) * scale >= viewport) return [Math.min(a, b), Math.max(a, b)];
-    const center = ((lo + hi) * scale) / 2;
-    return [(viewport * (1 - CENTER_REGION)) / 2 - center, (viewport * (1 + CENTER_REGION)) / 2 - center];
+    const start = CONTENT_MARGIN - lo * scale,
+      end = viewport - CONTENT_MARGIN - inset - hi * scale;
+    // If margins alone do not fit, centre the content in the usable area.
+    return start <= end ? [start, end] : [(start + end) / 2, (start + end) / 2];
   };
   const [left, right] = axis(Math.min(...xs), Math.max(...xs), width, x0, x1);
-  const [top, bottom] = axis(Math.min(...ys), Math.max(...ys), height, y0, y1);
+  const [top, bottom] = axis(Math.min(...ys), Math.max(...ys), height, y0, y1, bottomInset);
   return [left, top, right, bottom];
 }
 

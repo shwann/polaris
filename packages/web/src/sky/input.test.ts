@@ -204,3 +204,45 @@ it('preserves the last release position even between animation frames', () => {
   detach();
   registry.dispose();
 });
+
+it('returns the whole compact chart above the measured toolbar after a zoomed-out corner drag', () => {
+  const { s, star, dispose } = input(),
+    node = document.createElement('div');
+  vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(new DOMRect(357, 832, 726, 45));
+  s.w = 1440;
+  s.h = 900;
+  s.registry.register('skybar', node);
+  star('edge', 1100, 750);
+  Object.assign(s.cam, { s: 0.5 });
+  Object.assign(s.camT, s.cam);
+  pointer('pointerdown', 600, 400, 0);
+  pointer('pointermove', 2400, 1800, 70);
+  const bounds = cameraBounds(s);
+  expect(s.cam.x).toBeGreaterThan(bounds[2]);
+  expect(s.cam.y).toBeGreaterThan(bounds[3]);
+  pointer('pointerup', 2400, 1800, 71);
+  for (let t = 80; t <= 2080; t += 1000 / 60) s.frame(t);
+  expect(s.toScreen(100, 100)[0]).toBeGreaterThanOrEqual(24);
+  expect(s.toScreen(100, 100)[1]).toBeGreaterThanOrEqual(24);
+  expect(s.toScreen(1100, 750)[0]).toBeLessThanOrEqual(1440 - 24 + 0.01);
+  expect(s.toScreen(1100, 750)[1]).toBeLessThanOrEqual(832 - 24 + 0.01);
+  dispose();
+});
+
+it('keeps the simulation clock monotonic if a queued rAF timestamp predates pointerup', () => {
+  const { s, star, dispose } = input(),
+    a = star('a', 400, 400);
+  pointer('pointerdown', 400, 400, 0);
+  pointer('pointermove', 500, 400, 40);
+  s.frame(50);
+  pointer('pointerup', 560, 400, 70);
+  expect(s.soft.time).toBe(70);
+  const ox = a.ox;
+  s.frame(66);
+  expect(s.soft.time).toBe(70);
+  expect(a.ox).toBe(ox);
+  s.frame(83);
+  expect(s.soft.time).toBe(83);
+  expect(a.ox).toBeGreaterThan(ox);
+  dispose();
+});

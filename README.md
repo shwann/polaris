@@ -69,6 +69,8 @@ $env:POLARIS_HOME = Join-Path $HOME 'polaris-data'
 | `/polaris:sync` | 把当前对话中已发生的任务进展、决定和发版同步到北辰 |
 | `/polaris:mirror` | 生成只读镜像，在发布工具可用时协助发布 |
 
+CLI：`polaris release next --system KEY --version VERSION [--note TEXT]` 仅修改下一版，不新增发版记录。省略 `--note` 保留说明，`--note ""` 清空；系统须已有 App 记录。动态、修改记录、备份及 `undo` 沿用现有写入流程。
+
 有数据库时，会话开始会注入最多 4 行只读摘要；无库时不输出。设置 `POLARIS_HOOK=off` 可关闭。
 
 ## 本机看板

@@ -126,6 +126,9 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
   const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
   ctx.save();
   for (const L of labels.sort((a, b) => b.pri - a.pri)) {
+    if (L.a <= 0) continue;
+    const ownHalo = obstacles.halos.find((h) => h.id === L.id),
+      gap = Math.max(L.gap, (ownHalo?.radius || 0) + 2 * state.sz);
     const variants = L.lines.length > 1 ? [L.lines, L.lines.slice(0, 1)] : [L.lines];
     // Prefer the original code-only anchor before moving a label away from its star.
     const attempts = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
@@ -137,7 +140,7 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
         placeLabel(
           L.x,
           L.y + direction * (metrics.height + size),
-          L.gap,
+          gap,
           metrics.width,
           metrics.height,
           view,
@@ -149,7 +152,7 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
       for (const placement of candidates) {
         if (
           placement.width <= metrics.left ||
-          !labelFits(placement.box, [...placed, ...obstacles.boxes], obstacles.halos, L.id)
+          !labelFits(placement.box, [...placed, ...obstacles.boxes], obstacles.halos)
         )
           continue;
         const { x, y, width, align, box } = placement,
@@ -159,9 +162,10 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
         ctx.shadowBlur = 5 * state.sz;
         lines.forEach((line, i) => {
           ctx.font = metrics.fonts[i]!;
-          ctx.fillStyle = i ? rgba([214, 228, 245], L.a * 0.85) : rgba(L.c, L.a);
+          const alpha = L.a * (i ? 0.85 : 1);
+          ctx.fillStyle = i ? rgba([214, 228, 245], state.sky ? 1 : alpha) : rgba(L.c, state.sky ? 1 : alpha);
           const scale = Math.min(1, (width - metrics.left) / (metrics.width - metrics.left));
-          if (state.sky) outlinedText(ctx, line, textX, y + i * metrics.lineH, 1, metrics.advances[i]! * scale);
+          if (state.sky) outlinedText(ctx, line, textX, y + i * metrics.lineH, 1, alpha, metrics.advances[i]! * scale);
           else ctx.fillText(line, textX, y + i * metrics.lineH, metrics.advances[i]! * scale);
         });
         break variants;

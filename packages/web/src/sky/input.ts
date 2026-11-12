@@ -159,13 +159,14 @@ export function attachInput(s: SkyState) {
         Object.assign(s.cam, s.camT);
       }
     }
-    s.drag = null;
     if (!d) return;
     if (d.moved || e.type === 'pointercancel') lastTap = null;
     if ((d.star || (s.w > 560 && d.dip >= 0)) && d.moved) {
       releaseHeld(s, d, e);
+      s.drag = null;
       return;
     }
+    s.drag = null;
     if (d.moved && s.sky && !s.reduce.matches && e.type !== 'pointercancel') {
       const samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
       const v = velocity(samples, e.timeStamp);

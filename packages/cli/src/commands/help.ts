@@ -11,10 +11,11 @@ task update ID [--progress 50 --detail TEXT --needs TEXT --target-release VERSIO
 task move ID --lane waiting [--status TEXT]；task step ID --seq 1 --name TEXT --state done
 task link ID --req REQ；task list|show [ID]；task delete ID
 release record --version VERSION [--tasks ID,ID ... --build BUILD --ref REF]
+release next --version VERSION [--note TEXT]（只改下一版；--note "" 清空说明，省略则保留）
 log add --text TEXT；status [--system KEY]；check；undo BATCH
 backup；restore FILE.sql；import-json DIR [--artifact-export]
 serve [--port 8790] [--readonly]；mirror [--out FILE.html]
 doctor [--json]：检查运行环境、数据、备份和端口（只读）
 hook session-start：会话摘要（POLARIS_HOOK=off 关闭）
-写入可用 --note TEXT 指定本次动态；更新时空字符串可清空可选字段。
+其他写入可用 --note TEXT 指定本次动态；更新时空字符串可清空可选字段。
 步骤 --seq 从 1 开始；需求 --accept/--refs 替换对应完整列表。`;

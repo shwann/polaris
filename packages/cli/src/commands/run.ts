@@ -16,7 +16,7 @@ const actions: Record<string, readonly string[]> = {
   system: ['add', 'update', 'list'],
   req: ['add', 'update', 'move', 'check', 'link', 'unlink', 'list', 'show'],
   task: ['add', 'update', 'move', 'step', 'link', 'list', 'show', 'delete'],
-  release: ['record'],
+  release: ['record', 'next'],
   log: ['add'],
 };
 const singles = ['status', 'check', 'undo', 'backup', 'restore', 'serve', 'mirror', 'import-json'];

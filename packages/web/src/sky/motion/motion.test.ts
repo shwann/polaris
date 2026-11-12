@@ -92,9 +92,9 @@ describe('bounds', () => {
     // At the limits the far edge of the content still sits KEEP of the viewport in from the opposite side.
     expect(80 * 5 + high[2]).toBeCloseTo(1000 * (1 - KEEP));
     expect(920 * 5 + high[0]).toBeCloseTo(1000 * KEEP);
-    // Compact content keeps its centre in the middle 60% of the viewport.
-    expect(box[0]).toBe(-300);
-    expect(box[2]).toBe(300);
+    // Compact content keeps its entire bounds inside the viewport margins.
+    expect(box[0]).toBe(-56);
+    expect(box[2]).toBe(56);
     let x = box[2] + 100,
       v = 0;
     for (let i = 0; i < 100; i++) {
@@ -106,18 +106,16 @@ describe('bounds', () => {
   });
 });
 
-it.each([0.5, 1])('keeps compact content centred within the middle 60%% using a soft return at zoom %s', (scale) => {
+it.each([0.5, 1])('keeps the entire compact content within 24px margins using a soft return at zoom %s', (scale) => {
   const points: Point[] = [
       [100, 80],
       [900, 720],
     ],
-    box = panBounds(points, 1440, 900, scale);
-  const cx = 500 * scale,
-    cy = 400 * scale;
-  expect(cx + box[0]).toBeCloseTo(1440 * 0.2);
-  expect(cx + box[2]).toBeCloseTo(1440 * 0.8);
-  expect(cy + box[1]).toBeCloseTo(900 * 0.2);
-  expect(cy + box[3]).toBeCloseTo(900 * 0.8);
+    box = panBounds(points, 1440, 900, scale, true, 68);
+  expect(100 * scale + box[0]).toBeCloseTo(24);
+  expect(900 * scale + box[2]).toBeCloseTo(1440 - 24);
+  expect(80 * scale + box[1]).toBeCloseTo(24);
+  expect(720 * scale + box[3]).toBeCloseTo(900 - 24 - 68);
   const outside = rubber(box[2] + 500, box[0], box[2]);
   expect(outside).toBeGreaterThan(box[2]);
   expect(outside).toBeLessThan(box[2] + 140);
@@ -130,7 +128,7 @@ it.each([0.5, 1])('keeps compact content centred within the middle 60%% using a 
   }
   expect(x).toBeCloseTo(box[2], 3);
 });
-it('retains KEEP independently on an oversized axis and uses the centre rule on the compact axis', () => {
+it('retains KEEP independently on an oversized axis and fully contains the compact axis', () => {
   const b = panBounds(
     [
       [0, 100],
@@ -142,6 +140,32 @@ it('retains KEEP independently on an oversized axis and uses the centre rule on 
   );
   expect(b[0] + 2000).toBeCloseTo(1440 * KEEP);
   expect(b[2]).toBeCloseTo(1440 * (1 - KEEP));
-  expect(b[1] + 200).toBeCloseTo(900 * 0.2);
-  expect(b[3] + 200).toBeCloseTo(900 * 0.8);
+  expect(b[1] + 100).toBeCloseTo(24);
+  expect(b[3] + 300).toBeCloseTo(876);
+});
+
+it('centres nearly viewport-sized content when only the margins cannot fit, and preserves mobile bounds', () => {
+  expect(
+    panBounds(
+      [
+        [0, 0],
+        [990, 790],
+      ],
+      1000,
+      800,
+      1,
+    ),
+  ).toEqual([5, 5, 5, 5]);
+  const mobile = panBounds(
+    [
+      [0, 0],
+      [100, 100],
+    ],
+    375,
+    800,
+    1,
+    false,
+    80,
+  );
+  expect(mobile).toEqual([375 * KEEP - 100, 800 * KEEP - 100, 375 * (1 - KEEP), 800 * (1 - KEEP)]);
 });

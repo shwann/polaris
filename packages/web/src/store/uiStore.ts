@@ -52,6 +52,7 @@ export const setSky = (sky: boolean) => uiStore.setState({ sky, ...(!sky ? { sel
 export function openDip(dip: number, toggle = false, keyboard = false) {
   const s = uiStore.getState();
   uiStore.setState({
+    selected: null,
     dipKeyboard: keyboard,
     dip: toggle && s.dip === dip ? -1 : dip,
     ...(s.dip !== dip ? { dipAll: false } : {}),

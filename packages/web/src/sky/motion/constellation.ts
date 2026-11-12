@@ -37,7 +37,7 @@ export function moveHeld(s: SkyState, d: Drag, x = s.px, y = s.py): Point | unde
 }
 
 /** Hub tethers transmit gently outward only; a task drag cannot disturb other lanes via the Dipper. */
-export function constellation(s: SkyState, list: Star[], dt: number) {
+export function constellation(s: SkyState, list: Star[], dt: number, time?: number) {
   syncHubs(s);
   const hubs = s.hubParticles,
     edges: Constraint[] = [];
@@ -71,11 +71,14 @@ export function constellation(s: SkyState, list: Star[], dt: number) {
       list.filter((p) => !p.dead && p.group === g),
     );
     if (hubDraggable(s)) groups.push(hubs);
+    // Input can advance the held pose to its release timestamp between rendered frames.
+    const duration = time === undefined || s.soft.time === undefined ? dt : Math.max(0, time - s.soft.time);
+    if (time !== undefined) s.soft.time = Math.max(time, s.soft.time ?? time);
     advance(
       s.soft,
       [...list, ...hubs],
       edges,
-      dt,
+      duration,
       particle && point ? { particle, point } : undefined,
       groups,
       MIN_SEPARATION / s.cam.s,
