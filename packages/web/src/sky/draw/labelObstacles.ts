@@ -21,6 +21,8 @@ export function haloRadius(s: SkyState, star: Star, t: number) {
     throb = star.late ? 0.5 + 0.5 * Math.sin(t / 420 + star.ph) : 0;
   return r * (5.5 + throb * 5 + star.flare * 10 + (held ? 7 : s.hover === star ? 4 : 0));
 }
+/** Labels avoid the bright inner part of a halo; the soft outer fade may sit under text. */
+export const HALO_KEEP = 0.5;
 export function labelObstacles(s: SkyState, t = s.last) {
   const bar = s.registry.get('skybar');
   return {
@@ -33,7 +35,7 @@ export function labelObstacles(s: SkyState, t = s.last) {
       .map((p) => ({
         id: p.id,
         point: s.at(p.x, p.y, 14),
-        radius: haloRadius(s, p, t),
+        radius: haloRadius(s, p, t) * HALO_KEEP,
       })),
   };
 }
