@@ -23,7 +23,16 @@ export function haloRadius(s: SkyState, star: Star, t: number) {
 }
 /** Labels avoid the bright inner part of a halo; the soft outer fade may sit under text. */
 export const HALO_KEEP = 0.5;
-export function labelObstacles(s: SkyState, t = s.last) {
+/**
+ * Halo size used for label layout. It ignores the time-varying throb of late stars and
+ * twinkle flares, so a label does not toggle between fitting and not fitting every frame.
+ */
+export function steadyHaloRadius(s: SkyState, star: Star) {
+  const held = s.drag?.star === star,
+    r = (MAG[star.group] || 1.7) * s.sz * (held ? 1.25 : 1);
+  return r * (5.5 + (held ? 7 : s.hover === star ? 4 : 0)) * HALO_KEEP;
+}
+export function labelObstacles(s: SkyState) {
   const bar = s.registry.get('skybar');
   return {
     boxes:
@@ -35,7 +44,7 @@ export function labelObstacles(s: SkyState, t = s.last) {
       .map((p) => ({
         id: p.id,
         point: s.at(p.x, p.y, 14),
-        radius: haloRadius(s, p, t) * HALO_KEEP,
+        radius: steadyHaloRadius(s, p),
       })),
   };
 }

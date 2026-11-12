@@ -69,3 +69,16 @@ it.each([0.5, 1])('places the done summary outside the cluster and away from all
   expect(overlaps(box, bounds)).toBe(false);
   expect(halos.some((h) => hitsHalo(box, h))).toBe(false);
 });
+it('keeps label obstacles steady while late stars throb and twinkle', () => {
+  const { s } = fixture(),
+    stars = [...s.stars.values()];
+  for (const star of stars) Object.assign(star, { late: true, flare: 0 });
+  const radii = () => labelObstacles(s).halos.map((h) => h.radius);
+  s.last = 0;
+  const first = radii();
+  for (const t of [137, 420, 911, 1650]) {
+    s.last = t;
+    stars.forEach((star, i) => (star.flare = (i % 3) / 3));
+    expect(radii()).toEqual(first);
+  }
+});

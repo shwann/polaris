@@ -117,61 +117,92 @@ export function measureLabel(ctx: CanvasRenderingContext2D, lines: string[], siz
   };
 }
 
-/** Placement and drawing share measured ink bounds; lower priority labels may fall back to code only. */
+interface LabelChoice {
+  full: boolean;
+  direction: number;
+  flip: boolean;
+}
+/** Last placement per sky state, so drifting clusters do not make labels hop every frame. */
+const memory = new WeakMap<object, Map<string, LabelChoice>>();
+/** Extra clearance, in sz, a code-only label needs before it grows its title back. */
+export const LABEL_UPGRADE_MARGIN = 6;
+const grow = (b: Box, m: number) => [b[0] - m, b[1] - m, b[2] + m, b[3] + m] as Box;
+
+/**
+ * Placement and drawing share measured ink bounds; lower priority labels may fall back to code only.
+ * In the sky view a label keeps its previous side and title state while it still fits.
+ */
 export function drawStarLabels(state: SkyState, labels: Label[]) {
   const ctx = state.ctx,
     size = Math.max(10, state.unit * 0.0098) * state.sz,
     view = [...state.toWorld(8, 8), ...state.toWorld(state.w - 8, state.h - 8)] as Box,
     placed: Box[] = [];
   const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
+  let memo = memory.get(state);
+  if (state.sky && !memo) memory.set(state, (memo = new Map()));
+  const chosen = new Map<string, LabelChoice>();
   ctx.save();
   for (const L of labels.sort((a, b) => b.pri - a.pri)) {
     if (L.a <= 0) continue;
     const ownHalo = obstacles.halos.find((h) => h.id === L.id),
       gap = Math.max(L.gap, (ownHalo?.radius || 0) + 2 * state.sz);
-    const variants = L.lines.length > 1 ? [L.lines, L.lines.slice(0, 1)] : [L.lines];
+    const hasTitle = L.lines.length > 1;
+    const variants = hasTitle ? [L.lines, L.lines.slice(0, 1)] : [L.lines];
+    const metrics = variants.map((lines) => measureLabel(ctx, lines, size));
     // Prefer the original code-only anchor before moving a label away from its star.
-    const attempts = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
-      variants.map((lines) => ({ lines, direction })),
+    const tries = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
+      variants.flatMap((lines, v) => [false, true].map((flip) => ({ v, direction, flip, full: hasTitle && v === 0 }))),
     );
-    variants: for (const { lines, direction } of attempts) {
-      const metrics = measureLabel(ctx, lines, size);
-      const candidates = [false, true].map((flip) =>
-        placeLabel(
-          L.x,
-          L.y + direction * (metrics.height + size),
-          gap,
-          metrics.width,
-          metrics.height,
-          view,
-          metrics.ascent,
-          2 * state.sz,
-          flip,
-        ),
+    const prev = L.id ? memo?.get(L.id) : undefined;
+    const same = (t: (typeof tries)[number]) =>
+      !!prev && t.full === prev.full && t.direction === prev.direction && t.flip === prev.flip;
+    const upgrading = !!prev && !prev.full && hasTitle;
+    const ordered = prev
+      ? upgrading
+        ? [...tries.filter((t) => t.full), ...tries.filter(same), ...tries.filter((t) => !t.full && !same(t))]
+        : [...tries.filter(same), ...tries.filter((t) => !same(t))]
+      : tries;
+    for (const t of ordered) {
+      const lines = variants[t.v]!,
+        m = metrics[t.v]!;
+      const placement = placeLabel(
+        L.x,
+        L.y + t.direction * (m.height + size),
+        gap,
+        m.width,
+        m.height,
+        view,
+        m.ascent,
+        2 * state.sz,
+        t.flip,
       );
-      for (const placement of candidates) {
-        if (
-          placement.width <= metrics.left ||
-          !labelFits(placement.box, [...placed, ...obstacles.boxes], obstacles.halos)
-        )
-          continue;
-        const { x, y, width, align, box } = placement,
-          textX = (align === 'left' ? x : x - width) + metrics.left;
-        placed.push(box);
-        ctx.shadowColor = 'rgba(4,10,20,.95)';
-        ctx.shadowBlur = 5 * state.sz;
-        lines.forEach((line, i) => {
-          ctx.font = metrics.fonts[i]!;
-          const alpha = L.a * (i ? 0.85 : 1);
-          ctx.fillStyle = i ? rgba([214, 228, 245], state.sky ? 1 : alpha) : rgba(L.c, state.sky ? 1 : alpha);
-          const scale = Math.min(1, (width - metrics.left) / (metrics.width - metrics.left));
-          if (state.sky) outlinedText(ctx, line, textX, y + i * metrics.lineH, 1, alpha, metrics.advances[i]! * scale);
-          else ctx.fillText(line, textX, y + i * metrics.lineH, metrics.advances[i]! * scale);
-        });
-        break variants;
-      }
+      const margin = upgrading && t.full ? LABEL_UPGRADE_MARGIN * state.sz : 0;
+      if (
+        placement.width <= m.left ||
+        !labelFits(grow(placement.box, margin), [...placed, ...obstacles.boxes], obstacles.halos)
+      )
+        continue;
+      const { x, y, width, align, box } = placement,
+        textX = (align === 'left' ? x : x - width) + m.left;
+      placed.push(box);
+      if (L.id) chosen.set(L.id, { full: t.full, direction: t.direction, flip: t.flip });
+      ctx.shadowColor = 'rgba(4,10,20,.95)';
+      ctx.shadowBlur = 5 * state.sz;
+      lines.forEach((line, i) => {
+        ctx.font = m.fonts[i]!;
+        const alpha = L.a * (i ? 0.85 : 1);
+        ctx.fillStyle = i ? rgba([214, 228, 245], state.sky ? 1 : alpha) : rgba(L.c, state.sky ? 1 : alpha);
+        const scale = Math.min(1, (width - m.left) / (m.width - m.left));
+        if (state.sky) outlinedText(ctx, line, textX, y + i * m.lineH, 1, alpha, m.advances[i]! * scale);
+        else ctx.fillText(line, textX, y + i * m.lineH, m.advances[i]! * scale);
+      });
+      break;
     }
   }
   ctx.restore();
+  if (memo) {
+    memo.clear();
+    for (const [id, c] of chosen) memo.set(id, c);
+  }
   return placed;
 }
