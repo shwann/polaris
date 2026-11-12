@@ -92,9 +92,9 @@ describe('bounds', () => {
     // At the limits the far edge of the content still sits KEEP of the viewport in from the opposite side.
     expect(80 * 5 + high[2]).toBeCloseTo(1000 * (1 - KEEP));
     expect(920 * 5 + high[0]).toBeCloseTo(1000 * KEEP);
-    // Content that fills the screen can still be dragged well past either side at unit scale.
-    expect(box[0]).toBeLessThan(-400);
-    expect(box[2]).toBeGreaterThan(400);
+    // Compact content keeps its centre in the middle 60% of the viewport.
+    expect(box[0]).toBe(-300);
+    expect(box[2]).toBe(300);
     let x = box[2] + 100,
       v = 0;
     for (let i = 0; i < 100; i++) {
@@ -104,4 +104,44 @@ describe('bounds', () => {
     }
     expect(x).toBeCloseTo(box[2], 5);
   });
+});
+
+it.each([0.5, 1])('keeps compact content centred within the middle 60%% using a soft return at zoom %s', (scale) => {
+  const points: Point[] = [
+      [100, 80],
+      [900, 720],
+    ],
+    box = panBounds(points, 1440, 900, scale);
+  const cx = 500 * scale,
+    cy = 400 * scale;
+  expect(cx + box[0]).toBeCloseTo(1440 * 0.2);
+  expect(cx + box[2]).toBeCloseTo(1440 * 0.8);
+  expect(cy + box[1]).toBeCloseTo(900 * 0.2);
+  expect(cy + box[3]).toBeCloseTo(900 * 0.8);
+  const outside = rubber(box[2] + 500, box[0], box[2]);
+  expect(outside).toBeGreaterThan(box[2]);
+  expect(outside).toBeLessThan(box[2] + 140);
+  let x = outside,
+    v = 0;
+  for (let i = 0; i < 60; i++) {
+    const next = spring(x, v, box[2], 1000 / 60, 18, 1);
+    x = next.x;
+    v = next.v;
+  }
+  expect(x).toBeCloseTo(box[2], 3);
+});
+it('retains KEEP independently on an oversized axis and uses the centre rule on the compact axis', () => {
+  const b = panBounds(
+    [
+      [0, 100],
+      [2000, 300],
+    ],
+    1440,
+    900,
+    1,
+  );
+  expect(b[0] + 2000).toBeCloseTo(1440 * KEEP);
+  expect(b[2]).toBeCloseTo(1440 * (1 - KEEP));
+  expect(b[1] + 200).toBeCloseTo(900 * 0.2);
+  expect(b[3] + 200).toBeCloseTo(900 * 0.8);
 });

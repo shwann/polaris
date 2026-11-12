@@ -15,6 +15,8 @@ export function SkyCanvas() {
     bindTooltip((text, detail, x, y) => {
       const tip = tooltip.current;
       if (!tip) return;
+      tip.hidden = !text;
+      if (!text) return;
       tip.replaceChildren(document.createTextNode(text));
       const small = document.createElement('small');
       small.textContent = detail;
@@ -46,7 +48,7 @@ export function SkyCanvas() {
   return (
     <>
       <canvas className={styles.field} ref={canvas} aria-hidden="true" />
-      <div className={styles.tip} ref={tooltip} aria-hidden="true" />
+      <div className={styles.tip} ref={tooltip} hidden aria-hidden="true" />
     </>
   );
 }

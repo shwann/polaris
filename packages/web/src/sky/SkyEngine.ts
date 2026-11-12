@@ -1,3 +1,5 @@
+import { hubObstacles } from './geometry/hubObstacles';
+import { placeCard } from './geometry/cardPlacement';
 import { COL, FIG_LANE } from '../domain/lanes';
 import { filtering, laneTasks, nextCandidates, searchTasks, selectView, shipped } from '../domain/selectors';
 import type { LayoutRegistry } from '../layout/LayoutRegistry';
@@ -136,6 +138,22 @@ export class SkyEngine {
     const s = this.state,
       p = s?.dipPos[index];
     return s && p ? s.toScreen(...p) : null;
+  }
+  hubObstacles(exclude = -1) {
+    return this.state ? hubObstacles(this.state, exclude) : [];
+  }
+  placeGroupCard(index: number, width: number, height: number) {
+    const s = this.state,
+      p = this.dipScreen(index);
+    if (!s || !p || !s.sky || s.w <= 560) return null;
+    const gp = this.groupScreen(index) || p;
+    const cluster: Box = [Math.min(p[0], gp[0]), Math.min(p[1], gp[1]), Math.max(p[0], gp[0]), Math.max(p[1], gp[1])];
+    const placement = placeCard(p, cluster, [width, height], [s.w, s.h - 74], undefined, hubObstacles(s, index));
+    if (Math.hypot(...placement.pan) > 0.75) {
+      s.camT.x = s.cam.x + placement.pan[0];
+      s.camT.y = s.cam.y + placement.pan[1];
+    }
+    return placement;
   }
   groupScreen(index: number) {
     const s = this.state,

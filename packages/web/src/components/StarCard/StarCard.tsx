@@ -1,3 +1,5 @@
+import { skyNames } from '../../sky/taskNames';
+import { getEngine } from '../../hooks/skyBridge';
 import { TaskEditor } from '../LocalEdit/TaskEditor';
 import sharedStyles from '../Shared/Shared.module.css';
 import styles from './StarCard.module.css';
@@ -34,6 +36,7 @@ export function moveStarCard(x: number, y: number, cluster: Box = [x, y, x, y]) 
     [card.offsetWidth, card.offsetHeight],
     [innerWidth, innerHeight - 74],
     same ? (card.dataset.side as CardSide | undefined) : undefined,
+    getEngine()?.hubObstacles(),
   );
   card.dataset.layoutId = card.dataset.starId;
   card.dataset.side = placement.side;
@@ -70,7 +73,7 @@ export function StarCard() {
       data-sky-block
     >
       <div className={styles['sc-top']}>
-        <span className={styles['sc-code']}>{t.code}</span>
+        <span className={styles['sc-code']}>{ui.sky ? skyNames(view.tasks).get(t.id) : t.code}</span>
         <span className={styles['sc-lane']}>{l.name}</span>
         <button
           type="button"

@@ -6,6 +6,7 @@ import { record, velocity } from './inertia';
 import { launch, resetParticle } from './softbody';
 
 export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
+  if (!d.star && d.dip >= 0) s.soft.hubDrag = d.dip;
   syncHubs(s);
   if (s.w <= 560 && d.star && !s.reduce.matches)
     d.mobileWeights = mobileWeights(d.star, s.trees.get(d.star.group) || []);
@@ -19,6 +20,7 @@ export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
   d.grab = [p.baseX! + p.ox + s.mx * depth - wx, p.baseY! + p.oy + s.my * depth - wy];
   p.vx = p.vy = 0;
   s.soft.releases?.clear();
+  s.soft.throws?.clear();
   s.soft.pin = { particle: p, point: [p.ox, p.oy] };
 }
 

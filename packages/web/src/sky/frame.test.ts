@@ -26,3 +26,34 @@ it('damps distant layer zoom and separates translation; board background keeps i
   }
   registry.dispose();
 });
+
+it('draws desktop sky text after link, pointer, beam and focus effects, preserving the board order', () => {
+  const { s, registry } = fixture(),
+    order: string[] = [];
+  for (const key of [
+    'drawDipper',
+    'drawClusters',
+    'drawPicking',
+    'drawBeams',
+    'drawSignals',
+    'drawEffects',
+    'drawStars',
+    'drawHubLabels',
+  ] as const) {
+    const original = s[key];
+    Object.assign(s, {
+      [key]: (...args: never[]) => {
+        order.push(key);
+        return (original as (...a: never[]) => unknown)(...args);
+      },
+    });
+  }
+  s.frame(16);
+  expect(order.indexOf('drawHubLabels')).toBeGreaterThan(order.indexOf('drawEffects'));
+  expect(order.indexOf('drawStars')).toBeGreaterThan(order.indexOf('drawEffects'));
+  order.length = 0;
+  s.sky = false;
+  s.frame(32);
+  expect(order.indexOf('drawHubLabels')).toBeLessThan(order.indexOf('drawBeams'));
+  registry.dispose();
+});

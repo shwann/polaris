@@ -1,3 +1,5 @@
+import { placeSummary } from './summaryPlacement';
+import { labelObstacles, outlinedText } from './labelObstacles';
 import { COL } from '../../domain/lanes';
 import { boundsOf } from '../geometry/cardPlacement';
 import { stopCamera } from '../motion/cameraMotion';
@@ -18,15 +20,26 @@ export function doneBounds(s: SkyState): Box | null {
 }
 
 export function doneLabel(s: SkyState) {
-  const [cx, cy] = s.centre('done'),
-    [x, y] = s.toScreen(...s.at(cx, cy, 14));
+  const box = doneBounds(s) || [0, 0, 0, 0];
+  const screen = [...s.toScreen(box[0], box[1]), ...s.toScreen(box[2], box[3])] as Box;
   const size = Math.max(10, s.unit * 0.0115) * s.sz * s.cam.s;
   const summary = doneSummary(s.laneCount('done'), s.cam.s);
   s.ctx.font = `600 ${size}px "JetBrains Mono", "Noto Sans SC", monospace`;
   const width = s.ctx.measureText(summary.text).width;
-  const left = Math.max(12, Math.min(x + 22, s.w - width - 12));
-  const top = Math.max(16, Math.min(y - 24, s.h - 100));
-  return { ...summary, left, top, size, width };
+  const obstacles = labelObstacles(s);
+  const placement = placeSummary(
+    screen,
+    width,
+    size,
+    [s.w, s.h],
+    obstacles.halos.map((p) => ({
+      ...p,
+      point: s.toScreen(...p.point),
+      radius: p.radius * s.cam.s,
+    })),
+    obstacles.boxes.map((b) => [...s.toScreen(b[0], b[1]), ...s.toScreen(b[2], b[3])] as Box),
+  );
+  return { ...summary, ...placement, alpha: placement.visible ? summary.alpha : 0, size, width };
 }
 
 /** Drawn in screen space, with the same font and colour as the other cluster labels. */
@@ -38,7 +51,7 @@ export function drawDoneOverview(s: SkyState) {
   s.ctx.fillStyle = rgba(COL.done, label.alpha * 0.95);
   s.ctx.shadowColor = 'rgba(4,10,20,.95)';
   s.ctx.shadowBlur = 5;
-  s.ctx.fillText(label.text, label.left, label.top);
+  outlinedText(s.ctx, label.text, label.left, label.top, 1);
   s.ctx.restore();
 }
 

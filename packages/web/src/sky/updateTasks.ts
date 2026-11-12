@@ -1,3 +1,4 @@
+import { skyNames } from './taskNames';
 import { COL } from '../domain/lanes';
 import { ageText } from '../domain/time';
 import type { Task } from '../domain/types';
@@ -5,7 +6,8 @@ import { hash } from './palette';
 import type { SkyState, Star } from './types';
 export function updateTasks(s: SkyState, list: Task[]) {
   s.unvN = list.filter((t) => t.unverified).length;
-  const seen = new Set<string>();
+  const seen = new Set<string>(),
+    names = skyNames(list);
   let moved = false;
   for (const t of list) {
     seen.add(t.id);
@@ -43,6 +45,7 @@ export function updateTasks(s: SkyState, list: Task[]) {
       moved = true;
     }
     star.code = t.code;
+    star.skyCode = names.get(t.id);
     star.title = t.title;
     star.late = t.lane === 'waiting' && ageText(t)[1];
     star.dead = false;

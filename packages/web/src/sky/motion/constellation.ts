@@ -2,9 +2,13 @@ import { DIPPER_LINES, FIG_LANE } from '../../domain/lanes';
 import { tetherEnd } from '../geometry/tether';
 import { hubHomes } from '../layout';
 import type { Drag, Point, SkyState, Star } from '../types';
-import { advance, resetParticle, type Constraint, type Particle } from './softbody';
+import { advance, HOME, DAMPING, resetParticle, type Constraint, type Particle } from './softbody';
 import { MIN_SEPARATION } from './separation';
 
+export const HUB_HOME = 100;
+export const HUB_DAMPING = 16;
+export const HUB_COMPLIANCE = 0.08;
+export const POLAR_COMPLIANCE = 0.012;
 export const hubDraggable = (s: SkyState) => s.sky && s.w > 560 && !s.reduce.matches;
 export const draggedParticle = (s: SkyState, d: Drag) =>
   d.star || (hubDraggable(s) ? s.hubParticles[d.dip] : undefined);
@@ -12,6 +16,8 @@ export const draggedParticle = (s: SkyState, d: Drag) =>
 export function syncHubs(s: SkyState) {
   hubHomes(s).forEach(([x, y], i) => {
     const p = (s.hubParticles[i] ??= { ox: 0, oy: 0, vx: 0, vy: 0 });
+    p.home = s.soft.hubDrag === 7 ? HOME : HUB_HOME;
+    p.damping = s.soft.hubDrag === 7 ? DAMPING : HUB_DAMPING;
     [p.baseX, p.baseY] = [x, y];
     if (!hubDraggable(s)) resetParticle(p);
   });
@@ -38,7 +44,13 @@ export function constellation(s: SkyState, list: Star[], dt: number) {
   for (const tree of s.trees.values())
     for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
   if (hubDraggable(s)) {
-    for (const [a, b] of [...DIPPER_LINES, [0, 7]]) edges.push({ a: hubs[a!]!, b: hubs[b!]!, compliance: 0.012 });
+    for (const [a, b] of [...DIPPER_LINES, [0, 7]])
+      edges.push({
+        a: hubs[a!]!,
+        b: hubs[b!]!,
+        compliance: s.soft.hubDrag === 7 ? POLAR_COMPLIANCE : HUB_COMPLIANCE,
+        stiffening: s.soft.hubDrag === 7 ? 6 : 0,
+      });
     for (let k = 1; k < 7; k++) {
       const p = hubs[k]!,
         b = clusterTether(s, k)?.star;

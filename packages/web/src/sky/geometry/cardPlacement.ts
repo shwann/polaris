@@ -1,10 +1,11 @@
 import type { Box, Point } from '../types';
+import { intersects } from '../draw/labelObstacles';
 
 export type CardSide = 'left' | 'right' | 'top' | 'bottom';
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
 /** Choose free screen area outside the cluster, then translate the star/card pair into view. */
-export function placeCard(star: Point, cluster: Box, size: Point, viewport: Point, preferred?: CardSide) {
+function baseCard(star: Point, cluster: Box, size: Point, viewport: Point, preferred?: CardSide) {
   const [w, h] = viewport,
     [cw, ch] = size,
     [x, y] = star,
@@ -32,6 +33,53 @@ export function placeCard(star: Point, cluster: Box, size: Point, viewport: Poin
   const dx = clamp(0, margin - Math.min(x - gap, left), w - margin - Math.max(x + gap, left + cw));
   const dy = clamp(0, margin - Math.min(y - gap, top), h - margin - Math.max(y + gap, top + ch));
   return { side, left: left + dx, top: top + dy, pan: [dx, dy] as Point };
+}
+
+/** Try both sides and slides along each edge before asking the camera to translate the chart. */
+export function placeCard(
+  star: Point,
+  cluster: Box,
+  size: Point,
+  viewport: Point,
+  preferred?: CardSide,
+  obstacles: Box[] = [],
+) {
+  const original = baseCard(star, cluster, size, viewport, preferred);
+  if (!obstacles.length) return original;
+  const [cw, ch] = size,
+    [w, h] = viewport;
+  const evaluate = (p: ReturnType<typeof baseCard>) => {
+    const box: Box = [p.left, p.top, p.left + cw, p.top + ch];
+    return obstacles.reduce((area, b) => {
+      const shifted: Box = [b[0] + p.pan[0], b[1] + p.pan[1], b[2] + p.pan[0], b[3] + p.pan[1]];
+      return (
+        area +
+        (intersects(box, shifted)
+          ? (Math.min(box[2], shifted[2]) - Math.max(box[0], shifted[0])) *
+            (Math.min(box[3], shifted[3]) - Math.max(box[1], shifted[1]))
+          : 0)
+      );
+    }, 0);
+  };
+  if (evaluate(original) === 0) return original;
+  const candidates = [original];
+  for (const side of ['right', 'left', 'bottom', 'top'] as CardSide[]) {
+    const p = baseCard(star, cluster, size, viewport, side),
+      horizontal = side === 'right' || side === 'left';
+    const slides = [
+      horizontal ? p.top - p.pan[1] : p.left - p.pan[0],
+      ...obstacles.flatMap((b) => (horizontal ? [b[1] - ch - 8, b[3] + 8] : [b[0] - cw - 8, b[2] + 8])),
+    ];
+    for (const slide of slides) {
+      const left = horizontal ? p.left - p.pan[0] : slide,
+        top = horizontal ? slide : p.top - p.pan[1],
+        dx = clamp(0, 16 - Math.min(star[0] - 26, left), w - 16 - Math.max(star[0] + 26, left + cw)),
+        dy = clamp(0, 16 - Math.min(star[1] - 26, top), h - 16 - Math.max(star[1] + 26, top + ch));
+      candidates.push({ side, left: left + dx, top: top + dy, pan: [dx, dy] });
+    }
+  }
+  candidates.sort((a, b) => evaluate(a) - evaluate(b) || Math.hypot(...a.pan) - Math.hypot(...b.pan));
+  return candidates[0]!;
 }
 
 export function boundsOf(points: Point[]): Box {

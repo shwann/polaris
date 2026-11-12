@@ -1,4 +1,5 @@
 import type { Box, Color, SkyState } from '../types';
+import { labelFits, labelObstacles, outlinedText } from './labelObstacles';
 import { rgba } from '../palette';
 
 /**
@@ -71,6 +72,7 @@ export function placeLabel(
 }
 
 interface Label {
+  id?: string;
   lines: string[];
   x: number;
   y: number;
@@ -121,16 +123,35 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
     size = Math.max(10, state.unit * 0.0098) * state.sz,
     view = [...state.toWorld(8, 8), ...state.toWorld(state.w - 8, state.h - 8)] as Box,
     placed: Box[] = [];
+  const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
   ctx.save();
   for (const L of labels.sort((a, b) => b.pri - a.pri)) {
     const variants = L.lines.length > 1 ? [L.lines, L.lines.slice(0, 1)] : [L.lines];
-    variants: for (const lines of variants) {
+    // Prefer the original code-only anchor before moving a label away from its star.
+    const attempts = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
+      variants.map((lines) => ({ lines, direction })),
+    );
+    variants: for (const { lines, direction } of attempts) {
       const metrics = measureLabel(ctx, lines, size);
       const candidates = [false, true].map((flip) =>
-        placeLabel(L.x, L.y, L.gap, metrics.width, metrics.height, view, metrics.ascent, 2 * state.sz, flip),
+        placeLabel(
+          L.x,
+          L.y + direction * (metrics.height + size),
+          L.gap,
+          metrics.width,
+          metrics.height,
+          view,
+          metrics.ascent,
+          2 * state.sz,
+          flip,
+        ),
       );
       for (const placement of candidates) {
-        if (placement.width <= metrics.left || placed.some((box) => overlaps(placement.box, box))) continue;
+        if (
+          placement.width <= metrics.left ||
+          !labelFits(placement.box, [...placed, ...obstacles.boxes], obstacles.halos, L.id)
+        )
+          continue;
         const { x, y, width, align, box } = placement,
           textX = (align === 'left' ? x : x - width) + metrics.left;
         placed.push(box);
@@ -140,7 +161,8 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
           ctx.font = metrics.fonts[i]!;
           ctx.fillStyle = i ? rgba([214, 228, 245], L.a * 0.85) : rgba(L.c, L.a);
           const scale = Math.min(1, (width - metrics.left) / (metrics.width - metrics.left));
-          ctx.fillText(line, textX, y + i * metrics.lineH, metrics.advances[i]! * scale);
+          if (state.sky) outlinedText(ctx, line, textX, y + i * metrics.lineH, 1, metrics.advances[i]! * scale);
+          else ctx.fillText(line, textX, y + i * metrics.lineH, metrics.advances[i]! * scale);
         });
         break variants;
       }

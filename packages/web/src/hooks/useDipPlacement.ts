@@ -16,6 +16,12 @@ export function useDipPlacement(ref: RefObject<HTMLDivElement | null>, index: nu
     let x, y;
     if (xy.current) [x, y] = xy.current;
     else {
+      const placement = getEngine()?.placeGroupCard(index, cw, ch);
+      if (placement) {
+        xy.current = [placement.left, placement.top];
+        node.style.transform = `translate(${Math.round(placement.left)}px, ${Math.round(placement.top)}px)`;
+        return;
+      }
       const p = getEngine()?.dipScreen(index) || [W * 0.4, 60],
         gp = getEngine()?.groupScreen(index),
         left = gp ? gp[0] > p[0]! : p[0]! + 28 + cw > W - m;
@@ -32,21 +38,8 @@ export function useDipPlacement(ref: RefObject<HTMLDivElement | null>, index: nu
     xy.current = null;
     const node = ref.current;
     if (!node || index < 0) return;
-    const W = innerWidth,
-      H = innerHeight,
-      cw = node.offsetWidth,
-      ch = node.offsetHeight,
-      m = 16,
-      p = getEngine()?.dipScreen(index) || [W * 0.4, 60],
-      gp = getEngine()?.groupScreen(index),
-      left = gp ? gp[0] > p[0]! : p[0]! + 28 + cw > W - m;
-    let x = left ? p[0]! - 28 - cw : p[0]! + 28;
-    if (x < m && left) x = p[0]! + 28;
-    const y = Math.max(m, Math.min(p[1]! + 18, H - ch - 90));
-    x = Math.max(m, Math.min(x, W - cw - m));
-    xy.current = [x, y];
-    if (W > 560) node.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-  }, [index, ref]);
+    place();
+  }, [index, ref, place]);
   useEffect(() => {
     window.addEventListener('resize', place);
     return () => {

@@ -26,6 +26,7 @@ export interface Star {
   f: number;
   x: number;
   y: number;
+  skyCode?: string;
   code: string;
   title: string;
   late: boolean;
@@ -146,6 +147,7 @@ export interface SkyState extends SkyMethods {
   /** Star each Dipper tether is attached to, kept between frames so it does not hop between equal candidates. */
   tetherHub: Map<Lane, string>;
   hubParticles: Particle[];
+  hubLabelBoxes?: Box[][];
   soft: SoftBody;
   dipHover: number;
   dipSel: number;
@@ -172,6 +174,7 @@ export interface SkyState extends SkyMethods {
   chartCore: HTMLCanvasElement | null;
   chartBox: Box;
   layoutScale: number;
+  tooltipSettling?: boolean;
   tooltipGate: { x: number; y: number; id: string | null } | null;
   tints: Map<string, HTMLCanvasElement>;
   halo: HTMLCanvasElement;

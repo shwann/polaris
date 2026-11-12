@@ -8,7 +8,7 @@ export function cameraBounds(s: SkyState, scale = s.camT.s) {
   const points = [...s.stars.values()]
     .filter((star) => !star.dead)
     .map((star) => s.at(star.baseX ?? star.x - star.ox, star.baseY ?? star.y - star.oy, 14));
-  return panBounds([...points, ...s.hubs()], s.w, s.h, scale);
+  return panBounds([...points, ...s.hubs()], s.w, s.h, scale, s.w > 560);
 }
 
 export function stopCamera(s: SkyState) {

@@ -7,6 +7,15 @@ export function clearTooltip(s: SkyState) {
   s.events.onTooltip?.('', '', s.px, s.py);
 }
 export function tooltipAllowed(s: SkyState): boolean {
+  if (s.drag) return false;
+  if (s.tooltipSettling) {
+    const moving = [...s.stars.values(), ...s.hubParticles].some(
+      (p) => Math.hypot(p.ox, p.oy) > 0.5 || Math.hypot(p.vx, p.vy) > 4,
+    );
+    if (moving) return false;
+    s.tooltipSettling = false;
+    s.tooltipGate = null;
+  }
   const gate = s.tooltipGate;
   const moved = !gate || s.px !== gate.x || s.py !== gate.y;
   return !!(
@@ -34,7 +43,7 @@ export function emitTooltip(s: SkyState) {
   if (s.hover) {
     const l = LANES.find((l) => l.key === s.hover!.group);
     s.events.onTooltip?.(
-      `${s.hover.code} ${s.hover.title}`,
+      `${s.sky ? s.hover.skyCode || s.hover.code : s.hover.code} ${s.hover.title}`,
       `${l?.name || s.hover.group} · 点击看详情 · 可拖动`,
       s.px,
       s.py,

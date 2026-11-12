@@ -92,6 +92,7 @@ it('softens only the released group for the fixed-clock launch window and leaves
   expect(Math.abs(neighbor.vx)).toBeLessThan(Math.abs(other.vx));
   for (let i = 0; i < 24; i++) advance(body, [root, neighbor, other], [], STEP * 1000);
   expect(body.releases?.size).toBe(0);
+  expect(body.throws?.size).toBe(0);
   launch(root, [-40, 0], 1, body, [root, neighbor]);
   expect(body.releases?.size).toBe(0);
 });

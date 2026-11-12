@@ -1,4 +1,6 @@
 import { FIG_LANE as CARD_LANE, COL, DIPPER, GOLD, LANES, LATIN } from '../../domain/lanes';
+import { textBox } from '../geometry/hubObstacles';
+import { outlinedText } from './labelObstacles';
 import { SMALL_LABEL } from '../constants';
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
@@ -8,6 +10,8 @@ export function drawHubLabels(state: SkyState) {
     small = Math.max(10, state.unit * 0.011) * state.sz;
   const total = [...state.counts.values()].reduce((a, b) => a + b, 0),
     done = state.laneCount('done');
+  const labelBoxes: import('../types').Box[][] = [];
+  state.hubLabelBoxes = labelBoxes;
   state.ctx.textAlign = 'center';
   state.dipPos.forEach(([x, y], k) => {
     let l1,
@@ -91,11 +95,15 @@ export function drawHubLabels(state: SkyState) {
       state.ctx.globalAlpha = state.skyK;
     } else if (!state.sky && state.toScreen(lx, y0)[1]! < 150) return; // behind the page header the label would clash with its text and buttons
     state.ctx.font = `600 ${big}px "JetBrains Mono", "Noto Sans SC", monospace`;
+    labelBoxes[k] = [textBox(state.ctx, l1, lx, y0)];
     state.ctx.fillStyle = rgba(c, on ? 0.95 : 0.55);
-    state.ctx.fillText(l1, lx, y0);
+    if (state.sky && state.w > 560) outlinedText(state.ctx, l1, lx, y0, 1);
+    else state.ctx.fillText(l1, lx, y0);
     state.ctx.font = `500 ${small}px "Noto Sans SC", sans-serif`;
+    labelBoxes[k]!.push(textBox(state.ctx, l2, lx, y0 + 15 * state.sz));
     state.ctx.fillStyle = rgba([200, 220, 245], on ? 0.6 : 0.35);
-    state.ctx.fillText(l2, lx, y0 + 15 * state.sz);
+    if (state.sky && state.w > 560) outlinedText(state.ctx, l2, lx, y0 + 15 * state.sz, 1);
+    else state.ctx.fillText(l2, lx, y0 + 15 * state.sz);
     state.ctx.globalAlpha = 1;
   });
   state.ctx.textAlign = 'start';

@@ -1,4 +1,5 @@
 import { FIG_LANE as CARD_LANE } from '../domain/lanes';
+import { drawDoneOverview } from './draw/doneOverview';
 import { drawBackgroundChart } from './draw/background';
 import { layerScale } from './draw/chartGeometry';
 import { DEPTH } from './constants';
@@ -75,10 +76,26 @@ export function frame(state: SkyState, t: number) {
   const live = state.drawClusters(t, list);
   state.drawFlows(t);
   state.drawTraces(t);
-  state.drawHubLabels();
+  if (!state.sky || state.w <= 560) state.drawHubLabels();
   state.drawPicking(t, list);
   state.drawBeams(t);
-  state.drawStars(t, list);
+  if (!state.sky || state.w <= 560) state.drawStars(t, list);
   state.drawSignals(t, live);
   state.drawEffects(t, dt);
+  if (state.sky && state.w > 560) {
+    state.ctx.setTransform(
+      state.dpr * state.cam.s,
+      0,
+      0,
+      state.dpr * state.cam.s,
+      state.dpr * state.cam.x,
+      state.dpr * state.cam.y,
+    );
+    state.lwk = state.sz;
+    state.drawHubLabels();
+    state.drawStars(t, list);
+    state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    state.lwk = 1;
+    drawDoneOverview(state);
+  }
 }

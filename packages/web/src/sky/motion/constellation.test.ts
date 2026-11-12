@@ -166,3 +166,17 @@ it('draws the exact attachment solved this frame even if dragging changes the ne
   expect(clusterTether(s, 2, from)?.star).toBe(c);
   dispose();
 });
+
+it('keeps the original Polaris home and damping profile while tightening Dipper-initiated motion', () => {
+  const { s, dispose } = setup();
+  for (const [k, home, damping] of [
+    [7, 36, 6],
+    [3, 100, 16],
+  ]) {
+    const [x, y] = s.hubs()[k!]!;
+    pointer('pointerdown', x, y, 0);
+    expect(s.hubParticles.every((p) => p.home === home && p.damping === damping)).toBe(true);
+    pointer('pointerup', x, y, 10);
+  }
+  dispose();
+});

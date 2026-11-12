@@ -1,3 +1,4 @@
+import { haloRadius } from './labelObstacles';
 import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
@@ -15,7 +16,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     const tw = 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
       throb = s.late ? 0.5 + 0.5 * Math.sin(t / 420 + s.ph) : 0,
       a0 = (s.group === 'done' ? 0.85 : 1) * s.alpha;
-    const hr = r * (5.5 + throb * 5 + s.flare * 10 + (held ? 7 : state.hover === s ? 4 : 0));
+    const hr = haloRadius(state, s, t);
     state.ctx.globalAlpha = Math.min(
       1,
       ((s.group === 'done' ? 0.3 : 0.5) + throb * 0.4 + s.flare * 0.9 + (held ? 0.65 : state.hover === s ? 0.4 : 0)) *
@@ -122,7 +123,8 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         (state.match && state.match.has(s.id)))
     )
       labels.push({
-        lines: labelLines(s.code, s.title, state.cam.s, state.sky),
+        id: s.id,
+        lines: labelLines(state.sky ? s.skyCode || s.code : s.code, s.title, state.cam.s, state.sky),
         x,
         gap: r + 6 * q,
         y: y - r - 3 * q,

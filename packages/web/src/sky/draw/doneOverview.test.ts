@@ -19,16 +19,18 @@ it('shows the actual filtered count and fades away as links become readable', ()
   expect(hitDone(s, 200, 600)).toBe(false);
   registry.dispose();
 });
-it('clicks the label ahead of task hits and zooms cluster blank space to a readable fit', () => {
+it('clicks the collision-free label and zooms cluster blank space to a readable fit', () => {
   const { s, star, registry } = fixture(),
     detach = attachInput(s);
   star('a', 180, 500, 'done');
   star('b', 340, 660, 'done');
   s.counts.set('done', 2);
+  star('near-label', 195, 470, 'doing');
   const label = doneLabel(s),
     x = label.left + 10,
     y = label.top;
-  star('under-label', x, y, 'doing');
+  // The summary now avoids stars; clicking its current position still takes precedence.
+  expect(Math.hypot(x - 195, y - 470)).toBeGreaterThan(10);
   pointer('pointerdown', x, y, 0);
   pointer('pointerup', x, y, 10);
   expect(s.selected).toBeNull();
@@ -37,7 +39,7 @@ it('clicks the label ahead of task hits and zooms cluster blank space to a reada
   expect(260 * s.camT.s + s.camT.x).toBeCloseTo(s.w / 2);
   expect(580 * s.camT.s + s.camT.y).toBeCloseTo(s.h / 2);
   Object.assign(s.camT, { s: 1, x: 0, y: 0 });
-  s.selected = 'under-label';
+  s.selected = 'near-label';
   pointer('pointerdown', 260, 580, 100);
   pointer('pointerup', 260, 580, 110);
   expect(s.camT.s).toBeCloseTo(3);

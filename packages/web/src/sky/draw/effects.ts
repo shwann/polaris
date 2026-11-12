@@ -1,4 +1,3 @@
-import { drawDoneOverview } from './doneOverview';
 import { boundsOf } from '../geometry/cardPlacement';
 import { clearTooltip } from '../tooltip';
 import { COL } from '../../domain/lanes';
@@ -8,7 +7,6 @@ import type { SkyState } from '../types';
 export function drawEffects(state: SkyState, t: number, dt: number) {
   state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
   state.lwk = 1;
-  drawDoneOverview(state);
   // Pointer reticle (screen space).
   if (state.px > -1e3 && state.onSky) {
     state.ctx.strokeStyle = 'rgba(46,230,255,.35)';

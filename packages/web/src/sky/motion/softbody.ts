@@ -2,6 +2,8 @@ import type { Point } from '../types';
 import { MIN_SEPARATION, separate } from './separation';
 
 export interface Particle {
+  home?: number;
+  damping?: number;
   baseX?: number;
   baseY?: number;
   ox: number;
@@ -14,10 +16,13 @@ export interface Constraint {
   b: Particle;
   compliance?: number;
   oneWay?: boolean;
+  stiffening?: number;
 }
 export interface SoftBody {
   remainder: number;
+  hubDrag?: number;
   releases?: Map<Particle, number>;
+  throws?: Map<Particle, number>;
   pin?: { particle: Particle; point: Point };
 }
 export const STEP = 1 / 120;
@@ -28,6 +33,7 @@ export const THROW_SPEED = 1400;
 export const THROW_WINDOW = 0.18;
 export const THROW_HOME = 0.7;
 export const THROW_FROM = 600;
+export const THROW_COMPLIANCE = 12;
 export const COMPRESSION = 0.8;
 export const softBody = (): SoftBody => ({ remainder: 0 });
 export const resetParticle = (p: Particle) => (p.ox = p.oy = p.vx = p.vy = 0);
@@ -37,6 +43,9 @@ export function launch(p: Particle, v: Point, scale = 1, body?: SoftBody, group:
   [p.vx, p.vy] = [v[0] * k, v[1] * k];
   if (body) {
     body.releases ??= new Map();
+    body.throws ??= new Map();
+    if (Math.hypot(p.vx, p.vy) >= THROW_FROM && p.home === undefined) body.throws.set(p, 0);
+    else body.throws.delete(p);
     for (const member of group) {
       if (Math.hypot(p.vx, p.vy) >= THROW_FROM) body.releases.set(member, 0);
       else body.releases.delete(member);
@@ -45,7 +54,7 @@ export function launch(p: Particle, v: Point, scale = 1, body?: SoftBody, group:
 }
 
 /** Compliant position constraints; compression has a shorter, softer rest distance (a slack rope). */
-function solve({ a, b, compliance = COMPLIANCE, oneWay }: Constraint, pin?: Particle) {
+function solve({ a, b, compliance = COMPLIANCE, oneWay, stiffening = 6 }: Constraint, pin?: Particle, give = 1) {
   const hx = b.baseX! - a.baseX!,
     hy = b.baseY! - a.baseY!,
     rest = Math.hypot(hx, hy),
@@ -58,7 +67,7 @@ function solve({ a, b, compliance = COMPLIANCE, oneWay }: Constraint, pin?: Part
     error = compressed ? Math.min(0, length - rest * COMPRESSION) : length - rest;
   const wa = a === pin || oneWay ? 0 : 1,
     wb = b === pin ? 0 : 1;
-  const alpha = (compliance * (compressed ? 4 : 1)) / (1 + 6 * stretch * stretch) / STEP ** 2;
+  const alpha = (compliance * give * (compressed ? 4 : 1)) / (1 + stiffening * stretch * stretch) / STEP ** 2;
   // A hard bead separation prevents a compressed segment from turning inside out at coincidence.
   const correction = length < MIN_SEPARATION ? (length - MIN_SEPARATION) / (wa + wb || 1) : error / (wa + wb + alpha),
     nx = length > 1e-6 ? dx / length : hx / rest,
@@ -90,13 +99,13 @@ export function advance(
       old[i] = [p.ox, p.oy];
       const age = body.releases?.get(p),
         k = age === undefined ? 1 : Math.min(1, age / THROW_WINDOW),
-        home = HOME * (THROW_HOME + (1 - THROW_HOME) * k * k * (3 - 2 * k));
+        home = (p.home ?? HOME) * (THROW_HOME + (1 - THROW_HOME) * k * k * (3 - 2 * k));
       if (age !== undefined) {
         if (age + STEP >= THROW_WINDOW) body.releases!.delete(p);
         else body.releases!.set(p, age + STEP);
       }
-      p.vx = (p.vx - home * p.ox * STEP) * Math.exp(-DAMPING * STEP);
-      p.vy = (p.vy - home * p.oy * STEP) * Math.exp(-DAMPING * STEP);
+      p.vx = (p.vx - home * p.ox * STEP) * Math.exp(-(p.damping ?? DAMPING) * STEP);
+      p.vy = (p.vy - home * p.oy * STEP) * Math.exp(-(p.damping ?? DAMPING) * STEP);
       p.ox += p.vx * STEP;
       p.oy += p.vy * STEP;
     });
@@ -105,7 +114,15 @@ export function advance(
       pin.particle.ox = start[0] + (pin.point[0] - start[0]) * k;
       pin.particle.oy = start[1] + (pin.point[1] - start[1]) * k;
     }
-    for (const edge of edges) solve(edge, pin?.particle);
+    for (const edge of edges) {
+      const age = Math.min(body.throws?.get(edge.a) ?? THROW_WINDOW, body.throws?.get(edge.b) ?? THROW_WINDOW);
+      const k = Math.min(1, age / THROW_WINDOW);
+      solve(edge, pin?.particle, 1 + (THROW_COMPLIANCE - 1) * (1 - k) ** 2);
+    }
+    for (const [p, age] of body.throws || []) {
+      if (age + STEP >= THROW_WINDOW) body.throws!.delete(p);
+      else body.throws!.set(p, age + STEP);
+    }
     separate(groups, minimum, pin?.particle);
     particles.forEach((p, i) => {
       p.vx = (p.ox - old[i]![0]) / STEP;

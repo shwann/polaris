@@ -62,6 +62,10 @@ export function attachInput(s: SkyState) {
       const dx = e.clientX - d.x0,
         dy = e.clientY - d.y0;
       if (!d.moved && Math.hypot(dx, dy) >= 5 && (s.sky || d.star || (s.w > 560 && d.dip >= 0))) d.moved = true;
+      if (d.moved) {
+        clearTooltip(s);
+        s.tooltipSettling = s.w > 560;
+      }
       d.samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
       if (d.moved && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
         [s.camT.x, s.camT.y] = rubberPoint([d.cx + dx, d.cy + dy], cameraBounds(s));
