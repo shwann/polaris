@@ -1,6 +1,6 @@
 {
   "name": "polaris",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "北辰 Polaris：在本机记录需求和任务进度，通过星图看板查看并导出只读镜像。",
   "author": {
     "name": "北辰 Polaris"
