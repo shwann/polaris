@@ -1,6 +1,7 @@
 import type { Point } from '../types';
 
-export const STAR_SPACING = 16;
+// The widest resting halo is doing: MAG 3.6 × 5.5 × two radii = 39.6px.
+export const STAR_SPACING = 40;
 
 /** Stable local relaxation; an ordered nearest-free search guarantees the final minimum. */
 export function separatePoints(input: Point[], minimum: number): Point[] {

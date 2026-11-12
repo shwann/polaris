@@ -14,9 +14,9 @@ function spaced(points: Point[], minimum: number) {
 }
 it('separates exact overlaps and dense neighbors deterministically without changing the centroid', () => {
   const input: Point[] = Array.from({ length: 44 }, (_, i) => [i % 3, i % 5]);
-  const result = separatePoints(input, 16);
-  spaced(result, 16);
-  expect(result).toEqual(separatePoints(input, 16));
+  const result = separatePoints(input, STAR_SPACING);
+  spaced(result, STAR_SPACING);
+  expect(result).toEqual(separatePoints(input, STAR_SPACING));
   expect(input[0]).toEqual([0, 0]);
   for (const axis of [0, 1])
     expect(result.reduce((n, p) => n + p[axis]!, 0)).toBeCloseTo(
@@ -53,5 +53,33 @@ it('keeps minimum screen spacing at every zoom and during the slow cluster rotat
     layoutHomes(s);
     expect(stars.map((st) => [st.layoutX, st.layoutY])).toEqual(first);
   }
+  registry.dispose();
+});
+
+it.each([8, 10, 12])('keeps a %s-star risk cluster spaced, centered and deterministic at default zoom', (count) => {
+  const { s, star, registry } = fixture();
+  const stars = Array.from({ length: count }, (_, i) => {
+    const node = star(`task-${i}`, 0, 0, 'risk');
+    node.ang = i * 2.39996;
+    node.rad = 0.25 + (i % 4) * 0.1;
+    return node;
+  });
+  layoutHomes(s);
+  const first = stars.map((st) => home(s, st, 0));
+  spaced(first, STAR_SPACING);
+  layoutHomes(s);
+  expect(stars.map((st) => home(s, st, 0))).toEqual(first);
+  const center = s.centre('risk'),
+    R = center[2];
+  const original = stars.map((st): Point => [
+    center[0] + Math.cos(st.ang) * st.rad * R * 1.25,
+    center[1] + Math.sin(st.ang) * st.rad * R * 0.85,
+  ]);
+  for (const axis of [0, 1])
+    expect(first.reduce((sum, p) => sum + p[axis]!, 0)).toBeCloseTo(
+      original.reduce((sum, p) => sum + p[axis]!, 0),
+      8,
+    );
+  expect(STAR_SPACING).toBeGreaterThanOrEqual(2 * 3.6 * 5.5);
   registry.dispose();
 });

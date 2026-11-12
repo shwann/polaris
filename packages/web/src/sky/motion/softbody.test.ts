@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   advance,
   COMPLIANCE,
+  COMPRESSION,
   HOME,
   launch,
   softBody,
@@ -10,6 +11,7 @@ import {
   type Constraint,
   type Particle,
 } from './softbody';
+import { MIN_SEPARATION } from './separation';
 
 const particle = (x = 0, y = 0): Particle => ({ baseX: x, baseY: y, ox: 0, oy: 0, vx: 0, vy: 0 });
 const distance = (p: Particle) => Math.hypot(p.ox, p.oy);
@@ -130,7 +132,7 @@ it('keeps connected beads separated even when the pointer lands on its neighbor 
     b = particle(60),
     body = softBody();
   advance(body, [a, b], [{ a, b }], STEP * 1000, { particle: a, point: [60, 0] });
-  expect(Math.hypot(60 + b.ox - a.ox, b.oy - a.oy)).toBeGreaterThanOrEqual(18);
+  expect(Math.hypot(60 + b.ox - a.ox, b.oy - a.oy)).toBeGreaterThanOrEqual(MIN_SEPARATION);
 });
 
 it('dissipates the total kinetic, home and elastic energy of a released chain', () => {
@@ -144,7 +146,7 @@ it('dissipates the total kinetic, home and elastic energy of a released chain', 
       const rest = Math.hypot(b.baseX! - a.baseX!, b.baseY! - a.baseY!),
         length = Math.hypot(b.baseX! + b.ox - a.baseX! - a.ox, b.baseY! + b.oy - a.baseY! - a.oy),
         e = Math.max(0, length - rest),
-        c = Math.min(0, length - rest * 0.65);
+        c = Math.min(0, length - rest * COMPRESSION);
       return total + ((e * e) / 2 + (1.5 * e ** 4) / rest ** 2 + (c * c) / 8) / COMPLIANCE;
     }, 0);
   let previous = energy();
