@@ -1,3 +1,4 @@
+import { measureHubLabels } from '../geometry/hubLabels';
 import type { SkyState } from '../types';
 import { constrain, panBounds } from './bounds';
 import { coast } from './inertia';
@@ -10,7 +11,23 @@ export function cameraBounds(s: SkyState, scale = s.camT.s) {
     .map((star) => s.at(star.baseX ?? star.x - star.ox, star.baseY ?? star.y - star.oy, 14));
   const bar = s.registry.get('skybar'),
     bottomInset = bar && bar.height > 0 ? Math.max(0, s.h - bar.top) : 0;
-  return panBounds([...points, ...s.hubs()], s.w, s.h, scale, s.w > 560, bottomInset);
+  const hubs = s.hubs().map(([x, y], i): import('../types').Point => {
+    const p = s.sky && s.w > 560 && !s.reduce.matches ? s.hubParticles[i] : undefined;
+    return [x - (p?.ox || 0), y - (p?.oy || 0)];
+  });
+  const labels =
+    s.sky && s.w > 560
+      ? measureHubLabels(s, hubs, scale)
+          .flat()
+          .flatMap(
+            (b) =>
+              [
+                [b[0], b[1]],
+                [b[2], b[3]],
+              ] as import('../types').Point[],
+          )
+      : [];
+  return panBounds([...points, ...hubs, ...labels], s.w, s.h, scale, s.w > 560, bottomInset);
 }
 
 export function stopCamera(s: SkyState) {

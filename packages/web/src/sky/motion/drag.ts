@@ -19,6 +19,7 @@ export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
   const depth = d.star ? 14 : 0;
   d.grab = [p.baseX! + p.ox + s.mx * depth - wx, p.baseY! + p.oy + s.my * depth - wy];
   p.vx = p.vy = 0;
+  s.soft.recovery = [];
   s.soft.releases?.clear();
   s.soft.throws?.clear();
   s.soft.pin = { particle: p, point: [p.ox, p.oy] };

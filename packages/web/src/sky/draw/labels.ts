@@ -1,4 +1,5 @@
-import { FIG_LANE as CARD_LANE, COL, DIPPER, GOLD, LANES, LATIN } from '../../domain/lanes';
+import { hubCaption, hubLabelAnchor } from '../geometry/hubLabels';
+import { FIG_LANE as CARD_LANE, DIPPER, GOLD } from '../../domain/lanes';
 import { textBox } from '../geometry/hubObstacles';
 import { outlinedText } from './labelObstacles';
 import { SMALL_LABEL } from '../constants';
@@ -8,44 +9,20 @@ import type { SkyState } from '../types';
 export function drawHubLabels(state: SkyState) {
   const big = Math.max(10, state.unit * 0.0115) * state.sz,
     small = Math.max(10, state.unit * 0.011) * state.sz;
-  const total = [...state.counts.values()].reduce((a, b) => a + b, 0),
-    done = state.laneCount('done');
   const labelBoxes: import('../types').Box[][] = [];
   state.hubLabelBoxes = labelBoxes;
   state.ctx.textAlign = 'center';
   state.dipPos.forEach(([x, y], k) => {
-    let l1,
-      l2,
-      c,
-      y0,
-      on = state.sky || k === state.dipLit || k === state.dipSel || k === state.dipHover;
-    if (k === 7) {
-      l1 = `北辰 · ALL ${total}`;
-      l2 = `总览 · 完成 ${total ? Math.round((done / total) * 100) : 0}%`;
-      c = GOLD;
-      y0 = y + 50 * state.sz;
-    } else if (k === 0) {
-      const nx =
-        state.board?.app?.next ||
-        (state.board?.nextRelease ? String(state.board.nextRelease).split(/[:：（(，,\s]/)[0]! : '');
-      l1 = `α 天枢 · BUILD ${state.board?.app?.version || state.board?.appVersion || '—'}`;
-      l2 = '正式 App' + (nx ? ` · 下个 ${nx}` : '') + (state.unvN ? ` · 待实证 ${state.unvN}` : '');
-      c = COL.doing;
-      y0 = y + 34 * state.sz;
-    } else {
-      const g = CARD_LANE[k]!,
-        n = state.laneCount(g),
-        [zx, zy, R] = state.centre(g),
-        lane = LANES.find((l) => l.key === g);
-      l1 = `${DIPPER[k]!.gr} ${DIPPER[k]!.zh} · ${LATIN[g]!} ${n}`;
-      l2 =
-        (lane ? lane.name : g) +
-        (n ? '' : ' · 暂无') +
-        (g === 'done' && n > 12 && state.sky && state.cam.s < 1.4 ? ' · 放大看连线' : '');
-      c = COL[g]! || COL.planned;
-      y0 = state.at(zx, zy + (n ? R * 0.85 + 22 * state.sz : 50 * state.sz), 14)[1]!;
-      on = on || state.litGroup === g || !!(state.hover && state.hover.group === g);
-    }
+    const { l1, l2, c } = hubCaption(state, k),
+      anchor = hubLabelAnchor(state, k, [x, y], state.sz),
+      g = CARD_LANE[k];
+    let y0 = anchor.y;
+    const on =
+      state.sky ||
+      k === state.dipLit ||
+      k === state.dipSel ||
+      k === state.dipHover ||
+      (!!g && (state.litGroup === g || state.hover?.group === g));
     let lx = x;
     if (state.ZONE.dip) {
       // Small header Dipper: just the star's name, placed so neighbours never collide (fades out as the sky view opens).
@@ -87,11 +64,9 @@ export function drawHubLabels(state: SkyState) {
       }
       if (state.skyK < 0.02) return;
       // Sky view: the full catalogue entry beside its star (-1 left, 1 right, 0 below, 2 above).
-      const sd = state.ZONE.side[k]!,
-        gap = (k === 7 ? 44 : 20) * state.sz;
-      state.ctx.textAlign = sd === -1 ? 'right' : sd === 1 ? 'left' : 'center';
-      lx = sd === -1 || sd === 1 ? x + sd * gap : x;
-      y0 = sd === 0 ? y + 30 * state.sz : sd === 2 ? y - 34 * state.sz : y - 2 * state.sz;
+      state.ctx.textAlign = anchor.align;
+      lx = anchor.x;
+      y0 = anchor.y;
       state.ctx.globalAlpha = state.skyK;
     } else if (!state.sky && state.toScreen(lx, y0)[1]! < 150) return; // behind the page header the label would clash with its text and buttons
     state.ctx.font = `600 ${big}px "JetBrains Mono", "Noto Sans SC", monospace`;

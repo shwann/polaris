@@ -1,3 +1,4 @@
+import { settleLabelZoom } from './motion/labelZoom';
 import { FIG_LANE as CARD_LANE } from '../domain/lanes';
 import { drawDoneOverview } from './draw/doneOverview';
 import { drawBackgroundChart } from './draw/background';
@@ -6,6 +7,7 @@ import { DEPTH } from './constants';
 import { advanceCamera, cameraMoving } from './motion/cameraMotion';
 import { drawDust } from './draw/dust';
 import type { SkyState } from './types';
+import { advanceSpin } from './geometry/clusters';
 
 export function frame(state: SkyState, t: number) {
   const dt = Math.max(0, state.last ? t - state.last : 16);
@@ -15,6 +17,7 @@ export function frame(state: SkyState, t: number) {
   if (state.w < 2 || state.h < 2) return; // Wait until layout gives the canvas room.
   const moving = cameraMoving(state);
   advanceCamera(state, dt);
+  advanceSpin(state, dt);
   if (!state.drag && !moving && !cameraMoving(state)) {
     if (state.px > -1e3 && !state.reduce.matches) {
       state.tx = (state.px / state.w - 0.5) * -1;
@@ -31,6 +34,7 @@ export function frame(state: SkyState, t: number) {
     state.cam.x += (state.camT.x - state.cam.x) * ease;
     state.cam.y += (state.camT.y - state.cam.y) * ease;
   }
+  settleLabelZoom(state);
   [state.wpx, state.wpy] = state.px > -1e3 ? state.toWorld(state.px, state.py) : [-1e4, -1e4];
   state.skyK += ((state.sky ? 1 : 0) - state.skyK) * (state.reduce.matches ? 1 : 0.07);
   if (Math.abs(state.skyK - (state.sky ? 1 : 0)) < 0.002) state.skyK = state.sky ? 1 : 0;

@@ -61,7 +61,7 @@ export function placeCard(
       );
     }, 0);
   };
-  if (evaluate(original) === 0) return original;
+  if (evaluate(original) === 0 && Math.hypot(...original.pan) === 0) return original;
   const candidates = [original];
   for (const side of ['right', 'left', 'bottom', 'top'] as CardSide[]) {
     const p = baseCard(star, cluster, size, viewport, side),
@@ -78,7 +78,32 @@ export function placeCard(
       candidates.push({ side, left: left + dx, top: top + dy, pan: [dx, dy] });
     }
   }
-  candidates.sort((a, b) => evaluate(a) - evaluate(b) || Math.hypot(...a.pan) - Math.hypot(...b.pan));
+  // A tall overview near Polaris may fit only farther along an edge, away from the selected hub.
+  const xs = [16, w - 16 - cw, original.left, ...obstacles.flatMap((b) => [b[0] - cw - 8, b[2] + 8])];
+  const ys = [16, h - 16 - ch, original.top, ...obstacles.flatMap((b) => [b[1] - ch - 8, b[3] + 8])];
+  for (const left of xs)
+    for (const top of ys) {
+      if (left < 16 || left + cw > w - 16 || top < 16 || top + ch > h - 16) continue;
+      if (
+        intersects(
+          [left, top, left + cw, top + ch],
+          [cluster[0] - 26, cluster[1] - 26, cluster[2] + 26, cluster[3] + 26],
+        )
+      )
+        continue;
+      if (star[0] >= left - 26 && star[0] <= left + cw + 26 && star[1] >= top - 26 && star[1] <= top + ch + 26)
+        continue;
+      const side: CardSide =
+        left + cw <= star[0] ? 'left' : left >= star[0] ? 'right' : top >= star[1] ? 'bottom' : 'top';
+      candidates.push({ side, left, top, pan: [0, 0] });
+    }
+  candidates.sort(
+    (a, b) =>
+      evaluate(a) - evaluate(b) ||
+      Math.hypot(...a.pan) - Math.hypot(...b.pan) ||
+      Math.hypot(a.left - original.left, a.top - original.top) -
+        Math.hypot(b.left - original.left, b.top - original.top),
+  );
   return candidates[0]!;
 }
 

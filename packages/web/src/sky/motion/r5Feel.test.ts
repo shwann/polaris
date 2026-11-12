@@ -67,12 +67,57 @@ function fling(hz: number, duration: number, dip = false, phase?: number) {
   if (!dip && duration === 70) expect(root.vx).toBeCloseTo(1400);
   if (phase !== undefined) expect(list[0]!.x).toBeCloseTo(x + 160);
   const peaks = s.hubParticles.map((p) => Math.hypot(p.ox, p.oy));
+  const edges = s.trees.get('risk') || [];
+  const order = () =>
+    list
+      .slice(1)
+      .sort((a, b) => Math.atan2(a.y - list[0]!.y, a.x - list[0]!.x) - Math.atan2(b.y - list[0]!.y, b.x - list[0]!.x))
+      .map((p) => p.id);
+  const original = points
+    .slice(1)
+    .map((p, i) => ({ p, id: list[i + 1]?.id }))
+    .sort(
+      (a, b) =>
+        Math.atan2(a.p[1] - points[0]![1], a.p[0] - points[0]![0]) -
+        Math.atan2(b.p[1] - points[0]![1], b.p[0] - points[0]![0]),
+    )
+    .map((p) => p.id);
+  const turn = (a: Star, b: Star, c: Star) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  let crossingFrames = 0,
+    orderFrames = 0,
+    settled = 0,
+    settledSpeed = 0;
   let peak = 0,
     own = Math.hypot(root.ox, root.oy),
     carried = 0;
   for (let i = 1; i <= hz * 4; i++) {
     if (phase === undefined) s.physics(duration + (i * 1000) / hz, 1000 / hz, list);
     else s.frame(frame + ((i - 1) * 1000) / hz);
+    if (!dip && duration === 70) {
+      for (const [j, a] of list.entries())
+        for (const b of list.slice(j + 1)) expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThanOrEqual(20 - 1e-6);
+      const crossed = edges.some(([a, b], j) =>
+        edges
+          .slice(j + 1)
+          .some(
+            ([c, d]) =>
+              a !== c &&
+              a !== d &&
+              b !== c &&
+              b !== d &&
+              turn(a, b, c) * turn(a, b, d) < 0 &&
+              turn(c, d, a) * turn(c, d, b) < 0,
+          ),
+      );
+      if (crossed) crossingFrames++;
+      const current = order(),
+        start = current.indexOf(original[0]!);
+      if (original.some((id, j) => id !== current[(start + j) % current.length])) orderFrames++;
+      if (i === hz) {
+        settled = Math.max(...list.map((p) => Math.hypot(p.ox, p.oy)));
+        settledSpeed = Math.max(...list.map((p) => Math.hypot(p.vx, p.vy)));
+      }
+    }
     peak = Math.max(peak, root.ox - 160);
     carried = Math.max(carried, ...list.slice(1).map((p) => Math.hypot(p.ox, p.oy)));
     own = Math.max(own, Math.hypot(root.ox, root.oy));
@@ -85,11 +130,15 @@ function fling(hz: number, duration: number, dip = false, phase?: number) {
   detach();
   registry.dispose();
   expect(Math.max(0, ...list.map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(0.5);
-  return { peak, own, peaks, carried, lag };
+  return { peak, own, peaks, carried, lag, crossingFrames, orderFrames, settled, settledSpeed };
 }
 it('keeps a seven-event 160px/70ms outward fling visible with a nine-star risk tree at every refresh rate', () => {
   const runs = [30, 60, 144].map((hz) => fling(hz, 70));
   for (const r of runs) {
+    expect(r.crossingFrames).toBe(0);
+    expect(r.orderFrames).toBe(0);
+    expect(r.settled).toBeLessThan(1);
+    expect(r.settledSpeed).toBeLessThan(4);
     expect(r.carried).toBeGreaterThan(10);
     expect(r.peak).toBeGreaterThanOrEqual(40);
     expect(r.peak).toBeLessThanOrEqual(90);
@@ -111,6 +160,10 @@ it.each([0, 4, 8, 12, 16])(
   'replays independent 10ms pointer timestamps through full 60Hz frames at phase %sms',
   (phase) => {
     const run = fling(60, 70, false, phase);
+    expect(run.crossingFrames).toBe(0);
+    expect(run.orderFrames).toBe(0);
+    expect(run.settled).toBeLessThan(1);
+    expect(run.settledSpeed).toBeLessThan(4);
     expect(run.lag).toBeGreaterThan(20);
     expect(run.peak).toBeGreaterThanOrEqual(40);
     expect(run.peak).toBeLessThanOrEqual(90);

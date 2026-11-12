@@ -1,3 +1,13 @@
+import {
+  repairOrder,
+  shapeTargets,
+  SHAPE_FORCE,
+  RECOVERY_DELAY,
+  RECOVERY_RAMP,
+  RECOVERY_HOME,
+  RECOVERY_DAMPING,
+  RECOVERY_DURATION,
+} from './shape';
 import type { Point } from '../types';
 import { MIN_SEPARATION, separate } from './separation';
 
@@ -19,6 +29,7 @@ export interface Constraint {
   stiffening?: number;
 }
 export interface SoftBody {
+  recovery?: { group: Particle[]; root: Particle; age: number }[];
   remainder: number;
   time?: number;
   hubDrag?: number;
@@ -34,7 +45,7 @@ export const THROW_SPEED = 1400;
 export const THROW_WINDOW = 0.18;
 export const THROW_HOME = 0.7;
 export const THROW_FROM = 600;
-export const THROW_COMPLIANCE = 12;
+export const THROW_COMPLIANCE = 20;
 export const COMPRESSION = 0.8;
 export const softBody = (): SoftBody => ({ remainder: 0 });
 export const resetParticle = (p: Particle) => (p.ox = p.oy = p.vx = p.vy = 0);
@@ -43,6 +54,11 @@ export function launch(p: Particle, v: Point, scale = 1, body?: SoftBody, group:
   const k = Math.min(1 / scale, THROW_SPEED / (Math.hypot(...v) || 1));
   [p.vx, p.vy] = [v[0] * k, v[1] * k];
   if (body) {
+    if (p.home === undefined) {
+      body.recovery = (body.recovery || []).filter((r) => !r.group.includes(p));
+      body.recovery.push({ group, root: p, age: 0 });
+      repairOrder(group, p);
+    }
     body.releases ??= new Map();
     body.throws ??= new Map();
     if (Math.hypot(p.vx, p.vy) >= THROW_FROM && p.home === undefined) body.throws.set(p, 0);
@@ -96,17 +112,34 @@ export function advance(
   body.remainder += duration;
   const old = particles.map(() => [0, 0] as Point);
   while (body.remainder + 1e-10 >= STEP) {
+    const recovery = new Map<Particle, { k: number; target: readonly [number, number] }>();
+    if (!pin)
+      for (const r of body.recovery || []) {
+        const k = Math.min(1, Math.max(0, (r.age - RECOVERY_DELAY) / RECOVERY_RAMP));
+        const targets = shapeTargets(r.group);
+        r.group.forEach((p, i) => recovery.set(p, { k, target: targets[i]! }));
+        r.age += STEP;
+      }
+    body.recovery = body.recovery?.filter((r) => r.age < RECOVERY_DURATION);
     particles.forEach((p, i) => {
       old[i] = [p.ox, p.oy];
       const age = body.releases?.get(p),
         k = age === undefined ? 1 : Math.min(1, age / THROW_WINDOW),
-        home = (p.home ?? HOME) * (THROW_HOME + (1 - THROW_HOME) * k * k * (3 - 2 * k));
+        home =
+          ((p.home ?? HOME) + (RECOVERY_HOME - HOME) * (recovery.get(p)?.k || 0)) *
+          (THROW_HOME + (1 - THROW_HOME) * k * k * (3 - 2 * k));
       if (age !== undefined) {
         if (age + STEP >= THROW_WINDOW) body.releases!.delete(p);
         else body.releases!.set(p, age + STEP);
       }
-      p.vx = (p.vx - home * p.ox * STEP) * Math.exp(-(p.damping ?? DAMPING) * STEP);
-      p.vy = (p.vy - home * p.oy * STEP) * Math.exp(-(p.damping ?? DAMPING) * STEP);
+      const fit = recovery.get(p),
+        damping = (p.damping ?? DAMPING) + (RECOVERY_DAMPING - DAMPING) * (fit?.k || 0);
+      if (fit) {
+        p.vx += (fit.target[0] - p.ox) * SHAPE_FORCE * fit.k * STEP;
+        p.vy += (fit.target[1] - p.oy) * SHAPE_FORCE * fit.k * STEP;
+      }
+      p.vx = (p.vx - home * p.ox * STEP) * Math.exp(-damping * STEP);
+      p.vy = (p.vy - home * p.oy * STEP) * Math.exp(-damping * STEP);
       p.ox += p.vx * STEP;
       p.oy += p.vy * STEP;
     });
@@ -125,6 +158,9 @@ export function advance(
       else body.throws!.set(p, age + STEP);
     }
     separate(groups, minimum, pin?.particle);
+    if (!pin && body.recovery?.length) {
+      for (const r of body.recovery) repairOrder(r.group, r.root);
+    }
     particles.forEach((p, i) => {
       p.vx = (p.ox - old[i]![0]) / STEP;
       p.vy = (p.oy - old[i]![1]) / STEP;

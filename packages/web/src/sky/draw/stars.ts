@@ -124,7 +124,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     )
       labels.push({
         id: s.id,
-        lines: labelLines(state.sky ? s.skyCode || s.code : s.code, s.title, state.cam.s, state.sky),
+        lines: labelLines(state.sky ? s.skyCode || s.code : s.code, s.title, state.cam.s, state.sky, state.w > 560),
         x,
         gap: r + 6 * q,
         y: y - r - 3 * q,

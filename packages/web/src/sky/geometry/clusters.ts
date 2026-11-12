@@ -15,9 +15,21 @@ export function centre(state: SkyState, g: import('../../domain/types').Lane): [
   return [Math.min(Math.max(z[0]! * state.w, rx), state.w - rx), Math.min(Math.max(zy * state.h, ry), state.h - ry), R];
 }
 
+/** Clusters turn slowly in the overview and come to rest once zoomed in for reading. */
+export const SPIN_FULL = 1.2;
+export const SPIN_STOP = 2;
+export function spinRate(zoom: number) {
+  return Math.min(1, Math.max(0, (SPIN_STOP - zoom) / (SPIN_STOP - SPIN_FULL)));
+}
+/** Advance the cluster spin clock; zooming in slows it down instead of jumping the angle. */
+export function advanceSpin(state: SkyState, dt: number) {
+  state.spinT = (state.spinT ?? 0) + dt * spinRate(state.cam.s);
+}
+
 export function home(state: SkyState, s: Star, t: number): Point {
-  const [cx, cy, R] = state.centre(s.group),
-    spin = (((s.group.length % 2 ? 1 : -1) * t) / 1000) * 0.012;
+  const clock = t === 0 ? 0 : (state.spinT ?? t),
+    [cx, cy, R] = state.centre(s.group),
+    spin = (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
   if (state.sky && state.w > 560 && s.layoutX !== undefined && s.layoutY !== undefined) {
     return [
       cx + s.layoutX * Math.cos(spin) - s.layoutY * Math.sin(spin),

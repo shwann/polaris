@@ -47,6 +47,16 @@ export function useDipPlacement(ref: RefObject<HTMLDivElement | null>, index: nu
       release.current?.();
     };
   }, [place]);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || index < 0 || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      xy.current = null;
+      place();
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [index, place, ref]);
   return {
     dragging,
     onPointerDown: (e: React.PointerEvent) => {

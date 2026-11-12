@@ -33,7 +33,8 @@ it('pulls tree neighbors through distances and rebounds without migration easing
     s.frame(t);
     maximum = Math.max(maximum, a.ox);
   }
-  expect(maximum).toBeGreaterThan(0.5);
+  // Recovery damping keeps a small overshoot while settling faster.
+  expect(maximum).toBeGreaterThan(0.1);
   expect(Math.abs(a.ox)).toBeLessThan(0.1);
   expect(Math.abs(b.ox)).toBeLessThan(0.1);
   expect(other.x).toBe(600);

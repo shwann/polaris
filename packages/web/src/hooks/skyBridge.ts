@@ -29,7 +29,7 @@ export function locateStar(id: string) {
 export function stepStar(dir: number) {
   const u = uiStore.getState(),
     v = selectView(dataStore.getState().snapshot, u.system),
-    group = FIG_LANE[u.dip],
+    group = FIG_LANE[u.dip] || v.tasks.find((t) => t.id === u.selected)?.lane,
     list = group ? laneTasks(v.tasks, group) : flowTasks(searchTasks(v.tasks, u));
   if (!list.length) return;
   const i = list.findIndex((t) => t.id === u.selected),

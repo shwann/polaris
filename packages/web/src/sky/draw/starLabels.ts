@@ -1,3 +1,4 @@
+import { TITLE_BAND } from '../motion/labelZoom';
 import type { Box, Color, SkyState } from '../types';
 import { labelFits, labelObstacles, outlinedText } from './labelObstacles';
 import { rgba } from '../palette';
@@ -18,10 +19,14 @@ const MAX_LINES = 3;
 
 const clip = (text: string, n: number) => (text.length > n ? text.slice(0, n) + '…' : text);
 
-/** Characters of title shown between TITLE_FROM and FULL_FROM, growing with zoom. */
-export function shortLength(zoom: number): number {
-  const k = Math.min(1, Math.max(0, (zoom - TITLE_FROM) / (FULL_FROM - TITLE_FROM)));
-  return Math.round(SHORT_MIN + k * (SHORT_MAX - SHORT_MIN));
+/** Desktop title length changes in discrete bands; mobile retains its existing continuous rule. */
+export function shortLength(zoom: number, stepped = true): number {
+  if (!stepped)
+    return Math.round(
+      SHORT_MIN + Math.min(1, Math.max(0, (zoom - TITLE_FROM) / (FULL_FROM - TITLE_FROM))) * (SHORT_MAX - SHORT_MIN),
+    );
+  const band = Math.min(2, Math.max(0, Math.floor((zoom - TITLE_FROM + 1e-8) / TITLE_BAND)));
+  return zoom >= FULL_FROM ? SHORT_MAX : SHORT_MIN + band * 4;
 }
 
 /** Wrap a title into lines of WRAP characters, at most MAX_LINES, the last one clipped. */
@@ -36,10 +41,10 @@ export function wrapTitle(title: string): string[] {
  * Lines for one star label: the code first, then as much title as the zoom allows.
  * @param sky - Only the full sky view grows labels; the header chart keeps codes.
  */
-export function labelLines(code: string, title: string, zoom: number, sky: boolean): string[] {
+export function labelLines(code: string, title: string, zoom: number, sky: boolean, stepped = true): string[] {
   const text = title.trim();
   if (!sky || !text || zoom < TITLE_FROM) return [code];
-  if (zoom < FULL_FROM) return [code, clip(text, shortLength(zoom))];
+  if (zoom < FULL_FROM) return [code, clip(text, shortLength(zoom, stepped))];
   return [code, ...wrapTitle(text)];
 }
 
@@ -124,6 +129,7 @@ interface LabelChoice {
 }
 /** Last placement per sky state, so drifting clusters do not make labels hop every frame. */
 const memory = new WeakMap<object, Map<string, LabelChoice>>();
+const revisions = new WeakMap<object, number>();
 /** Extra clearance, in sz, a code-only label needs before it grows its title back. */
 export const LABEL_UPGRADE_MARGIN = 6;
 const grow = (b: Box, m: number) => [b[0] - m, b[1] - m, b[2] + m, b[3] + m] as Box;
@@ -140,6 +146,11 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
   const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
   let memo = memory.get(state);
   if (state.sky && !memo) memory.set(state, (memo = new Map()));
+  if (state.labelLayout && revisions.get(state) !== state.labelLayout.revision) {
+    // A settled zoom gets one fresh layout; afterwards labels keep their places with hysteresis.
+    memo?.clear();
+    revisions.set(state, state.labelLayout.revision);
+  }
   const chosen = new Map<string, LabelChoice>();
   ctx.save();
   for (const L of labels.sort((a, b) => b.pri - a.pri)) {

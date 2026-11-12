@@ -101,6 +101,8 @@ export interface SkyMethods {
   emitTooltip(): void;
 }
 export interface SkyState extends SkyMethods {
+  /** Cluster spin clock in ms; advances slower when zoomed in. */
+  spinT?: number;
   cvs: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   registry: LayoutRegistry;
@@ -174,6 +176,7 @@ export interface SkyState extends SkyMethods {
   chartCore: HTMLCanvasElement | null;
   chartBox: Box;
   layoutScale: number;
+  labelLayout?: { key: string; settled: boolean; revision: number };
   tooltipSettling?: boolean;
   tooltipGate: { x: number; y: number; id: string | null } | null;
   tints: Map<string, HTMLCanvasElement>;

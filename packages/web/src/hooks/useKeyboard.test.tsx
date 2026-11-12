@@ -35,7 +35,7 @@ it('closes task, group and sky one layer at a time; clears pinned star on the bo
 it.each([
   ['ArrowRight', 'WAIT-OLD'],
   ['ArrowLeft', 'WAIT-NEW'],
-])('replaces a group with its first/last task on %s, then follows the existing global flow', (key, id) => {
+])('replaces a group with its first/last task on %s, then cycles within the same ordered group', (key, id) => {
   const snapshot = dataStore.getState().snapshot!,
     base = snapshot.tasks[0]!;
   dataStore.setState({
@@ -61,7 +61,7 @@ it.each([
   expect(getAllByRole('dialog')).toHaveLength(1);
   uiStore.setState({ query: '' });
   fireEvent.keyDown(window, { key: 'ArrowRight' });
-  expect(uiStore.getState().selected).toBe(id === 'WAIT-OLD' ? 'AFTER' : 'WAIT-OLD');
+  expect(uiStore.getState().selected).toBe(id === 'WAIT-OLD' ? 'WAIT-NEW' : 'WAIT-OLD');
   expect(getAllByRole('dialog')).toHaveLength(1);
 });
 it('keeps card selection exclusive for pointer, list and keyboard entry points', () => {
@@ -73,4 +73,29 @@ it('keeps card selection exclusive for pointer, list and keyboard entry points',
   expect(uiStore.getState()).toMatchObject({ selected: null, dip: 4 });
   selectFromSky('REPORT');
   expect(uiStore.getState()).toMatchObject({ selected: 'REPORT', dip: -1 });
+});
+
+it('cycles direct sky selections in card order, ignoring the board filter and other lanes', () => {
+  const snapshot = dataStore.getState().snapshot!,
+    base = snapshot.tasks[0]!;
+  dataStore.setState({
+    snapshot: {
+      ...snapshot,
+      tasks: [
+        { ...base, id: 'A', lane: 'waiting', sort: 8, waitingSince: '2026-11-01' },
+        { ...base, id: 'B', lane: 'waiting', sort: 0, waitingSince: '2026-11-02' },
+        { ...base, id: 'C', lane: 'waiting', sort: 1, waitingSince: '2026-11-02' },
+        { ...base, id: 'OTHER', lane: 'release' },
+      ],
+    },
+  });
+  uiStore.setState({ sky: true, query: 'no match' });
+  render(<Keys />);
+  selectFromSky('A');
+  for (const id of ['B', 'C', 'A']) {
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(uiStore.getState().selected).toBe(id);
+  }
+  fireEvent.keyDown(window, { key: 'ArrowLeft' });
+  expect(uiStore.getState().selected).toBe('C');
 });

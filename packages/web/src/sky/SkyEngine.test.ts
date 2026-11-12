@@ -88,3 +88,28 @@ it('clears hover synchronously on keyboard selection changes and closing the car
   engine.destroy();
   registry.dispose();
 });
+
+it('chooses a clear Polaris overview using long current Dipper captions before moving the camera', () => {
+  vi.stubGlobal('innerWidth', 1440);
+  vi.stubGlobal('innerHeight', 900);
+  const registry = new LayoutRegistry(),
+    canvas = document.createElement('canvas');
+  canvas.getContext('2d')!.measureText = vi.fn(
+    (text: string) => ({ width: text.includes('天枢') ? 330 : text.length * 9 }) as TextMetrics,
+  );
+  const engine = new SkyEngine(canvas, registry, {});
+  uiStore.setState({ sky: true });
+  const before = engine.dipScreen(7);
+  const p = engine.placeGroupCard(7, 360, 600)!;
+  expect(engine.dipScreen(7)).toEqual(before);
+  for (const b of engine.hubObstacles(7))
+    expect(
+      p.left < b[2] + p.pan[0] &&
+        p.left + 360 > b[0] + p.pan[0] &&
+        p.top < b[3] + p.pan[1] &&
+        p.top + 600 > b[1] + p.pan[1],
+    ).toBe(false);
+  expect(engine.hubObstacles(7)).toHaveLength(21);
+  engine.destroy();
+  registry.dispose();
+});

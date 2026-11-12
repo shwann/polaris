@@ -1,3 +1,4 @@
+import { advanceComets } from '../motion/comets';
 import { boundsOf } from '../geometry/cardPlacement';
 import { clearTooltip } from '../tooltip';
 import { COL } from '../../domain/lanes';
@@ -55,33 +56,8 @@ export function drawEffects(state: SkyState, t: number, dt: number) {
       }
     }
   }
-  if (!state.reduce.matches && t > state.nextComet) {
-    // Mostly single meteors; now and then a short shower from one radiant.
-    const shower = Math.random() < 0.22,
-      n = shower ? 4 + Math.floor(Math.random() * 4) : 1,
-      L = Math.random() < 0.5;
-    const ox = L ? -40 : state.w * (0.3 + Math.random() * 0.6),
-      oy = L ? state.h * Math.random() * 0.4 : -40,
-      vx = 0.5 + Math.random() * 0.35,
-      vy = 0.2 + Math.random() * 0.25;
-    for (let i = 0; i < n; i++)
-      state.comets.push({
-        x: ox + (Math.random() - 0.5) * 160,
-        y: oy + (Math.random() - 0.5) * 120,
-        vx: vx * (0.85 + Math.random() * 0.3),
-        vy: vy * (0.85 + Math.random() * 0.3),
-        delay: i * (180 + Math.random() * 260),
-      });
-    state.nextComet = t + (shower ? 14000 : 6000) + Math.random() * 7000;
-  }
-  state.comets = state.comets.filter((c) => c.x < state.w + 200 && c.y < state.h + 200);
+  advanceComets(state, t, dt);
   for (const c of state.comets) {
-    if (c.delay > 0) {
-      c.delay -= dt;
-      continue;
-    }
-    c.x += c.vx * dt;
-    c.y += c.vy * dt;
     const n = Math.hypot(c.vx, c.vy),
       x0 = c.x - (c.vx / n) * 150,
       y0 = c.y - (c.vy / n) * 150;
