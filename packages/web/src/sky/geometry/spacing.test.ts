@@ -2,7 +2,7 @@ import '../../../tests/support';
 import { expect, it } from 'vitest';
 import { fixture } from '../testFixture';
 import { home, layoutHomes } from './clusters';
-import { separatePoints, STAR_SPACING } from './spacing';
+import { DONE_SPACING, STAR_SPACING, separatePoints } from './spacing';
 import type { Point } from '../types';
 
 function spaced(points: Point[], minimum: number) {
@@ -46,7 +46,7 @@ it('keeps minimum screen spacing at every zoom and during the slow cluster rotat
     for (const time of [0, 50000, 150000]) {
       spaced(
         stars.map((st) => home(s, st, time).map((v) => v * scale) as Point),
-        STAR_SPACING,
+        DONE_SPACING,
       );
     }
     const first = stars.map((st) => [st.layoutX, st.layoutY]);
@@ -54,6 +54,10 @@ it('keeps minimum screen spacing at every zoom and during the slow cluster rotat
     expect(stars.map((st) => [st.layoutX, st.layoutY])).toEqual(first);
   }
   registry.dispose();
+});
+
+it('lays the many small done stars out with the tighter done floor, not as a lattice', () => {
+  expect(DONE_SPACING).toBeLessThan(STAR_SPACING);
 });
 
 it.each([8, 10, 12])('keeps a %s-star risk cluster spaced, centered and deterministic at default zoom', (count) => {
