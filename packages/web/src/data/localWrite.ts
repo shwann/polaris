@@ -5,7 +5,8 @@ export interface LocalCredentials {
   token: string;
   page: string;
 }
-export type WritePath = '/api/task/move' | '/api/task/progress' | '/api/req/move' | '/api/req/check' | '/api/undo';
+export type WritePath =
+  '/api/task/move' | '/api/task/progress' | '/api/req/move' | '/api/req/check' | '/api/dispatch/set' | '/api/undo';
 let version = 0;
 let pending = false;
 export const localWriteVersion = () => version;

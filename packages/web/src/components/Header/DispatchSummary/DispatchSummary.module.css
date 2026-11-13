@@ -5,6 +5,32 @@
   color: var(--ink-2);
   font-size: 0.78rem;
 }
-.summary p {
+.summary p,
+.summary button {
   margin: 0.6rem 0 0;
+}
+.summary button {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.summary button:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.summary button:focus-visible {
+  outline: 1px solid var(--cyan);
+  outline-offset: 4px;
+}
+.summary button:disabled {
+  cursor: default;
+  opacity: 0.5;
 }

@@ -85,6 +85,14 @@ export interface DispatchSpec {
   effort: string;
 }
 export const DISPATCH_ENGINE_LABELS: Record<DispatchEngine, string> = { codex: 'Codex', claude: 'Claude' };
+export const DISPATCH_EFFORT_LABELS: Record<(typeof DISPATCH_EFFORTS)[DispatchEngine][number], string> = {
+  minimal: '最低',
+  low: '低',
+  medium: '中',
+  high: '高',
+  xhigh: '极高',
+  max: '最大',
+};
 
 /** Shared validation for system settings, task overrides and snapshots. */
 export function dispatchError(engine: unknown, model: unknown, effort: unknown): string | undefined {

@@ -46,9 +46,13 @@ export function acceptSnapshot(snapshot: DisplaySnapshot, confirmed: boolean) {
   });
 }
 
-export async function submitWrite(path: WritePath, body: Record<string, unknown>, description: string) {
+export async function submitWrite(
+  path: WritePath,
+  body: Record<string, unknown>,
+  description: string,
+): Promise<boolean> {
   const state = dataStore.getState();
-  if (!state.credentials || state.origin !== 'local' || state.writing) return;
+  if (!state.credentials || state.origin !== 'local' || state.writing) return false;
   dataStore.setState({ writing: true, notice: null });
   try {
     const result = await localWrite(state.credentials, path, body);
@@ -59,8 +63,10 @@ export async function submitWrite(path: WritePath, body: Record<string, unknown>
         ...(path === '/api/undo' ? {} : { batch: result.batch }),
       },
     });
+    return true;
   } catch (error) {
     dataStore.setState({ notice: { text: (error as Error).message, error: true } });
+    return false;
   } finally {
     dataStore.setState({ writing: false, writeRevision: dataStore.getState().writeRevision + 1 });
   }

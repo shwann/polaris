@@ -7,7 +7,7 @@ const read = (p: string) => readFileSync(p, 'utf8');
 const files = readdirSync('packages/web/src', { recursive: true }).filter(
   (p) =>
     String(p).endsWith('.css') &&
-    !/^components\/(Requirements|Markdown|LocalEdit|TaskExecution|Header\/DispatchSummary)\//.test(String(p)),
+    !/^components\/(Requirements|Markdown|LocalEdit|TaskExecution|Header\/Dispatch(Summary|Dialog))\//.test(String(p)),
 );
 const migrated = files.map((p) => read('packages/web/src/' + p)).join('\n');
 const legacy = read('history/index.v42.html').split('<style>')[1]!.split('</style>')[0]!;
