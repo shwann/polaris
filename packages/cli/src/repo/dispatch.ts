@@ -1,4 +1,4 @@
-import type { DispatchSetting } from '@polaris/core';
+import type { DispatchEngine, DispatchSetting } from '@polaris/core';
 import type { Database, Row } from '../db/connection.js';
 import { insert } from './rows.js';
 
@@ -26,6 +26,17 @@ export function dispatchValue(row: Row, task?: string): DispatchSetting {
   };
 }
 export const insertDispatch = (db: Database, row: Row) => insert(db, 'dispatch_settings', row);
+
+export function dispatchModels(db: Database, system: string): Partial<Record<DispatchEngine, string[]>> {
+  const models: Partial<Record<DispatchEngine, string[]>> = {};
+  for (const row of db.all(
+    'SELECT DISTINCT engine,model FROM dispatch_settings WHERE system_key=? ORDER BY model',
+    system,
+  )) {
+    (models[row.engine as DispatchEngine] ??= []).push(String(row.model));
+  }
+  return models;
+}
 
 export function taskDispatchAudit(db: Database, id: string): Row | undefined {
   return db.get(

@@ -23,6 +23,7 @@ export function executeHttpWrite(
     return String(body[key]);
   };
   let args: Parsed;
+  let system: string | undefined;
   if (path === '/api/task/move') {
     args = { positionals: ['task', 'move', text('id')], values: { lane: text('lane') } };
     if (body.status !== undefined) args.values.status = text('status');
@@ -33,15 +34,25 @@ export function executeHttpWrite(
   else if (path === '/api/req/check') {
     if (typeof body.met !== 'boolean') throw new HttpError(400, '验收勾选值必须是布尔值');
     args = { positionals: ['req', 'check', text('id')], values: { item: number('item'), off: !body.met } };
+  } else if (path === '/api/dispatch/set') {
+    const trimmed = (key: string) => text(key).trim();
+    system = trimmed('system');
+    if (!system) throw new HttpError(400, '请提供有效的系统');
+    const model = trimmed('model');
+    if ([...model].length > 64) throw new HttpError(400, '模型不能超过 64 字');
+    if (body.note !== undefined && typeof body.note !== 'string') throw new HttpError(400, '说明必须是文本');
+    const note = (body.note as string | undefined)?.trim() || '看板修改';
+    if ([...note].length > 500) throw new HttpError(400, '说明不能超过 500 字');
+    args = {
+      positionals: ['dispatch', 'set'],
+      values: { engine: trimmed('engine'), model, effort: trimmed('effort'), note, by: '用户' },
+    };
   } else if (path === '/api/undo') {
     const batch = text('batch');
     if (!batches.has(batch)) throw new HttpError(403, '只能撤销本页面刚才产生的批次');
     args = { positionals: ['undo', batch], values: {} };
   } else throw new HttpError(404, '未找到写接口');
-  const result = executeWrite(
-    { db, config: { ...cfg, actor: 'web', system: undefined }, at: new Date().toISOString() },
-    args,
-  );
+  const result = executeWrite({ db, config: { ...cfg, actor: 'web', system }, at: new Date().toISOString() }, args);
   if (path === '/api/undo') batches.delete(text('batch'));
   else batches.add(result.batch);
   // A committed write must still return its batch if the optional backup step fails.

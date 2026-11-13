@@ -86,6 +86,16 @@ POST JSON 接口：`/api/task/move`（id、lane、可选 status）、`/api/task/
 
 每次启动生成随机令牌；每次打开页面生成独立会话。写请求须携带 `X-Polaris-Token` 和 `X-Polaris-Page`，且满足本机 Host、同源 Origin、POST、JSON 与 64KB 限制。只能撤销当前页面收到的写批次，不能撤销命令行或其他页面的批次，也不能重复撤销同一批次。服务最多保留 128 个页面会话，超出后最旧页面需刷新。
 
+`POST /api/dispatch/set` 请求体：
+
+```json
+{"system":"beidou","engine":"codex","model":"gpt-6.1-sol","effort":"high","note":"选填说明"}
+```
+
+字符串先 trim；system 必须存在，engine/model/effort 复用 `dispatchError` 校验，model 最多 64 字、note 最多 500 字。note 缺省或空白时记为“看板修改”。该接口将 system 传给命令行写入上下文，固定 `actor:web`、`by:用户`；返回 `{ok:true,batch,snapshot,warning?}`，无效输入返回 400 和中文错误，可用本页面的 batch 调 `/api/undo` 恢复上一条派工。其他写接口不继承服务启动时的 system。
+
+只有 `origin:local` 且有页面 credentials 时，顶部派工显示为按钮；点击弹框可选执行方、模型、中文思考强度和说明，确定后立即保存，成功关闭并显示带撤销的提示条，失败保持弹框。没有派工时仅单系统可写视图显示“派工 未设置”。全部系统视图按星座显示已有派工，分别修改。镜像、artifact、`serve --readonly` 不渲染派工弹框。
+
 ## 派工读取与 JSON 合约
 
 engine 只接受 `codex` 或 `claude`，model 必须非空。codex effort：`minimal|low|medium|high|xhigh`；claude effort：`low|medium|high|xhigh|max`。校验集中在 core/enums.ts，错误为中文。`by` 默认“用户”，独立于写入者 `actor`。`note` 原文完整保留。
@@ -110,6 +120,6 @@ polaris task update T1 --dispatch "" --executor ""
 
 不带 `--json` 输出一行中文：`派工：Codex gpt-6.1-sol / xhigh（2026-11-13 用户定）原话：…`；查询任务时附来源。读取结果用于下一次执行方式的选择，本功能只记录派工，不启动引擎。
 
-Snapshot 保持 `schema:1`：SystemInfo 新增可选 `dispatch:{current,history}`，history 最多最近 5 条；Task 新增可选 dispatchEngine、dispatchModel、dispatchEffort、executor、executorAt。数据归一化保留这些字段，本机及镜像共用同份数据。派工和执行信息只通过命令行修改，页面没有派工写入入口，也不增加 HTTP 写接口。
+Snapshot 保持 `schema:1`：SystemInfo 新增可选 `dispatch:{current,history,models?}`，history 最多最近 5 条，models 按引擎列出该系统完整历史中去重的模型名，供弹框选用；Task 新增可选 dispatchEngine、dispatchModel、dispatchEffort、executor、executorAt。数据归一化保留这些字段，本机及镜像共用同份数据。系统派工可通过命令行或本机可写看板修改；单任务派工覆盖和执行者登记仍只通过命令行修改。
 
 会话摘要在“需要你”之前显示 `派工：Codex gpt-6.1-sol / xhigh（MM-DD 用户定）`，日期取 set_at 的本地日期；多系统时各加星座名、以“；”合并，仅显示有设置的系统。没有设置或 v1 旧库不增加该行；hook 不迁移数据库。0002 迁移升级前自动备份旧主库及 WAL；dispatch_settings 参与审计、undo 和 SQL 备份恢复。

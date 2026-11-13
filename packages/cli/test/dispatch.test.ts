@@ -157,6 +157,10 @@ test('snapshot keeps the last five settings and validates incomplete task overri
     'model-2',
   ]);
   expect(db.all('SELECT * FROM dispatch_settings')).toHaveLength(7);
+  expect(data.systems[0]!.dispatch!.models).toEqual({ codex: Array.from({ length: 7 }, (_, i) => `model-${i}`) });
+  write('system', 'add', 'other', '--name', '其他');
+  write('dispatch', 'set', ...setting, '--system', 'other', '--model', 'other-model');
+  expect(snapshot(db).systems.find((s) => s.key === 'beidou')!.dispatch!.models?.codex).not.toContain('other-model');
   data.tasks[0]!.dispatchEngine = 'codex';
   data.systems[0]!.dispatch!.current.setAt = 'invalid';
   expect(

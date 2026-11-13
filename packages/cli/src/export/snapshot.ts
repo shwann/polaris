@@ -12,7 +12,7 @@ import { taskRows, stepRows, reqLinks } from '../repo/tasks.js';
 import { requirementRows, acceptanceRows, refRows, taskLinks } from '../repo/requirements.js';
 import { releaseRows } from '../repo/releases.js';
 import { eventRows } from '../repo/events.js';
-import { dispatchRows, dispatchValue } from '../repo/dispatch.js';
+import { dispatchModels, dispatchRows, dispatchValue } from '../repo/dispatch.js';
 
 export function camel(row: Row): Record<string, Value> {
   return Object.fromEntries(
@@ -37,7 +37,7 @@ export function snapshot(db: Database, now = new Date().toISOString()): Snapshot
       ...camel(s),
       app: app ? camel(app) : null,
       releases: releaseRows(db, String(s.key)).map(camel),
-      ...(history[0] ? { dispatch: { current: history[0], history } } : {}),
+      ...(history[0] ? { dispatch: { current: history[0], history, models: dispatchModels(db, String(s.key)) } } : {}),
     } as unknown as SystemInfo;
   });
   const tasks = taskRows(db).map(

@@ -47,7 +47,12 @@ export interface SystemInfo {
   sort: number;
   app: AppInfo | null;
   releases: Release[];
-  dispatch?: { current: DispatchSetting; history: DispatchSetting[] };
+  dispatch?: {
+    current: DispatchSetting;
+    history: DispatchSetting[];
+    /** All historical models, including settings outside the recent history window. */
+    models?: Partial<Record<DispatchEngine, string[]>>;
+  };
 }
 
 export interface TaskStep {
