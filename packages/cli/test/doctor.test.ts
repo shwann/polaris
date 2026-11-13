@@ -42,7 +42,7 @@ test('doctor checks Node, SQLite, writable home, schema/check, git, backup and p
   expect(result.ok).toBe(true);
   expect(result.checks.map((c) => c.name)).toEqual(['node', 'sqlite', 'home', 'database', 'git', 'backup', 'port']);
   expect(byName(result, 'home')).toMatchObject({ path: home, exists: true, writable: true });
-  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 1, check: { errors: 0 } });
+  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 2, check: { errors: 0 } });
   expect(fs.readFileSync(path)).toEqual(before);
   expect(inspectPort).toHaveBeenCalledWith(8790);
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -107,10 +107,10 @@ test('doctor rejects corrupt data, unsupported schema and check violations witho
   expect(byName(await diagnose(bad), 'database').detail).toContain('检查失败');
   const { db, home, write } = boot();
   write('task', 'add', 'BAD', '--system', 'beidou', '--title', '任务');
-  db.run('UPDATE schema_version SET version=99');
+  db.run('UPDATE schema_version SET version=99 WHERE version=2');
   expect(byName(await diagnose(home), 'database')).toMatchObject({ migrationVersion: 99, ok: false });
-  expect(db.get('SELECT version FROM schema_version')?.version).toBe(99);
-  db.run('UPDATE schema_version SET version=1');
+  expect(db.get('SELECT MAX(version) AS version FROM schema_version')?.version).toBe(99);
+  db.run('UPDATE schema_version SET version=2 WHERE version=99');
   db.run("UPDATE tasks SET updated_at='invalid'");
   expect(byName(await diagnose(home), 'database').ok).toBe(false);
 });
@@ -135,7 +135,7 @@ test('hook is silent with no database, corrupt database, invalid options or POLA
   expect(log).not.toHaveBeenCalled();
 });
 
-test('hook summarizes all systems and oldest three needed IDs within four lines without business writes', async () => {
+test('hook summarizes all systems and oldest three needed IDs within five lines without business writes', async () => {
   const { db, write, home } = boot();
   for (let i = 1; i <= 4; i++) {
     write('system', 'add', `demo${i}`, '--name', `示例${i}\n系统`);
@@ -149,7 +149,7 @@ test('hook summarizes all systems and oldest three needed IDs within four lines 
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});
   await sessionStart(['--home', home]);
   const text = String(log.mock.calls[0]![0]);
-  expect(text.split('\n')).toHaveLength(4);
+  expect(text.split('\n').length).toBeLessThanOrEqual(5);
   expect(text).toContain('开发中 1，等你回复 0，等发版 1，完成 1/3');
   for (let i = 1; i <= 4; i++) expect(text).toContain(`示例${i} 系统`);
   expect(text.split('\n').at(-1)).toContain('需要你：WAIT1、WAIT2、WAIT3');

@@ -12,6 +12,7 @@ import { taskRows, stepRows, reqLinks } from '../repo/tasks.js';
 import { requirementRows, acceptanceRows, refRows, taskLinks } from '../repo/requirements.js';
 import { releaseRows } from '../repo/releases.js';
 import { eventRows } from '../repo/events.js';
+import { dispatchRows, dispatchValue } from '../repo/dispatch.js';
 
 export function camel(row: Row): Record<string, Value> {
   return Object.fromEntries(
@@ -30,11 +31,13 @@ export function snake(value: object): Row {
 export function snapshot(db: Database, now = new Date().toISOString()): Snapshot {
   const systems = systemRows(db).map((s) => {
     const app = appRow(db, String(s.key));
+    const history = dispatchRows(db, String(s.key), 5).map((r) => dispatchValue(r));
     if (app) delete app.system_key;
     return {
       ...camel(s),
       app: app ? camel(app) : null,
       releases: releaseRows(db, String(s.key)).map(camel),
+      ...(history[0] ? { dispatch: { current: history[0], history } } : {}),
     } as unknown as SystemInfo;
   });
   const tasks = taskRows(db).map(
@@ -59,6 +62,7 @@ export function snapshot(db: Database, now = new Date().toISOString()): Snapshot
     ...tasks.map((t) => t.updatedAt),
     ...requirements.map((r) => r.updatedAt),
     ...events.map((e) => e.at),
+    ...systems.flatMap((s) => (s.dispatch ? [s.dispatch.current.setAt] : [])),
   ]
     .sort((a, b) => Date.parse(a) - Date.parse(b))
     .at(-1);

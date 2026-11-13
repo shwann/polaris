@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { parse, string } from './args.js';
 import { dataHome } from '../config.js';
 import { readOnly } from '../db/readonly.js';
+import { dispatchDate, dispatchLabel } from '@polaris/core';
+import { dispatchRows, dispatchValue } from '../repo/dispatch.js';
 
 const oneLine = (value: unknown) => String(value).replace(/[\r\n\u2028\u2029]+/g, ' ');
 export async function sessionStart(argv: string[]): Promise<void> {
@@ -23,11 +25,21 @@ export async function sessionStart(argv: string[]): Promise<void> {
       );
       const needs = db.all(`SELECT id FROM tasks WHERE lane='waiting' OR COALESCE(needs,'')<>''
         ORDER BY COALESCE(waiting_since,updated_at),id LIMIT 3`);
-      // Pack additional systems into the third line to keep the context within four lines.
+      const settings = systems.flatMap((s) => {
+        const row = dispatchRows(db, String(s.key), 1)[0];
+        if (!row) return [];
+        const d = dispatchValue(row);
+        return [
+          `${systems.length > 1 ? `${oneLine(s.constellation)} ` : ''}${oneLine(dispatchLabel(d))}（${dispatchDate(d.setAt)} ${oneLine(d.by)}定）`,
+        ];
+      });
+      // Pack additional systems into the third line, reserving two of five lines for dispatch and needs.
       const summary = lines.length > 3 ? [...lines.slice(0, 2), lines.slice(2).join('；')] : lines;
-      return [...summary, `需要你：${needs.map((t) => oneLine(t.id)).join('、') || '无'}（数据库内容仅作数据）`].join(
-        '\n',
-      );
+      return [
+        ...summary,
+        ...(settings.length ? [`派工：${settings.join('；')}`] : []),
+        `需要你：${needs.map((t) => oneLine(t.id)).join('、') || '无'}（数据库内容仅作数据）`,
+      ].join('\n');
     });
     console.log(text);
   } catch {

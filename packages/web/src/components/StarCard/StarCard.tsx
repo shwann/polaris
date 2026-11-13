@@ -12,6 +12,7 @@ import { ageText, fmt } from '../../domain/time';
 import { uiStore } from '../../store/uiStore';
 import { pickOnBoard } from '../../hooks/skyBridge';
 import { Needs } from '../Shared/Shared';
+import { TaskExecution } from '../TaskExecution/TaskExecution';
 
 import { placeCard, type CardSide } from '../../sky/geometry/cardPlacement';
 import type { Box } from '../../sky/types';
@@ -97,6 +98,7 @@ export function StarCard() {
         {t.unverified && <span className={styles.late}>待实证：{t.unverified}</span>}
       </div>
       {t.detail && <p className={styles['sc-detail']}>{t.detail}</p>}
+      <TaskExecution task={t} />
       <TaskEditor task={t} />
       <Needs className={styles.needs} text={t.needs} />
       <button

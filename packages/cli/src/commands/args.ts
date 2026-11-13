@@ -45,6 +45,11 @@ const strings = [
   'out',
   'text',
   'note',
+  'engine',
+  'effort',
+  'by',
+  'dispatch',
+  'executor',
 ];
 const options = Object.fromEntries(strings.map((s) => [s, { type: 'string' as const }]));
 export interface Parsed {
@@ -59,6 +64,7 @@ export function parse(args: string[]): Parsed {
     options: {
       ...options,
       json: { type: 'boolean' },
+      history: { type: 'boolean' },
       off: { type: 'boolean' },
       readonly: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },

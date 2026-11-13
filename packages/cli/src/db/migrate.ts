@@ -1,8 +1,12 @@
 import { copyFileSync, existsSync } from 'node:fs';
 import type { Database } from './connection.js';
 import init from './migrations/0001_init.sql?raw';
+import dispatch from './migrations/0002_dispatch.sql?raw';
 
-const migrations = [{ version: 1, sql: init }];
+const migrations = [
+  { version: 1, sql: init },
+  { version: 2, sql: dispatch },
+];
 export function migrate(db: Database, path: string): void {
   db.exec('BEGIN IMMEDIATE');
   try {

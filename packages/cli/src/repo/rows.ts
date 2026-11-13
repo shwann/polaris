@@ -3,6 +3,7 @@ import type { Database, Row, Value } from '../db/connection.js';
 export const keys = {
   systems: ['key'],
   system_apps: ['system_key'],
+  dispatch_settings: ['id'],
   releases: ['id'],
   requirements: ['id'],
   requirement_acceptance: ['req_id', 'seq'],

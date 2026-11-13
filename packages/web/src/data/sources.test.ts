@@ -116,3 +116,32 @@ it('aggregates Artifact tasks and metadata, preserves cache confirmation and uns
   off();
   expect(dispose).toHaveBeenCalledTimes(3);
 });
+
+it('preserves dispatch settings, history and task execution fields in the shared local/mirror snapshot', async () => {
+  const snapshot = structuredClone(sample);
+  const current = {
+    system: 'main',
+    engine: 'codex' as const,
+    model: 'gpt-6.1-sol',
+    effort: 'xhigh',
+    note: '原话',
+    by: '用户',
+    actor: 'test',
+    setAt: '2026-11-13T00:00:00Z',
+    source: 'system' as const,
+  };
+  snapshot.systems[0]!.dispatch = { current, history: [current] };
+  Object.assign(snapshot.tasks[0]!, {
+    dispatchEngine: 'claude',
+    dispatchModel: 'opus',
+    dispatchEffort: 'medium',
+    executor: 'Claude｜会话',
+  });
+  expect(normalize(snapshot)).toBe(snapshot);
+  const source = (await openSource({}, JSON.stringify(snapshot)))!,
+    emit = vi.fn();
+  const off = source.subscribe(emit, vi.fn());
+  await Promise.resolve();
+  expect(emit.mock.calls[0]![0].snapshot).toEqual(snapshot);
+  off();
+});

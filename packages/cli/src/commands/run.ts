@@ -11,6 +11,7 @@ import { status, statusText } from './status.js';
 import { check } from './check.js';
 import { executeWrite } from './write.js';
 import { required } from '../service/context.js';
+import { dispatchShow } from './dispatch.js';
 
 const actions: Record<string, readonly string[]> = {
   system: ['add', 'update', 'list'],
@@ -18,6 +19,7 @@ const actions: Record<string, readonly string[]> = {
   task: ['add', 'update', 'move', 'step', 'link', 'list', 'show', 'delete'],
   release: ['record', 'next'],
   log: ['add'],
+  dispatch: ['set', 'show'],
 };
 const singles = ['status', 'check', 'undo', 'backup', 'restore', 'serve', 'mirror', 'import-json'];
 function validateCommand(args: Parsed): void {
@@ -26,7 +28,8 @@ function validateCommand(args: Parsed): void {
     if (!action || !actions[command].includes(action))
       throw new Error(`无效操作：${command} ${action || ''}，请用 --help 查看用法`);
   } else if (!singles.includes(command)) throw new Error(`未知命令：${command}，请用 --help 查看用法`);
-  const max = actions[command] ? 3 : ['undo', 'restore', 'import-json'].includes(command) ? 2 : 1;
+  const max =
+    command === 'dispatch' ? 2 : actions[command] ? 3 : ['undo', 'restore', 'import-json'].includes(command) ? 2 : 1;
   if (args.positionals.length > max) throw new Error('位置参数过多，请用 --help 查看用法');
 }
 export async function run(argv: string[]): Promise<void> {
@@ -39,6 +42,10 @@ export async function run(argv: string[]): Promise<void> {
   }
   validateCommand(args);
   const cfg = config({ home: string(args, 'home'), actor: string(args, 'actor'), system: string(args, 'system') });
+  if (command === 'dispatch' && action === 'show') {
+    await dispatchShow(cfg, args);
+    return;
+  }
   if (command === 'restore') {
     const result = restore(required(action, 'SQL 文件'), cfg.path);
     const restored = connect(cfg.path);

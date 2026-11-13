@@ -76,6 +76,19 @@ test('serve and mirror report a missing frontend without falling back to the old
 test('mirror embeds the exact snapshot with core DATA_SLOT and readEmbedded', () => {
   const { db, write } = boot();
   write('task', 'add', 'T1', '--system', 'beidou', '--title', '</script><script>alert(1)</script>');
+  write(
+    'dispatch',
+    'set',
+    '--engine',
+    'codex',
+    '--model',
+    'gpt-6.1-sol',
+    '--effort',
+    'xhigh',
+    '--note',
+    '</script>原话',
+  );
+  write('task', 'update', 'T1', '--dispatch', 'claude/opus/medium', '--executor', 'Claude｜会话');
   const dir = temp(),
     html = join(dir, 'index.html'),
     out = join(dir, 'build', 'mirror.html');
@@ -85,6 +98,9 @@ test('mirror embeds the exact snapshot with core DATA_SLOT and readEmbedded', ()
   const text = readFileSync(out, 'utf8');
   const content = /<script id="polaris-data" type="application\/json">([\s\S]*?)<\/script>/.exec(text)![1];
   expect(readEmbedded(content)).toEqual(data);
+  expect(data.systems[0]!.dispatch!.current.note).toBe('</script>原话');
+  expect(data.tasks[0]!.dispatchEngine).toBe('claude');
+  expect(text).not.toContain('polaris-local-auth');
   expect(text).not.toContain('<script>alert(1)</script>');
   expect(text).not.toContain(DATA_SLOT);
 });

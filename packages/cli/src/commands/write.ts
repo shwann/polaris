@@ -5,6 +5,7 @@ import { changeRequirement, checkRequirement } from '../service/requirements.js'
 import { changeSystem } from '../service/systems.js';
 import { recordRelease, setNextRelease } from '../service/releases.js';
 import { undo } from '../service/undo.js';
+import { setDispatch, taskDispatchPatch } from '../service/dispatch.js';
 import { readLegacy, importSnapshot } from '../export/importer.js';
 import { patch, string, multi, type Parsed } from './args.js';
 
@@ -22,6 +23,7 @@ const taskFields = [
   'shipped-in',
   'target-release',
   'unverified',
+  'executor',
 ];
 const reqFields = ['title', 'body', 'source', 'priority', 'status', 'scope', 'owner'];
 const appFields = [
@@ -48,6 +50,15 @@ export function executeWrite(ctx: Context, args: Parsed) {
   if (command === 'task') {
     const fields = action === 'step' ? ['name', 'state'] : taskFields;
     const values = patch(args, fields);
+    const dispatch = string(args, 'dispatch');
+    if (dispatch !== undefined) {
+      if (action !== 'update') throw new Error('--dispatch 仅用于 task update');
+      Object.assign(values, taskDispatchPatch(dispatch));
+    }
+    if (string(args, 'executor') !== undefined) {
+      if (action !== 'update') throw new Error('--executor 仅用于 task update');
+      values.executor_at = values.executor ? ctx.at : null;
+    }
     // Task statuses are free text; requirement statuses alone use the closed enum.
     if (string(args, 'status') !== undefined) values.status = string(args, 'status')!;
     text = describe('task', action!, id || string(args, 'code') || title || '', {
@@ -63,6 +74,16 @@ export function executeWrite(ctx: Context, args: Parsed) {
         string(args, 'req'),
         string(args, 'seq') === undefined ? undefined : Number(string(args, 'seq')),
       );
+  } else if (command === 'dispatch') {
+    text = `设置系统 ${ctx.config.system || 'beidou'} 派工：${string(args, 'engine') || ''}/${string(args, 'model') || ''}/${string(args, 'effort') || ''}${note === undefined ? '' : `，原话：${note}`}`;
+    apply = () =>
+      setDispatch(ctx, {
+        engine: string(args, 'engine') ?? '',
+        model: string(args, 'model') ?? '',
+        effort: string(args, 'effort') ?? '',
+        note: note ?? '',
+        by: string(args, 'by') ?? '用户',
+      });
   } else if (command === 'req' && action === 'check') {
     const key = required(id, '需求 ID');
     const item = Number(string(args, 'item'));
@@ -119,10 +140,17 @@ export function executeWrite(ctx: Context, args: Parsed) {
     preserveEvents = true;
   } else throw new Error(`未知写命令：${command}`);
   const eventContext =
-    command === 'system'
-      ? { ...ctx, config: { ...ctx.config, system: id || ctx.config.system } }
-      : command === 'undo'
-        ? { ...ctx, config: { ...ctx.config, system: undefined } }
-        : ctx;
-  return write(eventContext, command === 'release' && action === 'next' ? text : note || text, apply, preserveEvents);
+    command === 'dispatch'
+      ? { ...ctx, config: { ...ctx.config, system: ctx.config.system || 'beidou' } }
+      : command === 'system'
+        ? { ...ctx, config: { ...ctx.config, system: id || ctx.config.system } }
+        : command === 'undo'
+          ? { ...ctx, config: { ...ctx.config, system: undefined } }
+          : ctx;
+  return write(
+    eventContext,
+    command === 'dispatch' || (command === 'release' && action === 'next') ? text : note || text,
+    apply,
+    preserveEvents,
+  );
 }

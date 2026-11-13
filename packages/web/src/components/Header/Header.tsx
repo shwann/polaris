@@ -11,6 +11,7 @@ import { useBoard } from '../../hooks/useBoard';
 import { useLayout } from '../../hooks/useLayout';
 import { systemLabel, latestUpdate } from '../../domain/selectors';
 import { fmt } from '../../domain/time';
+import { DispatchSummary } from './DispatchSummary/DispatchSummary';
 
 import { vars } from '../../styles/style';
 export function Header() {
@@ -21,6 +22,10 @@ export function Header() {
       <div className="boot" style={vars({ '--d': 0 })} data-sky-block>
         <Title />
         <Ticker />
+        <DispatchSummary
+          systems={view.systemKey === 'all' ? view.systems : [view.system]}
+          all={view.systemKey === 'all'}
+        />
         <p className={styles.sub}>
           {view.note || '由 Claude 维护：任务派出、完成、合入、发版、需要你决定时都会更新。'}
         </p>

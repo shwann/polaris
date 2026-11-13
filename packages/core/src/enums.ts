@@ -73,3 +73,24 @@ export const isReqPriority = (v: unknown): v is ReqPriority =>
   typeof v === 'string' && (REQ_PRIORITIES as readonly string[]).includes(v);
 export const isReqSource = (v: unknown): v is ReqSource =>
   typeof v === 'string' && (REQ_SOURCES as readonly string[]).includes(v);
+
+export const DISPATCH_EFFORTS = {
+  codex: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+  claude: ['low', 'medium', 'high', 'xhigh', 'max'],
+} as const;
+export type DispatchEngine = keyof typeof DISPATCH_EFFORTS;
+export interface DispatchSpec {
+  engine: DispatchEngine;
+  model: string;
+  effort: string;
+}
+export const DISPATCH_ENGINE_LABELS: Record<DispatchEngine, string> = { codex: 'Codex', claude: 'Claude' };
+
+/** Shared validation for system settings, task overrides and snapshots. */
+export function dispatchError(engine: unknown, model: unknown, effort: unknown): string | undefined {
+  if (engine !== 'codex' && engine !== 'claude') return '派工 engine 只能是 codex 或 claude';
+  if (typeof model !== 'string' || !model.trim()) return '派工 model 必须非空';
+  if (typeof effort !== 'string' || !(DISPATCH_EFFORTS[engine] as readonly string[]).includes(effort))
+    return `派工 ${engine} 的 effort 只能是 ${DISPATCH_EFFORTS[engine].join('|')}`;
+  return undefined;
+}

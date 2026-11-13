@@ -1,0 +1,10 @@
+.summary {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+  font-size: 0.78rem;
+}
+.summary p {
+  margin: 0.6rem 0 0;
+}

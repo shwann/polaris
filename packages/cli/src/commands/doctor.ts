@@ -67,7 +67,7 @@ export async function diagnose(home: string, port = 8790) {
       const result = await readOnly(path, (db) => check(db));
       database = {
         ...database,
-        ok: database.migrationVersion === 1 && result.errors === 0,
+        ok: [1, 2].includes(Number(database.migrationVersion)) && result.errors === 0,
         check: result,
         detail: `数据库存在，迁移版本 ${database.migrationVersion}，check：${result.errors} 个错误、${result.warnings} 个提示`,
       };

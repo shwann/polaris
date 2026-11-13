@@ -1,4 +1,4 @@
-import { isLane, isReqPriority, isReqSource, isReqStatus, isStepState } from './enums.js';
+import { dispatchError, isLane, isReqPriority, isReqSource, isReqStatus, isStepState } from './enums.js';
 import type { Requirement, Snapshot, Task } from './types.js';
 
 export interface Issue {
@@ -27,6 +27,11 @@ export function validateTask(t: Task, systemKeys: ReadonlySet<string>): Issue[] 
   });
   if (t.lane === 'waiting' && !t.waitingSince) warn('waiting 组没有 waitingSince，等待天数会按 updatedAt 算');
   if (t.waitingSince && !isIsoTime(t.waitingSince)) err('waitingSince 不是带时区的 ISO 时间');
+  if ([t.dispatchEngine, t.dispatchModel, t.dispatchEffort].some((v) => v !== undefined)) {
+    const error = dispatchError(t.dispatchEngine, t.dispatchModel, t.dispatchEffort);
+    if (error) err(error);
+  }
+  if (t.executorAt !== undefined && !isIsoTime(t.executorAt)) err('executorAt 不是带时区的 ISO 时间');
   return out;
 }
 
@@ -49,6 +54,16 @@ export function validateSnapshot(s: Snapshot): Issue[] {
   const keys = new Set(s.systems.map((x) => x.key));
   if (keys.size !== s.systems.length) out.push({ level: 'error', path: 'systems', message: '系统 key 重复' });
   if (!s.systems.length) out.push({ level: 'error', path: 'systems', message: '至少要有一个系统' });
+  for (const system of s.systems) {
+    if (!system.dispatch) continue;
+    for (const d of [system.dispatch.current, ...system.dispatch.history]) {
+      const error = dispatchError(d.engine, d.model, d.effort);
+      const err = (message: string) => out.push({ level: 'error', path: `systems/${system.key}/dispatch`, message });
+      if (error) err(error);
+      if (!isIsoTime(d.setAt)) err('setAt 不是带时区的 ISO 时间');
+      if (d.system !== system.key || d.source !== 'system') err('派工系统或来源不匹配');
+    }
+  }
   const taskIds = new Set(s.tasks.map((t) => t.id));
   const reqIds = new Set(s.requirements.map((r) => r.id));
   for (const t of s.tasks) {

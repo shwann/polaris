@@ -28,3 +28,23 @@ it('shows a unique task id for repeated sky codes while retaining the board titl
   rerender(<StarCard />);
   expect(screen.getByText('DESK5')).toBeTruthy();
 });
+
+it('shows the executor and task dispatch override in a read-only mirror', async () => {
+  const { dataStore } = await import('../../store/dataStore');
+  const snapshot = structuredClone(dataStore.getState().snapshot!);
+  Object.assign(
+    snapshot.tasks.find((t) => t.id === 'EXPORT')!,
+    {
+      executor: 'Codex gpt-6.1-sol xhigh｜商务 worktree｜会话',
+      dispatchEngine: 'codex',
+      dispatchModel: 'gpt-6.1-sol',
+      dispatchEffort: 'high',
+    },
+  );
+  dataStore.setState({ snapshot });
+  uiStore.setState({ selected: 'EXPORT', sky: true });
+  render(<StarCard />);
+  expect(screen.getByText('执行：Codex gpt-6.1-sol xhigh｜商务 worktree｜会话')).toBeTruthy();
+  expect(screen.getByText('派工覆盖：codex/gpt-6.1-sol/high')).toBeTruthy();
+  expect(screen.queryByRole('textbox')).toBeNull();
+});

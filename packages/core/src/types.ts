@@ -1,7 +1,18 @@
-import type { Lane, ReqPriority, ReqSource, ReqStatus, StepState } from './enums.js';
+import type { DispatchEngine, DispatchSpec, Lane, ReqPriority, ReqSource, ReqStatus, StepState } from './enums.js';
 
 /** ISO 8601 timestamp with offset, e.g. 2026-11-11T13:30:00+08:00. */
 export type IsoTime = string;
+
+/** Stable CLI JSON contract; database row ids are intentionally private. */
+export interface DispatchSetting extends DispatchSpec {
+  system: string;
+  note: string;
+  by: string;
+  actor: string;
+  setAt: IsoTime;
+  source: 'system' | 'task';
+  task?: string;
+}
 
 /** The formal build of a system as its users run it (天枢's panel). */
 export interface AppInfo {
@@ -36,6 +47,7 @@ export interface SystemInfo {
   sort: number;
   app: AppInfo | null;
   releases: Release[];
+  dispatch?: { current: DispatchSetting; history: DispatchSetting[] };
 }
 
 export interface TaskStep {
@@ -56,6 +68,11 @@ export interface Task {
   /** What the user has to do; the board counts these as “需要你”. */
   needs?: string;
   owner?: string;
+  dispatchEngine?: DispatchEngine;
+  dispatchModel?: string;
+  dispatchEffort?: string;
+  executor?: string;
+  executorAt?: IsoTime;
   ref?: string;
   /** First time the task entered the waiting lane; kept while it stays there. */
   waitingSince?: IsoTime;

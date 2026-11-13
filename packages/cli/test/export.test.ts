@@ -69,6 +69,20 @@ test('artifact meta/tasks uses the same core conversion', () => {
 test('SQL export and restore round trip is byte-identical including quotes, Unicode, null and NUL', () => {
   const { db, home, write } = boot();
   write('task', 'add', 'T1', '--system', 'beidou', '--title', "客户的 '标题'\n</script>", '--detail', '含\0空字节');
+  write(
+    'dispatch',
+    'set',
+    '--engine',
+    'codex',
+    '--model',
+    'gpt-6.1-sol',
+    '--effort',
+    'xhigh',
+    '--note',
+    "客户的 '原话'\n含\0字节",
+  );
+  write('dispatch', 'set', '--engine', 'claude', '--model', 'opus', '--effort', 'max', '--note', '最新原话');
+  write('task', 'update', 'T1', '--dispatch', 'claude/opus/medium', '--executor', 'Claude opus｜会话');
   const sql = dump(db),
     file = join(home, 'export.sql');
   writeFileSync(file, sql);
@@ -77,6 +91,9 @@ test('SQL export and restore round trip is byte-identical including quotes, Unic
   const restored = connect(dest);
   try {
     expect(dump(restored)).toBe(sql);
+    expect(restored.all('SELECT * FROM dispatch_settings')).toEqual(db.all('SELECT * FROM dispatch_settings'));
+    expect(snapshot(restored).systems[0]!.dispatch!.history).toHaveLength(2);
+    expect(snapshot(restored).tasks[0]!.executor).toBe('Claude opus｜会话');
   } finally {
     restored.close();
   }

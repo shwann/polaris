@@ -64,6 +64,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 
 | 发生了什么 | 命令 |
 |---|---|
+| 决定派工 | `polaris dispatch set --engine codex --model gpt-6.1-sol --effort xhigh --note "用户原话"`；执行前用 `dispatch show [--task ID] --json` 读最新配置，`task update --executor "执行者｜worktree｜会话"` 记谁在干活 |
 | 开工 | `polaris task move <ID> --lane doing --status "…"`，再用 `task step` 写步骤，`task update --progress` 写进度 |
 | 等用户决定 | `polaris task move <ID> --lane waiting --needs "要你做什么"`。首次等待时间自动记录，后续不变 |
 | 用户答复了 | `polaris task move <ID> --lane doing`，`needs` 用空字符串清掉 |

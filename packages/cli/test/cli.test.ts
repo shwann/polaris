@@ -228,3 +228,45 @@ test('req check checks and unchecks a single criterion through the CLI and expos
   expect(JSON.parse(cli(home, 'req', 'show', 'R1')).acceptance.every((i: { met: boolean }) => !i.met)).toBe(true);
   expect(cli(home, '--help')).toContain('req check');
 });
+
+test('dispatch CLI errors exit nonzero in Chinese and plain output remains one line', () => {
+  const home = temp();
+  expect(() => cli(home, 'dispatch', 'show')).toThrow();
+  try {
+    cli(home, 'dispatch', 'show');
+  } catch (error) {
+    expect(String((error as { stderr?: string }).stderr)).toContain('尚未设置派工');
+  }
+  cli(home, 'system', 'add', 'beidou', '--name', '测试');
+  cli(
+    home,
+    'dispatch',
+    'set',
+    '--engine',
+    'codex',
+    '--model',
+    'gpt-6.1-sol',
+    '--effort',
+    'xhigh',
+    '--note',
+    '原话\n示例',
+  );
+  const result = JSON.parse(cli(home, 'dispatch', 'show'));
+  expect(result).toMatchObject({ system: 'beidou', engine: 'codex', source: 'system', by: '用户' });
+  const plain = execFileSync(process.execPath, [binary, 'dispatch', 'show', '--home', home], { encoding: 'utf8' });
+  expect(plain.trim().split('\n')).toHaveLength(1);
+  expect(plain).toContain('派工：Codex gpt-6.1-sol / xhigh');
+});
+
+test('bundled hook accepts leading global options and remains silent when disabled', () => {
+  const home = temp();
+  cli(home, 'system', 'add', 'beidou', '--name', '测试');
+  cli(home, 'dispatch', 'set', '--engine', 'codex', '--model', 'gpt-6.1-sol', '--effort', 'xhigh', '--note', '原话');
+  const args = [binary, '--home', home, '--actor', 'test', 'hook', 'session-start'];
+  const result = execFileSync(process.execPath, args, { encoding: 'utf8' });
+  expect(result).toContain('派工：Codex gpt-6.1-sol / xhigh');
+  expect(result.trim().split('\n').length).toBeLessThanOrEqual(5);
+  expect(execFileSync(process.execPath, args, { encoding: 'utf8', env: { ...process.env, POLARIS_HOOK: 'off' } })).toBe(
+    '',
+  );
+});

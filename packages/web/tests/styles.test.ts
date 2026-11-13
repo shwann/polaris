@@ -3,9 +3,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { it, expect } from 'vitest';
 import { rules } from './cssHarness';
 const read = (p: string) => readFileSync(p, 'utf8');
-// Requirement, Markdown and local editing modules are additive UI; preserve the exact v42 baseline for every task-view module.
+// Additive UI lives in its own modules; preserve the exact v42 baseline for the original task-view styles.
 const files = readdirSync('packages/web/src', { recursive: true }).filter(
-  (p) => String(p).endsWith('.css') && !/^components\/(Requirements|Markdown|LocalEdit)\//.test(String(p)),
+  (p) =>
+    String(p).endsWith('.css') &&
+    !/^components\/(Requirements|Markdown|LocalEdit|TaskExecution|Header\/DispatchSummary)\//.test(String(p)),
 );
 const migrated = files.map((p) => read('packages/web/src/' + p)).join('\n');
 const legacy = read('history/index.v42.html').split('<style>')[1]!.split('</style>')[0]!;

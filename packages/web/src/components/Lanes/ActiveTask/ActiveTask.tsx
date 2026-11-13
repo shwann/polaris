@@ -8,6 +8,7 @@ import { taskProgress } from '../../../domain/selectors';
 import { fmt } from '../../../domain/time';
 import { locateStar } from '../../../hooks/skyBridge';
 import { Clamp, Count, Needs, RefLine } from '../../Shared/Shared';
+import { TaskExecution } from '../../TaskExecution/TaskExecution';
 
 const words = { done: 'DONE · 完成', doing: 'RUNNING · 进行中', blocked: 'BLOCKED · 受阻', todo: 'QUEUED · 未开始' };
 export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean }) {
@@ -64,6 +65,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
         </div>
       )}
       {t.detail && <Clamp className={styles['a-detail']} id={t.id + ':d'} text={t.detail} />}
+      <TaskExecution task={t} />
       <TaskEditor task={t} />
       <Needs text={t.needs} />
       <RefLine parts={[t.owner, t.ref, fmt(t.updatedAt)]} reference={t.ref} />
