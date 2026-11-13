@@ -69,7 +69,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 | 等用户决定 | `polaris task move <ID> --lane waiting --needs "要你做什么"`。首次等待时间自动记录，后续不变 |
 | 用户答复了 | `polaris task move <ID> --lane doing`，`needs` 用空字符串清掉 |
 | 已合入，等发版 | `polaris task move <ID> --lane release`，`task update --target-release <版本>` |
-| 完成 | `polaris task move <ID> --lane done` |
+| 完成 | `polaris task move <ID> --lane done`。关联需求的任务全部完成时，需求自动转待验收；验收通过后仍需 `req check` 逐条勾选，并用 `req move --status 已完成` |
 | 只是记一笔 | `polaris log add --text "…"` |
 
 改错了就用 `polaris undo <批次>` 撤销，批次号在每条写命令的输出里。

@@ -1,62 +1,8 @@
-import { Readable } from 'node:stream';
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
-import { boot } from './helpers.js';
-import { handler } from '../src/server.js';
-import { router } from '../src/httpRouter.js';
 import { snapshot } from '../src/export/snapshot.js';
-
-function setup(readonly = false) {
-  const f = boot();
-  f.write('task', 'add', 'T1', '--system', 'beidou', '--title', '任务');
-  f.write('req', 'add', 'R1', '--system', 'beidou', '--title', '需求', '--accept', '第一条', '--accept', '第二条');
-  const route = router(
-    f.db,
-    '<html>北辰</html>',
-    { readonly, config: { home: f.home, path: f.path, actor: 'ignored' } },
-    () => 8790,
-    handler(f.db, '<html>只读</html>'),
-  );
-  async function request(
-    path: string,
-    body: unknown = {},
-    options: { method?: string; headers?: Record<string, string>; chunks?: string[] } = {},
-  ) {
-    const req = Object.assign(Readable.from(options.chunks ?? [JSON.stringify(body)]), {
-      url: path,
-      method: options.method ?? 'POST',
-      headers: {
-        host: '127.0.0.1:8790',
-        origin: 'http://127.0.0.1:8790',
-        'content-type': 'application/json',
-        ...options.headers,
-      },
-    }) as IncomingMessage;
-    const res = {
-      statusCode: 200,
-      body: '',
-      headers: new Map<string, string>(),
-      setHeader(name: string, value: string) {
-        this.headers.set(name, value);
-      },
-      end(value: string) {
-        this.body = value;
-      },
-    };
-    await route(req, res as unknown as ServerResponse);
-    return { code: res.statusCode, text: res.body, headers: res.headers, json: () => JSON.parse(res.body) };
-  }
-  async function page() {
-    const response = await request('/', {}, { method: 'GET' });
-    return {
-      'x-polaris-token': /name="polaris-token" content="([^"]+)"/.exec(response.text)?.[1] ?? '',
-      'x-polaris-page': /name="polaris-page" content="([^"]+)"/.exec(response.text)?.[1] ?? '',
-    };
-  }
-  return { ...f, request, page };
-}
+import { setup } from './httpSetup.js';
 
 test('all write routes share CLI transactions, audit web events, SQL backup and undo', async () => {
   const f = setup(),
@@ -225,67 +171,29 @@ test('tokens differ per server and task status remains literal free text', async
   expect(result.snapshot.tasks[0].status).toBe('--free-text');
 });
 
-const dispatchBody = { system: 'other', engine: 'codex', model: 'gpt-6.1-sol', effort: 'high' };
-test('dispatch writes target the requested system, audit web/user, refresh snapshot and undo to the previous setting', async () => {
+test('task move automatically advances linked requirements in the same HTTP batch and undo restores both', async () => {
   const f = setup(),
     headers = await f.page();
-  f.write('system', 'add', 'other', '--name', '其他系统');
-  f.write('dispatch', 'set', '--system', 'other', '--engine', 'claude', '--model', 'opus', '--effort', 'medium');
-  const before = snapshot(f.db).systems.find((s) => s.key === 'other')!.dispatch!.current;
-  const response = await f.request(
-    '/api/dispatch/set',
-    {
-      system: ' other ',
-      engine: ' codex ',
-      model: ' gpt-6.1-sol ',
-      effort: ' high ',
-      note: ' 用户原话 ',
-    },
-    { headers },
-  );
+  f.write('req', 'move', 'R1', '--status', '开发中');
+  f.write('task', 'link', 'T1', '--req', 'R1');
+  const before = snapshot(f.db);
+  const response = await f.request('/api/task/move', { id: 'T1', lane: 'done' }, { headers });
   expect(response.code).toBe(200);
   const result = response.json();
-  expect(result).toMatchObject({ ok: true, batch: expect.any(String) });
-  expect(result.snapshot.systems.find((s: { key: string }) => s.key === 'other').dispatch.current).toMatchObject({
-    ...dispatchBody,
-    note: '用户原话',
-    actor: 'web',
-    by: '用户',
-    source: 'system',
-  });
-  expect(result.snapshot.systems.find((s: { key: string }) => s.key === 'beidou').dispatch).toBeUndefined();
-  expect(f.db.all('SELECT actor FROM changes WHERE batch=?', result.batch).every((r) => r.actor === 'web')).toBe(true);
-  const undone = await f.request('/api/undo', { batch: result.batch }, { headers });
-  expect(undone.code).toBe(200);
-  expect(undone.json().snapshot.systems.find((s: { key: string }) => s.key === 'other').dispatch.current).toEqual(
-    before,
+  expect(result.ok).toBe(true);
+  expect(result.snapshot.tasks[0].lane).toBe('done');
+  expect(result.snapshot.requirements[0].status).toBe('acceptance');
+  expect(result.snapshot.events).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ text: '需求 R1 关联任务已全部完成，自动转为待验收', systemKey: 'beidou' }),
+    ]),
   );
-});
-
-test.each([undefined, '', '  '])('dispatch defaults an absent or blank note (%s) to 看板修改', async (note) => {
-  const f = setup(),
-    headers = await f.page();
-  const response = await f.request('/api/dispatch/set', { ...dispatchBody, system: 'beidou', note }, { headers });
-  expect(response.code).toBe(200);
-  expect(response.json().snapshot.systems[0].dispatch.current.note).toBe('看板修改');
-});
-
-test.each([
-  { effort: 'max' },
-  { engine: 'invalid' },
-  { model: '' },
-  { model: '   ' },
-  { model: '模'.repeat(65) },
-  { system: 'missing' },
-  { system: '   ' },
-  { note: '字'.repeat(501) },
-  { note: 42 },
-])('dispatch rejects invalid input atomically in Chinese: %j', async (invalid) => {
-  const f = setup(),
-    headers = await f.page(),
-    before = f.db.all('SELECT * FROM changes');
-  const response = await f.request('/api/dispatch/set', { ...dispatchBody, system: 'beidou', ...invalid }, { headers });
-  expect(response.code).toBe(400);
-  expect(response.json()).toMatchObject({ ok: false, error: expect.stringMatching(/[\u3400-\u9fff]/u) });
-  expect(f.db.all('SELECT * FROM changes')).toEqual(before);
+  const changes = f.db.all('SELECT * FROM changes WHERE batch=?', result.batch);
+  expect(changes.some((c) => c.entity === 'requirements' && c.field === 'status')).toBe(true);
+  expect(changes.every((c) => c.actor === 'web')).toBe(true);
+  const undone = (await f.request('/api/undo', { batch: result.batch }, { headers })).json();
+  expect(undone.ok).toBe(true);
+  expect(undone.snapshot.tasks).toEqual(before.tasks);
+  expect(undone.snapshot.requirements).toEqual(before.requirements);
+  expect(undone.snapshot.events.some((e: { text: string }) => e.text.includes('自动转为待验收'))).toBe(false);
 });

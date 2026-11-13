@@ -3,6 +3,7 @@ import { existing, required } from './context.js';
 import type { Row } from '../db/connection.js';
 import { find, insert, remove, update } from '../repo/rows.js';
 import { newId } from '../audit.js';
+import { autoAccept } from './reqAutoAccept.js';
 
 export function changeRequirement(
   ctx: Context,
@@ -12,7 +13,7 @@ export function changeRequirement(
   accept?: string[],
   refs?: string[],
   task?: string,
-): string {
+): { id: string; autoAccepted: string[] } {
   const key = id || newId(),
     { db, at } = ctx;
   if (action === 'add')
@@ -47,7 +48,7 @@ export function changeRequirement(
     remove(db, 'requirement_refs', { req_id: key });
     refs.forEach((ref, seq) => insert(db, 'requirement_refs', { req_id: key, seq, ref }));
   }
-  return key;
+  return { id: key, autoAccepted: autoAccept(ctx, action === 'link' || action === 'unlink' ? [key] : []) };
 }
 
 export function checkRequirement(ctx: Context, id: string, item: number, met: boolean): string {

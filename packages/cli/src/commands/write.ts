@@ -44,6 +44,7 @@ export function executeWrite(ctx: Context, args: Parsed) {
   const id = string(args, 'id') || positionalId;
   const note = string(args, 'note');
   const title = string(args, 'title');
+  let autoAccepted: string[] = [];
   let text: string,
     apply: () => unknown,
     preserveEvents = false;
@@ -65,8 +66,8 @@ export function executeWrite(ctx: Context, args: Parsed) {
       ...values,
       ...patch(args, ['req', 'seq']),
     });
-    apply = () =>
-      changeTask(
+    apply = () => {
+      const result = changeTask(
         ctx,
         action!,
         id,
@@ -74,6 +75,9 @@ export function executeWrite(ctx: Context, args: Parsed) {
         string(args, 'req'),
         string(args, 'seq') === undefined ? undefined : Number(string(args, 'seq')),
       );
+      autoAccepted = result.autoAccepted;
+      return result.id;
+    };
   } else if (command === 'dispatch') {
     text = `设置系统 ${ctx.config.system || 'beidou'} 派工：${string(args, 'engine') || ''}/${string(args, 'model') || ''}/${string(args, 'effort') || ''}${note === undefined ? '' : `，原话：${note}`}`;
     apply = () =>
@@ -96,8 +100,8 @@ export function executeWrite(ctx: Context, args: Parsed) {
       ...(multi(args, 'accept') ? { accept: multi(args, 'accept')!.join('；') } : {}),
       ...(multi(args, 'refs') ? { refs: multi(args, 'refs')!.join('；') } : {}),
     });
-    apply = () =>
-      changeRequirement(
+    apply = () => {
+      const result = changeRequirement(
         ctx,
         action!,
         id,
@@ -106,6 +110,9 @@ export function executeWrite(ctx: Context, args: Parsed) {
         multi(args, 'refs'),
         string(args, 'task'),
       );
+      autoAccepted = result.autoAccepted;
+      return result.id;
+    };
   } else if (command === 'system') {
     text = describe(
       'system',
@@ -147,10 +154,14 @@ export function executeWrite(ctx: Context, args: Parsed) {
         : command === 'undo'
           ? { ...ctx, config: { ...ctx.config, system: undefined } }
           : ctx;
-  return write(
+  const result = write(
     eventContext,
     command === 'dispatch' || (command === 'release' && action === 'next') ? text : note || text,
     apply,
     preserveEvents,
   );
+  return {
+    ...result,
+    text: result.text + (autoAccepted.length ? `；需求 ${autoAccepted.join('、')} 自动转待验收` : ''),
+  };
 }

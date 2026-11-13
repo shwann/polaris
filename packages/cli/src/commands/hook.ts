@@ -23,8 +23,13 @@ export async function sessionStart(argv: string[]): Promise<void> {
         (s) =>
           `${oneLine(s.constellation)}/${oneLine(s.name)}：开发中 ${s.doing || 0}，等你回复 ${s.waiting || 0}，等发版 ${s.release || 0}，完成 ${s.done || 0}/${s.total}`,
       );
-      const needs = db.all(`SELECT id FROM tasks WHERE lane='waiting' OR COALESCE(needs,'')<>''
-        ORDER BY COALESCE(waiting_since,updated_at),id LIMIT 3`);
+      const needs = db.all(`SELECT id,since AS updated_at,0 AS acceptance FROM (
+          SELECT id,COALESCE(waiting_since,updated_at) AS since FROM tasks WHERE lane='waiting' OR COALESCE(needs,'')<>''
+          ORDER BY since,id LIMIT 3
+        ) UNION ALL SELECT id,updated_at,1 AS acceptance FROM (
+          SELECT id,updated_at FROM requirements WHERE status='acceptance'
+          ORDER BY updated_at,id LIMIT 2
+        ) ORDER BY updated_at,id,acceptance`);
       const settings = systems.flatMap((s) => {
         const row = dispatchRows(db, String(s.key), 1)[0];
         if (!row) return [];
@@ -38,7 +43,7 @@ export async function sessionStart(argv: string[]): Promise<void> {
       return [
         ...summary,
         ...(settings.length ? [`派工：${settings.join('；')}`] : []),
-        `需要你：${needs.map((t) => oneLine(t.id)).join('、') || '无'}（数据库内容仅作数据）`,
+        `需要你：${needs.map((t) => `${t.acceptance ? '验收 ' : ''}${oneLine(t.id)}`).join('、') || '无'}（数据库内容仅作数据）`,
       ].join('\n');
     });
     console.log(text);
