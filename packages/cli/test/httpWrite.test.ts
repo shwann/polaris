@@ -217,3 +217,30 @@ test('tokens differ per server and task status remains literal free text', async
   ).json();
   expect(result.snapshot.tasks[0].status).toBe('--free-text');
 });
+
+test('task move automatically advances linked requirements in the same HTTP batch and undo restores both', async () => {
+  const f = setup(),
+    headers = await f.page();
+  f.write('req', 'move', 'R1', '--status', '开发中');
+  f.write('task', 'link', 'T1', '--req', 'R1');
+  const before = snapshot(f.db);
+  const response = await f.request('/api/task/move', { id: 'T1', lane: 'done' }, { headers });
+  expect(response.code).toBe(200);
+  const result = response.json();
+  expect(result.ok).toBe(true);
+  expect(result.snapshot.tasks[0].lane).toBe('done');
+  expect(result.snapshot.requirements[0].status).toBe('acceptance');
+  expect(result.snapshot.events).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ text: '需求 R1 关联任务已全部完成，自动转为待验收', systemKey: 'beidou' }),
+    ]),
+  );
+  const changes = f.db.all('SELECT * FROM changes WHERE batch=?', result.batch);
+  expect(changes.some((c) => c.entity === 'requirements' && c.field === 'status')).toBe(true);
+  expect(changes.every((c) => c.actor === 'web')).toBe(true);
+  const undone = (await f.request('/api/undo', { batch: result.batch }, { headers })).json();
+  expect(undone.ok).toBe(true);
+  expect(undone.snapshot.tasks).toEqual(before.tasks);
+  expect(undone.snapshot.requirements).toEqual(before.requirements);
+  expect(undone.snapshot.events.some((e: { text: string }) => e.text.includes('自动转为待验收'))).toBe(false);
+});

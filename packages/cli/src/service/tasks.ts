@@ -4,6 +4,7 @@ import { find, insert, remove, update, rows } from '../repo/rows.js';
 import type { Row } from '../db/connection.js';
 import { newId } from '../audit.js';
 import { reqLinks } from '../repo/tasks.js';
+import { autoAccept } from './reqAutoAccept.js';
 
 export function changeTask(
   ctx: Context,
@@ -12,7 +13,7 @@ export function changeTask(
   patch: Row,
   req?: string,
   seq?: number,
-): string {
+): { id: string; autoAccepted: string[] } {
   const { db, at } = ctx;
   const key = id || (typeof patch.code === 'string' ? patch.code : newId());
   if (action === 'add') {
@@ -28,13 +29,20 @@ export function changeTask(
       ...patch,
       ...(patch.lane === 'waiting' ? { waiting_since: at } : {}),
     });
-    return key;
+    return {
+      id: key,
+      autoAccepted: autoAccept(
+        ctx,
+        reqLinks(db, key).map((link) => String(link.req_id)),
+      ),
+    };
   }
   const old = existing(ctx, 'tasks', required(id, '任务 ID'));
   if (action === 'delete') {
-    for (const link of reqLinks(db, key)) update(db, 'requirements', { id: link.req_id! }, { updated_at: at });
+    const reqIds = reqLinks(db, key).map((link) => String(link.req_id));
+    for (const reqId of reqIds) update(db, 'requirements', { id: reqId }, { updated_at: at });
     remove(db, 'tasks', { id: key });
-    return key;
+    return { id: key, autoAccepted: autoAccept(ctx, reqIds) };
   }
   if (action === 'link') {
     insert(db, 'task_requirements', { task_id: key, req_id: required(req, '--req') });
@@ -58,5 +66,11 @@ export function changeTask(
     update(db, 'tasks', { id: key }, patch);
   }
   update(db, 'tasks', { id: key }, { updated_at: at });
-  return key;
+  const reqIds =
+    action === 'link'
+      ? [req!]
+      : patch.lane !== undefined && patch.lane !== old.lane
+        ? reqLinks(db, key).map((link) => String(link.req_id))
+        : [];
+  return { id: key, autoAccepted: autoAccept(ctx, reqIds) };
 }
