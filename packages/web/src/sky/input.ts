@@ -1,4 +1,4 @@
-import { pickRelease } from './geometry/figures/aquarius';
+import { moveAquarius, pickRelease, pickUrn } from './geometry/figures/aquarius';
 import { clearTooltip } from './tooltip';
 import { COL } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
@@ -74,7 +74,8 @@ export function attachInput(s: SkyState) {
         s.tooltipSettling = s.w > 560;
       }
       d.samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
-      if (d.moved && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
+      if (d.moved && d.aquarius) moveAquarius(s, d, e.clientX, e.clientY);
+      if (d.moved && !d.aquarius && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
         [s.camT.x, s.camT.y] = rubberPoint([d.cx + dx, d.cy + dy], cameraBounds(s));
         // Direct manipulation must not wait for the next interpolated camera frame.
         Object.assign(s.cam, s.camT);
@@ -131,6 +132,7 @@ export function attachInput(s: SkyState) {
         };
       } else {
         const hit = pickAt(s, e.clientX, e.clientY);
+        const urn = !!pickRelease(s, e.clientX, e.clientY) || pickUrn(s, e.clientX, e.clientY);
         const [wx, wy] = s.toWorld(e.clientX, e.clientY);
         s.drag = {
           x0: e.clientX,
@@ -138,8 +140,9 @@ export function attachInput(s: SkyState) {
           cx: s.cam.x,
           cy: s.cam.y,
           moved: false,
-          star: pickRelease(s, e.clientX, e.clientY) ? null : hit.star,
-          dip: pickRelease(s, e.clientX, e.clientY) ? -1 : hit.dip,
+          star: urn ? null : hit.star,
+          dip: urn ? -1 : hit.dip,
+          aquarius: urn ? [...(s.aquariusOffset ?? [0, 0])] : undefined,
           grab: [0, 0],
           samples: [{ x: e.clientX, y: e.clientY, t: e.timeStamp }],
         };
@@ -161,12 +164,18 @@ export function attachInput(s: SkyState) {
     if (d?.moved && e.type !== 'pointercancel') {
       s.px = e.clientX;
       s.py = e.clientY;
-      if (!draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
+      if (!d.aquarius && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
         [s.camT.x, s.camT.y] = rubberPoint([d.cx + e.clientX - d.x0, d.cy + e.clientY - d.y0], cameraBounds(s));
         Object.assign(s.cam, s.camT);
       }
     }
     if (!d) return;
+    if (d.aquarius && (d.moved || e.type === 'pointercancel')) {
+      moveAquarius(s, d, e.clientX, e.clientY, e.type === 'pointercancel');
+      lastTap = null;
+      s.drag = null;
+      return;
+    }
     if (d.moved || e.type === 'pointercancel') lastTap = null;
     if ((d.star || (s.w > 560 && d.dip >= 0)) && d.moved) {
       releaseHeld(s, d, e);
@@ -195,6 +204,7 @@ export function attachInput(s: SkyState) {
       s.events.onPickRelease?.(release.release.version);
       return;
     }
+    if (d.aquarius) return;
     if (hitDoneLabel(s, e.clientX, e.clientY)) {
       zoomDone(s, e.clientX, e.clientY);
       return;
