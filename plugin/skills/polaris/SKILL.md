@@ -66,7 +66,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 |---|---|
 | 决定派工 | `polaris dispatch set --engine codex --model gpt-6.1-sol --effort xhigh --note "用户原话"`；本机看板点顶部派工也可以改；执行前用 `dispatch show [--task ID] --json` 读最新配置，`task update --executor "执行者｜worktree｜会话"` 记谁在干活 |
 | 开工 | `polaris task move <ID> --lane doing --status "…"`，再用 `task step` 写步骤，`task update --progress` 写进度 |
-| 等用户决定 | `polaris task move <ID> --lane waiting --needs "要你做什么"`。首次等待时间自动记录，后续不变 |
+| 等用户决定 | `polaris task move <ID> --lane waiting --needs "要你做什么"`。首次等待时间自动记录，后续不变。等的不是用户时加 `--waiting-on`：`客户`（等客户给资料、确认）、`前置`（等前置任务合入或到日期才开工）；等用户答复、决定、验收用 `你` 或不写。只有“等你”算进“需要你” |
 | 用户答复了 | `polaris task move <ID> --lane doing`，`needs` 用空字符串清掉 |
 | 已合入，等发版 | `polaris task move <ID> --lane release`，`task update --target-release <版本>` |
 | 完成 | `polaris task move <ID> --lane done`。关联需求的任务全部完成时，需求自动转待验收；验收通过后仍需 `req check` 逐条勾选，并用 `req move --status 已完成` |

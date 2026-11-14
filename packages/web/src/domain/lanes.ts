@@ -1,7 +1,7 @@
 import type { LaneInfo, Lane } from './types';
 export const LANES: LaneInfo[] = [
   { key: 'doing', name: '开发中', c: '--cyan' },
-  { key: 'waiting', name: '等你或客户回复', c: '--coral', hint: '不回复就不会往前走' },
+  { key: 'waiting', name: '等待中', c: '--coral', hint: '不回复就不会往前走' },
   { key: 'release', name: '已合入、等发版', c: '--amber' },
   { key: 'risk', name: '已知未验证', c: '--violet' },
   { key: 'planned', name: '待开工', c: '--slate', hint: '需求已写好，排队等执行' },

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { parse, string } from './args.js';
 import { dataHome } from '../config.js';
 import { readOnly } from '../db/readonly.js';
-import { dispatchDate, dispatchLabel } from '@polaris/core';
+import { WAITING_ON_LABELS, dispatchDate, dispatchLabel } from '@polaris/core';
 import { dispatchRows, dispatchValue } from '../repo/dispatch.js';
 
 const oneLine = (value: unknown) => String(value).replace(/[\r\n\u2028\u2029]+/g, ' ');
@@ -14,17 +14,27 @@ export async function sessionStart(argv: string[]): Promise<void> {
     const path = join(dataHome(string(args, 'home')), 'polaris.db');
     if (!existsSync(path)) return;
     const text = await readOnly(path, (db) => {
+      // v2 databases have no waiting_on column; every waiting task then counts as 等你.
+      const hasWaitingOn = db.all('PRAGMA table_info(tasks)').some((c) => c.name === 'waiting_on');
+      const asks = "(t.lane='waiting' OR COALESCE(t.needs,'')<>'')";
+      const who = hasWaitingOn ? "COALESCE(t.waiting_on,'user')" : "'user'";
       const systems = db.all(`SELECT s.key,s.constellation,s.name,COUNT(t.id) AS total,
-        SUM(t.lane='doing') AS doing,SUM(t.lane='waiting') AS waiting,
+        SUM(t.lane='doing') AS doing,SUM(${asks} AND ${who}='user') AS user,
+        SUM(${asks} AND ${who}='customer') AS customer,SUM(${asks} AND ${who}='dependency') AS dependency,
         SUM(t.lane='release') AS release,SUM(t.lane='done') AS done
         FROM systems s LEFT JOIN tasks t ON t.system_key=s.key
         GROUP BY s.key ORDER BY s.sort,s.key`);
+      const waits = (s: Record<string, unknown>) =>
+        (['user', 'customer', 'dependency'] as const)
+          .filter((k) => Number(s[k] || 0) > 0)
+          .map((k) => `，${WAITING_ON_LABELS[k]} ${Number(s[k])}`)
+          .join('');
       const lines = systems.map(
         (s) =>
-          `${oneLine(s.constellation)}/${oneLine(s.name)}：开发中 ${s.doing || 0}，等你回复 ${s.waiting || 0}，等发版 ${s.release || 0}，完成 ${s.done || 0}/${s.total}`,
+          `${oneLine(s.constellation)}/${oneLine(s.name)}：开发中 ${s.doing || 0}${waits(s)}，等发版 ${s.release || 0}，完成 ${s.done || 0}/${s.total}`,
       );
       const needs = db.all(`SELECT id,since AS updated_at,0 AS acceptance FROM (
-          SELECT id,COALESCE(waiting_since,updated_at) AS since FROM tasks WHERE lane='waiting' OR COALESCE(needs,'')<>''
+          SELECT t.id,COALESCE(t.waiting_since,t.updated_at) AS since FROM tasks t WHERE ${asks} AND ${who}='user'
           ORDER BY since,id LIMIT 3
         ) UNION ALL SELECT id,updated_at,1 AS acceptance FROM (
           SELECT id,updated_at FROM requirements WHERE status='acceptance'

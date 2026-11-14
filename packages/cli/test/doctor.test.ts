@@ -42,7 +42,7 @@ test('doctor checks Node, SQLite, writable home, schema/check, git, backup and p
   expect(result.ok).toBe(true);
   expect(result.checks.map((c) => c.name)).toEqual(['node', 'sqlite', 'home', 'database', 'git', 'backup', 'port']);
   expect(byName(result, 'home')).toMatchObject({ path: home, exists: true, writable: true });
-  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 2, check: { errors: 0 } });
+  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 3, check: { errors: 0 } });
   expect(fs.readFileSync(path)).toEqual(before);
   expect(inspectPort).toHaveBeenCalledWith(8790);
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -150,7 +150,7 @@ test('hook summarizes all systems and oldest three needed IDs within five lines 
   await sessionStart(['--home', home]);
   const text = String(log.mock.calls[0]![0]);
   expect(text.split('\n').length).toBeLessThanOrEqual(5);
-  expect(text).toContain('开发中 1，等你回复 0，等发版 1，完成 1/3');
+  expect(text).toContain('北斗/北斗：开发中 1，等发版 1，完成 1/3');
   for (let i = 1; i <= 4; i++) expect(text).toContain(`示例${i} 系统`);
   expect(text.split('\n').at(-1)).toContain('需要你：WAIT1、WAIT2、WAIT3');
   expect(text.split('\n').at(-1)).not.toContain('WAIT4');

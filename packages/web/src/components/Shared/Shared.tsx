@@ -1,3 +1,4 @@
+import type { WaitingOn } from '@polaris/core';
 import styles from './Shared.module.css';
 import { cn } from '../../styles/cn';
 import { useEffect, useRef, useState } from 'react';
@@ -108,10 +109,12 @@ export function RefLine({ parts, reference }: { parts: (string | undefined)[]; r
     </div>
   );
 }
-export function Needs({ text, className }: { text?: string; className?: string }) {
+const NEEDS_LABELS: Record<WaitingOn, string> = { user: '需要你：', customer: '等客户：', dependency: '等前置：' };
+/** The ask line; its label follows who the task waits on (需要你 / 等客户 / 等前置). */
+export function Needs({ text, className, wait }: { text?: string; className?: string; wait?: WaitingOn }) {
   return text ? (
-    <p className={cn(styles.needs, className)}>
-      <b>需要你：</b>
+    <p className={cn(styles.needs, className)} data-wait={wait}>
+      <b>{NEEDS_LABELS[wait ?? 'user']}</b>
       {text}
     </p>
   ) : null;

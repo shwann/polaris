@@ -68,6 +68,9 @@ const MARKS: Record<Lane, { text: string; icon: ReactNode }> = {
   done: { text: '小点，偶尔闪光', icon: <circle cx="9" cy="9" r="1.8" fill="currentColor" /> },
 };
 
+/** 天权's row names its three kinds; the other groups use their lane name. */
+export const legendName = (lane: Lane, name: string) => (lane === 'waiting' ? '等你 / 等客户、等前置（较暗）' : name);
+
 const Icon = ({ children }: { children: ReactNode }) => (
   <svg className={styles.icon} viewBox="0 0 18 18" aria-hidden="true">
     {children}
@@ -93,7 +96,7 @@ export function SkyLegend() {
           {LANES.map((lane) => (
             <li key={lane.key} className={styles.row} style={{ color: rgb(lane.key) }}>
               <Icon>{MARKS[lane.key].icon}</Icon>
-              <span className={styles.name}>{lane.name}</span>
+              <span className={styles.name}>{legendName(lane.key, lane.name)}</span>
               <span className={styles.note}>{MARKS[lane.key].text}</span>
             </li>
           ))}
@@ -103,7 +106,17 @@ export function SkyLegend() {
               <circle cx="9" cy="9" r="2.6" fill="currentColor" />
             </Icon>
             <span className={styles.name}>光晕大、闪烁</span>
-            <span className={styles.note}>等回复超过 {LATE_DAYS} 天</span>
+            <span className={styles.note}>等你超过 {LATE_DAYS} 天</span>
+          </li>
+          <li className={styles.row} style={{ color: rgb('planned') }}>
+            <Icon>
+              <path d="M3 13 L9 6 L15 10" fill="none" stroke="currentColor" />
+              <circle cx="3" cy="13" r="1.8" fill="currentColor" />
+              <circle cx="9" cy="6" r="1.8" fill="currentColor" />
+              <circle cx="15" cy="10" r="1.8" fill="currentColor" />
+            </Icon>
+            <span className={styles.name}>连线</span>
+            <span className={styles.note}>同一条需求（或同一模块）</span>
           </li>
           <li className={styles.row} style={{ color: rgb('done') }}>
             <Icon>

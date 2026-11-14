@@ -63,6 +63,26 @@
   color: var(--coral);
   font-weight: 700;
 }
+/* 等客户 asks read in amber and 等前置 in slate, each a step quieter than 等你. */
+.needs[data-wait='customer'] {
+  color: var(--ink-2);
+  background: rgba(255, 176, 46, 0.07);
+  border-color: rgba(255, 176, 46, 0.35);
+  box-shadow: none;
+}
+.needs[data-wait='customer'] b {
+  color: var(--amber);
+}
+.needs[data-wait='dependency'] {
+  color: var(--ink-2);
+  background: rgba(111, 133, 166, 0.08);
+  border-color: rgba(111, 133, 166, 0.35);
+  box-shadow: none;
+  padding: 0.25rem 0.6rem;
+}
+.needs[data-wait='dependency'] b {
+  color: var(--slate);
+}
 .clamp {
   display: -webkit-box;
   -webkit-box-orient: vertical;

@@ -1,4 +1,4 @@
-import { LANE_LABELS, REQ_SOURCE_LABELS, REQ_STATUS_LABELS } from '@polaris/core';
+import { LANE_LABELS, REQ_SOURCE_LABELS, REQ_STATUS_LABELS, WAITING_ON_LABELS } from '@polaris/core';
 import type { Database, Row } from './db/connection.js';
 import { businessTables, identity, insert, rows, type Table } from './repo/rows.js';
 
@@ -61,6 +61,7 @@ const fieldLabels: Record<string, string> = {
   progress: '进度',
   detail: '详情',
   needs: '需要你',
+  waiting_on: '等谁',
   owner: '负责人',
   executor: '执行',
   executor_at: '执行记录时间',
@@ -88,6 +89,7 @@ const fieldLabels: Record<string, string> = {
 // Stored enum values (doing, customer…) read as their board names in activity text.
 const valueLabels: Record<string, Record<string, string>> = {
   lane: LANE_LABELS,
+  waiting_on: WAITING_ON_LABELS,
   source: REQ_SOURCE_LABELS,
   status: REQ_STATUS_LABELS,
   state: { todo: '待做', doing: '进行中', blocked: '受阻', done: '完成' },

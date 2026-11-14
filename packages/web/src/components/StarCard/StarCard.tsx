@@ -1,3 +1,4 @@
+import { waitingOnOf } from '@polaris/core';
 import { skyNames } from '../../sky/taskNames';
 import { getEngine } from '../../hooks/skyBridge';
 import { TaskEditor } from '../LocalEdit/TaskEditor';
@@ -100,7 +101,7 @@ export function StarCard() {
       {t.detail && <p className={styles['sc-detail']}>{t.detail}</p>}
       <TaskExecution task={t} />
       <TaskEditor task={t} />
-      <Needs className={styles.needs} text={t.needs} />
+      <Needs className={styles.needs} text={t.needs} wait={waitingOnOf(t)} />
       <button
         id="star-go"
         type="button"

@@ -1,4 +1,4 @@
-import { dispatchError, isLane, isReqPriority, isReqSource, isReqStatus, isStepState } from './enums.js';
+import { dispatchError, isLane, isWaitingOn, isReqPriority, isReqSource, isReqStatus, isStepState } from './enums.js';
 import type { Requirement, Snapshot, Task } from './types.js';
 
 export interface Issue {
@@ -26,6 +26,7 @@ export function validateTask(t: Task, systemKeys: ReadonlySet<string>): Issue[] 
     if (!isStepState(s.state)) err(`第 ${i + 1} 步 state=${String(s.state)} 不合法`);
   });
   if (t.lane === 'waiting' && !t.waitingSince) warn('waiting 组没有 waitingSince，等待天数会按 updatedAt 算');
+  if (t.waitingOn !== undefined && !isWaitingOn(t.waitingOn)) err(`waitingOn=${String(t.waitingOn)} 不合法`);
   if (t.waitingSince && !isIsoTime(t.waitingSince)) err('waitingSince 不是带时区的 ISO 时间');
   if ([t.dispatchEngine, t.dispatchModel, t.dispatchEffort].some((v) => v !== undefined)) {
     const error = dispatchError(t.dispatchEngine, t.dispatchModel, t.dispatchEffort);

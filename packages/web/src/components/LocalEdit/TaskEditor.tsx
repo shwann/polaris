@@ -1,6 +1,14 @@
 import { useState, type KeyboardEvent } from 'react';
 import { useStore } from 'zustand';
-import { LANES, LANE_LABELS, type Task } from '@polaris/core';
+import {
+  LANES,
+  LANE_LABELS,
+  WAITING_ON,
+  WAITING_ON_LABELS,
+  waitingOnOf,
+  type Task,
+  type WaitingOn,
+} from '@polaris/core';
 import { dataStore, submitWrite } from '../../store/dataStore';
 import styles from './TaskEditor.module.css';
 
@@ -97,6 +105,29 @@ export function TaskEditor({ task: t, open = true }: { task: Task; open?: boolea
           ))}
         </select>
       </label>
+      {waitingOnOf(t) && (
+        <label>
+          等谁{' '}
+          <select
+            aria-label={`${t.code} 等谁`}
+            value={waitingOnOf(t)}
+            disabled={writing}
+            onChange={(e) =>
+              void submitWrite(
+                '/api/task/move',
+                { id: t.id, lane: t.lane, waitingOn: e.target.value },
+                `${t.code} ${WAITING_ON_LABELS[e.target.value as WaitingOn]}`,
+              )
+            }
+          >
+            {WAITING_ON.map((w) => (
+              <option key={w} value={w}>
+                {WAITING_ON_LABELS[w]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         进度 <Progress key={`${t.id}:${t.progress}:${revision}`} task={t} /> %
       </label>

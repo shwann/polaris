@@ -50,6 +50,7 @@ const strings = [
   'by',
   'dispatch',
   'executor',
+  'waiting-on',
 ];
 const options = Object.fromEntries(strings.map((s) => [s, { type: 'string' as const }]));
 export interface Parsed {

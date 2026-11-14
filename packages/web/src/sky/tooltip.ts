@@ -44,7 +44,7 @@ export function emitTooltip(s: SkyState) {
     const l = LANES.find((l) => l.key === s.hover!.group);
     s.events.onTooltip?.(
       `${s.sky ? s.hover.skyCode || s.hover.code : s.hover.code} ${s.hover.title}`,
-      `${l?.name || s.hover.group} · 点击看详情 · 可拖动`,
+      `${l?.name || s.hover.group} · 点击看详情 · 可拖动${s.hover.chainLabel ? `\n${s.hover.chainLabel}` : ''}`,
       s.px,
       s.py,
     );

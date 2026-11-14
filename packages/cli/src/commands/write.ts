@@ -7,6 +7,7 @@ import { recordRelease, setNextRelease } from '../service/releases.js';
 import { undo } from '../service/undo.js';
 import { setDispatch, taskDispatchPatch } from '../service/dispatch.js';
 import { readLegacy, importSnapshot } from '../export/importer.js';
+import { parseWaitingOn } from '@polaris/core';
 import { patch, string, multi, type Parsed } from './args.js';
 
 const taskFields = [
@@ -24,6 +25,7 @@ const taskFields = [
   'target-release',
   'unverified',
   'executor',
+  'waiting-on',
 ];
 const reqFields = ['title', 'body', 'source', 'priority', 'status', 'scope', 'owner'];
 const appFields = [
@@ -56,6 +58,7 @@ export function executeWrite(ctx: Context, args: Parsed) {
       if (action !== 'update') throw new Error('--dispatch 仅用于 task update');
       Object.assign(values, taskDispatchPatch(dispatch));
     }
+    if (typeof values.waiting_on === 'string') values.waiting_on = parseWaitingOn(values.waiting_on);
     if (string(args, 'executor') !== undefined) {
       if (action !== 'update') throw new Error('--executor 仅用于 task update');
       values.executor_at = values.executor ? ctx.at : null;

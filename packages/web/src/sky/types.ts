@@ -1,3 +1,4 @@
+import type { WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
 import type { Sample } from './motion/inertia';
 import type { Color } from '../domain/lanes';
@@ -31,6 +32,12 @@ export interface Star {
   code: string;
   title: string;
   late: boolean;
+  /** Who a waiting star waits on; 等客户 and 等前置 are drawn a step dimmer. */
+  wait?: WaitingOn;
+  /** Stars sharing this key (same requirement, else same code prefix) are joined by one string of links. */
+  chain?: string;
+  /** Tooltip line naming the chain: 需求 <ID> <标题> or 同组：<前缀>. */
+  chainLabel?: string;
   /** Done within the last few days: drawn brighter than older shipped work. */
   recent?: boolean;
   /** Title with the prefix it shares with its cluster neighbours removed, for short labels. */

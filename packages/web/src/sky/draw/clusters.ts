@@ -34,10 +34,13 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
   for (const [g, edges] of state.trees) {
     const fade = state.linkFade(g);
     if (fade < 0.01) continue;
-    const lit = (state.hover && state.hover.group === g) || state.litGroup === g,
-      c = COL[g]! || COL.planned,
-      base = 0.5 * (state.sky ? TASK_LINK_SKY : 1) * (lit ? 1.6 : 1) * fade;
+    const chain = state.hover?.group === g ? state.hover.chain : undefined,
+      lit = (state.hover && state.hover.group === g && !chain) || state.litGroup === g,
+      c = COL[g]! || COL.planned;
     for (const [a, b] of edges) {
+      // Hovering a star lights its own string (same requirement or module); the cluster's other strings stay put.
+      const on = lit || (!!chain && a.chain === chain),
+        base = 0.5 * (state.sky ? TASK_LINK_SKY : 1) * (on ? (chain ? 2 : 1.6) : 1) * fade;
       const [ax, ay] = state.at(a.x, a.y, 14),
         [bx, by] = state.at(b.x, b.y, 14),
         L = Math.hypot(bx - ax, by - ay);
@@ -61,9 +64,9 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
         y1 = by - uy * gap;
       state.ctx.lineCap = 'round';
       for (const [opacity, width] of [
-        [0.1, lit ? 9 : 7],
+        [0.1, on ? 9 : 7],
         [0.22, 3],
-        [0.75, lit ? 1.6 : 1.2],
+        [0.75, on ? 1.6 : 1.2],
       ]) {
         state.ctx.strokeStyle = rgba(color, opacity! * base * al * brightness);
         state.ctx.lineWidth = width! * thin;
