@@ -11,15 +11,18 @@ export const attachEngine = (value: SkyEngine | null) => {
 };
 export const getEngine = () => engine;
 export function selectStar(id: string | null, keyboard = false) {
-  uiStore.setState({ selected: id, ...(id ? { dip: -1 } : {}) });
+  uiStore.setState({ selected: id, selectedRelease: null, deliveryVersion: null, ...(id ? { dip: -1 } : {}) });
   if (id) {
     engine?.reveal(id);
     if (keyboard) requestAnimationFrame(() => document.getElementById('star-go')?.focus({ preventScroll: true }));
   }
 }
-export function selectFromSky(id: string | null) {
-  uiStore.setState({ selected: id, ...(id ? { dip: -1 } : {}) });
+export function selectFromSky(id: string | null, deliveryVersion: string | null = null) {
+  uiStore.setState({ selected: id, selectedRelease: null, deliveryVersion, ...(id ? { dip: -1 } : {}) });
   if (id && innerWidth <= 560) engine?.reveal(id);
+}
+export function selectRelease(version: string | null) {
+  uiStore.setState({ selected: null, selectedRelease: version, deliveryVersion: null, dip: -1 });
 }
 export function locateStar(id: string) {
   setSky(true);
@@ -28,8 +31,20 @@ export function locateStar(id: string) {
 }
 export function stepStar(dir: number) {
   const u = uiStore.getState(),
-    v = selectView(dataStore.getState().snapshot, u.system),
-    group = FIG_LANE[u.dip] || v.tasks.find((t) => t.id === u.selected)?.lane,
+    v = selectView(dataStore.getState().snapshot, u.system);
+  if (u.selectedRelease) return;
+  if (u.deliveryVersion) {
+    const list = v.tasks.filter((t) => t.systemKey === v.system.key && t.shippedIn === u.deliveryVersion),
+      i = list.findIndex((t) => t.id === u.selected);
+    const task = list[(i + dir + list.length) % list.length];
+    if (task) {
+      selectFromSky(task.id, u.deliveryVersion);
+      engine?.reveal(task.id);
+      requestAnimationFrame(() => document.getElementById('star-go')?.focus({ preventScroll: true }));
+    }
+    return;
+  }
+  const group = FIG_LANE[u.dip] || v.tasks.find((t) => t.id === u.selected)?.lane,
     list = group ? laneTasks(v.tasks, group) : flowTasks(searchTasks(v.tasks, u));
   if (!list.length) return;
   const i = list.findIndex((t) => t.id === u.selected),

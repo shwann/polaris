@@ -76,8 +76,8 @@ export interface Zone extends Record<Lane | 'pole', Point> {
   app: Point;
 }
 export interface SkyEvents {
-  onPickStar?(id: string | null): void;
-  onPickRelease?(version: string): void;
+  onPickStar?(id: string | null, deliveryVersion?: string): void;
+  onPickRelease?(version: string | null): void;
   onPickDipper?(index: number): void;
   onSelectedMove?(x: number, y: number, cluster?: Box): Point | void;
   onTooltip?(text: string, detail: string, x: number, y: number): void;
@@ -151,6 +151,8 @@ export interface SkyState extends SkyMethods {
   returning: boolean;
   match: Set<string> | null;
   selected: string | null;
+  selectedRelease: string | null;
+  deliveryVersion: string | null;
   wpx: number;
   wpy: number;
   px: number;
@@ -187,9 +189,11 @@ export interface SkyState extends SkyMethods {
   dipHover: number;
   dipSel: number;
   dipIds: (string | { id: string; dash?: boolean })[] | null;
-  /** Dipper star whose task links stay drawn after its card closes (-1: none). */
+  /** Dipper source retained after its card closes (-1: none). */
   beamSel: number;
   beamAll: boolean;
+  /** Aquarius source retained after its card closes; mutually exclusive with beamSel. */
+  beamRelease: string | null;
   sky: boolean;
   skyK: number;
   smallBox: Box | null;

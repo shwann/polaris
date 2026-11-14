@@ -49,19 +49,14 @@ export function emitTooltip(s: SkyState) {
   s.tooltipGate = null;
   if (s.hoverItem) {
     const { item, release } = s.hoverItem;
-    s.events.onTooltip?.(
-      `${item.code} · ${item.title} · 上线于 ${release.version}`,
-      '点击查看发布记录 · 可拖动',
-      s.px,
-      s.py,
-    );
+    s.events.onTooltip?.(`${item.code} · ${item.title} · 上线于 ${release.version}`, '点击看详情 · 可拖动', s.px, s.py);
     return;
   }
   if (s.hoverRelease) {
     const r = s.hoverRelease.release;
     s.events.onTooltip?.(
       `${r.version}${r.tag ? ' · ' + RELEASE_TAG_LABELS[r.tag] : ''} · ${fmt(r.releasedAt)}`,
-      `${releaseSummary(r) || '（未填写简介）'}\n交付 ${r.items?.length ?? r.stats?.items ?? 0} 项 · 点击查看发布记录`,
+      `${releaseSummary(r) || '（未填写简介）'}\n交付 ${r.items?.length ?? r.stats?.items ?? 0} 项 · 点击看版本详情`,
       s.px,
       s.py,
     );

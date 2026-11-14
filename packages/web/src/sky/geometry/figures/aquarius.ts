@@ -181,7 +181,7 @@ export function pickAquarius(s: SkyState, x: number, y: number): ReleaseDrag | n
 export function highlightedItems(s: SkyState) {
   return new Set(
     (s.aquarius?.jar.nodes ?? [])
-      .filter((node) => node.release.version === s.hoverRelease?.release.version)
+      .filter((node) => node.release.version === (s.selectedRelease || s.hoverRelease?.release.version))
       .map((node) => node.id),
   );
 }

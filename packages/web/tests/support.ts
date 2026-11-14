@@ -61,6 +61,8 @@ beforeEach(() => {
     inputChosen: false,
     projection: false,
     selected: null,
+    selectedRelease: null,
+    deliveryVersion: null,
     releaseFocus: null,
     dip: -1,
     dipAll: false,

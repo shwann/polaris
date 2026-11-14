@@ -19,7 +19,12 @@ export function useDashboardEffects() {
     let old = uiStore.getState();
     const off = uiStore.subscribe((next) => {
       if (next.sky && !old.sky) document.getElementById('skyback')?.focus();
-      if (((old.selected && !next.selected) || (old.dip >= 0 && next.dip < 0)) && next.sky) {
+      if (
+        ((old.selected && !next.selected) ||
+          (old.selectedRelease && !next.selectedRelease) ||
+          (old.dip >= 0 && next.dip < 0)) &&
+        next.sky
+      ) {
         const active = document.activeElement;
         if (active?.closest('#starcard,#dipcard')) document.getElementById('skyback')?.focus();
       }

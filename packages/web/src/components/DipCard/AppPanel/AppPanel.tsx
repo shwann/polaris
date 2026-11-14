@@ -1,10 +1,12 @@
 import styles from './AppPanel.module.css';
 import { cn } from '../../../styles/cn';
+import { releaseSummary } from '@polaris/core';
+import { selectRelease } from '../../../hooks/skyBridge';
 import type { ReactNode } from 'react';
 import type { BoardView } from '../../../domain/types';
 import { appPanelModel } from '../../../domain/viewModels';
 import { laneInfo } from '../../../domain/lanes';
-import { TaskList } from '../TaskList/TaskList';
+import { PanelList, TaskList } from '../TaskList/TaskList';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -18,7 +20,7 @@ export function AppPanel({ view: v }: { view: BoardView }) {
   const { a, cur, ship, plan, unv, next, np, appText, backendText, releases } = appPanelModel(v);
   return (
     <>
-      <p className={styles['dc-sub']}>你现在实际在用的正式 App · 星图上实线连这一版、虚线连下一版</p>
+      <p className={styles['dc-sub']}>星图上连着全部 {releases.length} 个版本 · 点一项看详情</p>
       <div className={styles['dc-body']}>
         {a ? (
           <Section title="现在跑的是什么">
@@ -94,14 +96,24 @@ export function AppPanel({ view: v }: { view: BoardView }) {
         )}
         {!!v.releases.length && (
           <Section title={`发版轨迹 · ${v.releases.length} 版${a?.rollback ? ' · 可回滚到 ' + a.rollback : ''}`}>
-            <ol className={styles['dc-tl']}>
-              {releases.map((r) => (
-                <li key={r.version} className={cn(r.current && styles.cur)} title={r.title}>
-                  <b>{r.version}</b>
-                  <span>{r.date}</span>
-                </li>
-              ))}
-            </ol>
+            <PanelList>
+              {[...releases]
+                .sort(
+                  (a, b) => Date.parse(b.releasedAt) - Date.parse(a.releasedAt) || b.version.localeCompare(a.version),
+                )
+                .map((r) => (
+                  <li key={r.version}>
+                    <button type="button" title={r.tooltip} onClick={() => selectRelease(r.version)}>
+                      <span data-code>{r.version}</span>
+                      <span data-title>{releaseSummary(r) || '（未填写简介）'}</span>
+                      <span data-right>
+                        {r.current ? '当前 · ' : ''}
+                        {r.date}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+            </PanelList>
           </Section>
         )}
       </div>

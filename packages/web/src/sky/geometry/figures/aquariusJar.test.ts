@@ -8,7 +8,7 @@ import { fixture, pointer } from '../../testFixture';
 import { attachInput } from '../../input';
 import { constellation } from '../../motion/constellation';
 import { emitTooltip } from '../../tooltip';
-import { goRelease } from '../../../hooks/skyBridge';
+import { selectFromSky } from '../../../hooks/skyBridge';
 import { uiStore } from '../../../store/uiStore';
 import type { Release } from '@polaris/core';
 
@@ -123,9 +123,9 @@ it('highlights exactly the seven items of a hovered release and shows delivered 
   registry.dispose();
 });
 
-it.each([0, 4, 5, 150])('navigates a jar point only for gestures below 5px (%s px)', (distance) => {
-  const onPickRelease = vi.fn(goRelease),
-    onPickStar = vi.fn(),
+it.each([0, 4, 5, 150])('opens a jar task card only for gestures below 5px (%s px)', (distance) => {
+  const onPickRelease = vi.fn(),
+    onPickStar = vi.fn(selectFromSky),
     { s, registry } = fixture(true, { onPickRelease, onPickStar }),
     detach = attachInput(s);
   s.releases = waterReleases();
@@ -135,10 +135,14 @@ it.each([0, 4, 5, 150])('navigates a jar point only for gestures below 5px (%s p
   pointer('pointerdown', x, y, 0);
   pointer('pointerup', x + distance, y, 100);
   if (distance < 5) {
-    expect(onPickRelease).toHaveBeenCalledWith(node.release.version);
-    expect(uiStore.getState()).toMatchObject({ sky: false, releaseFocus: node.release.version });
-  } else expect(onPickRelease).not.toHaveBeenCalled();
-  expect(onPickStar).not.toHaveBeenCalled();
+    expect(onPickStar).toHaveBeenCalledWith(node.id, node.release.version);
+    expect(uiStore.getState()).toMatchObject({
+      selected: node.id,
+      deliveryVersion: node.release.version,
+      releaseFocus: null,
+    });
+  } else expect(onPickStar).not.toHaveBeenCalled();
+  expect(onPickRelease).not.toHaveBeenCalled();
   detach();
   registry.dispose();
 });
@@ -179,8 +183,8 @@ it.each([0, 1, 5, 16, 100])('keeps all %s item particles exactly formed on first
 });
 
 it('keeps a zoomed jar point clickable after screen-space parallax drift', () => {
-  const onPickRelease = vi.fn(),
-    { s, registry } = fixture(true, { onPickRelease }),
+  const onPickStar = vi.fn(),
+    { s, registry } = fixture(true, { onPickStar }),
     detach = attachInput(s);
   Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
   Object.assign(s.cam, { s: 3, x: -4080, y: -2400 });
@@ -191,7 +195,7 @@ it('keeps a zoomed jar point clickable after screen-space parallax drift', () =>
   expect(pickAquarius(s, x + 14, y)?.particle).toBe(node.particle);
   pointer('pointerdown', x + 14, y, 0);
   pointer('pointerup', x + 14, y, 100);
-  expect(onPickRelease).toHaveBeenCalledWith(node.release.version);
+  expect(onPickStar).toHaveBeenCalledWith(node.id, node.release.version);
   detach();
   registry.dispose();
 });

@@ -13,6 +13,8 @@ export interface UIState extends Filter {
   inputChosen: boolean;
   projection: boolean;
   selected: string | null;
+  selectedRelease: string | null;
+  deliveryVersion: string | null;
   releaseFocus: string | null;
   dip: number;
   dipAll: boolean;
@@ -33,6 +35,8 @@ export const uiStore = createStore<UIState>(() => ({
   inputChosen: !!readPreference('board-input'),
   projection: !!readPreference('board-proj'),
   selected: null,
+  selectedRelease: null,
+  deliveryVersion: null,
   releaseFocus: null,
   dip: -1,
   dipAll: false,
@@ -40,7 +44,7 @@ export const uiStore = createStore<UIState>(() => ({
 }));
 export const selectSystem = (system: string) => {
   writePreference('board-system', system);
-  uiStore.setState({ system, pinned: -1 });
+  uiStore.setState({ system, pinned: -1, selectedRelease: null, deliveryVersion: null });
 };
 export const setInput = (input: 'pad' | 'mouse', save = true) => {
   if (save) writePreference('board-input', input);
@@ -50,11 +54,14 @@ export const setProjection = (projection: boolean) => {
   writePreference('board-proj', projection ? '1' : '');
   uiStore.setState({ projection });
 };
-export const setSky = (sky: boolean) => uiStore.setState({ sky, ...(!sky ? { selected: null, dip: -1 } : {}) });
+export const setSky = (sky: boolean) =>
+  uiStore.setState({ sky, ...(!sky ? { selected: null, selectedRelease: null, deliveryVersion: null, dip: -1 } : {}) });
 export function openDip(dip: number, toggle = false, keyboard = false) {
   const s = uiStore.getState();
   uiStore.setState({
     selected: null,
+    selectedRelease: null,
+    deliveryVersion: null,
     dipKeyboard: keyboard,
     dip: toggle && s.dip === dip ? -1 : dip,
     ...(s.dip !== dip ? { dipAll: false } : {}),
@@ -62,7 +69,8 @@ export function openDip(dip: number, toggle = false, keyboard = false) {
 }
 export function escapeLayer() {
   const s = uiStore.getState();
-  if (s.selected) uiStore.setState({ selected: null });
+  if (s.selected || s.selectedRelease)
+    uiStore.setState({ selected: null, selectedRelease: null, deliveryVersion: null });
   else if (s.dip >= 0) uiStore.setState({ dip: -1 });
   else if (!s.sky && s.pinned >= 0) uiStore.setState({ pinned: -1 });
   else if (s.sky) setSky(false);

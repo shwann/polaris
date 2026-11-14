@@ -1,5 +1,6 @@
 import { MAG } from '../../domain/lanes';
 import type { Box, Point, SkyState, Star } from '../types';
+import { aquariusObstacles, hitsSegment, type Segment } from './aquariusObstacles';
 
 export interface Halo {
   id: string;
@@ -12,8 +13,12 @@ export function hitsHalo(box: Box, { point: [x, y], radius }: Halo) {
     dy = y - Math.max(box[1], Math.min(y, box[3]));
   return dx * dx + dy * dy < radius * radius;
 }
-export function labelFits(box: Box, boxes: Box[], halos: Halo[]) {
-  return !boxes.some((b) => intersects(box, b)) && !halos.some((h) => hitsHalo(box, h));
+export function labelFits(box: Box, boxes: Box[], halos: Halo[], segments: Segment[] = []) {
+  return (
+    !boxes.some((b) => intersects(box, b)) &&
+    !halos.some((h) => hitsHalo(box, h)) &&
+    !segments.some((line) => hitsSegment(box, line))
+  );
 }
 export const figureSize = (star: Star) =>
   (star.figureRole?.size ?? 1) *
@@ -71,13 +76,17 @@ export const HUB_STAR_KEEP = 11;
  */
 export function labelObstacles(s: SkyState, withDone = true) {
   const m = HUB_MARGIN * s.sz;
+  const aquarius = aquariusObstacles(s);
   return {
+    segments: aquarius.segments,
     boxes: [
+      ...aquarius.boxes,
       ...(s.hubLabelBoxes || []).flatMap((b) => b || []).map((b): Box => [b[0] - m, b[1] - m, b[2] + m, b[3] + m]),
       ...domBoxes(s),
       ...(withDone && s.sky && s.doneLabelBox ? [s.doneLabelBox] : []),
     ],
     halos: [
+      ...aquarius.halos,
       ...starHalos(s),
       ...(s.sky ? s.dipPos : []).map((point, k) => ({ id: `hub-${k}`, point, radius: HUB_STAR_KEEP * s.sz })),
     ],

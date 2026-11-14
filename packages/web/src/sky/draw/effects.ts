@@ -4,6 +4,7 @@ import { clearTooltip } from '../tooltip';
 import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
+import { moveAquariusCard } from './aquariusSelection';
 
 export function drawEffects(state: SkyState, t: number, dt: number) {
   state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
@@ -24,7 +25,8 @@ export function drawEffects(state: SkyState, t: number, dt: number) {
     }
   }
   // Selected star: a target ring, and the detail card follows it while the sky moves.
-  if (state.selected) {
+  moveAquariusCard(state, t);
+  if (state.selected && !state.deliveryVersion) {
     const s = state.stars.get(state.selected);
     if (!s) {
       state.selected = null;

@@ -3,6 +3,7 @@ import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
 import { drawStarLabels, labelLines, placeLabel } from './starLabels';
+import { aquariusLabels } from './aquariusLabels';
 
 /** Older shipped stars recede: smaller and dimmer than work shipped in the last few days. */
 export const OLD_DONE = { size: 0.7, alpha: 0.4 };
@@ -177,7 +178,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       });
   }
   if (state.w > 560) {
-    drawStarLabels(state, labels);
+    drawStarLabels(state, [...labels, ...aquariusLabels(state)]);
     return;
   }
   // Place star labels without overlaps: hovered star first, then brighter stars. Title lines sit under the code,
@@ -220,4 +221,5 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     L.lines.slice(1).forEach((line, i) => state.ctx.fillText(line, x, y + (i + 1) * lineH, width));
     state.ctx.restore();
   }
+  drawStarLabels(state, aquariusLabels(state), placed);
 }

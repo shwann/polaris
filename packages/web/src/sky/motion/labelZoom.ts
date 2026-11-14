@@ -26,6 +26,8 @@ export function settleLabelZoom(s: SkyState) {
     s.h,
     s.hover?.id,
     s.selected,
+    s.selectedRelease,
+    s.hoverRelease?.release.version,
     s.match && [...s.match].join(','),
     bar?.top,
     bar?.width,

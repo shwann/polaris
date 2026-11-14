@@ -11,6 +11,7 @@ import { draggedParticle } from './motion/constellation';
 import { prepareDrag, releaseHeld } from './motion/drag';
 import { stillPointer } from './motion/pause';
 import type { Point, SkyState } from './types';
+import type { ReleaseDrag } from './geometry/figures/aquarius';
 
 export function attachInput(s: SkyState) {
   const abort = new AbortController(),
@@ -18,11 +19,27 @@ export function attachInput(s: SkyState) {
   const blocked = (target: EventTarget | null, wheel = false) => s.events.isBlocked?.(target, wheel) || false;
   const pick = (star: ReturnType<typeof pickAt>['star'], dip: number) => {
     clearTooltip(s);
+    s.selectedRelease = null;
+    s.deliveryVersion = null;
     if (star) {
       star.flare = 1;
       s.selected = star.id;
       s.events.onPickStar?.(star.id);
     } else if (dip >= 0) s.events.onPickDipper?.(dip);
+  };
+  const pickWater = ({ star }: ReleaseDrag) => {
+    clearTooltip(s);
+    if ('item' in star) {
+      s.selected = star.id;
+      s.selectedRelease = null;
+      s.deliveryVersion = star.release.version;
+      s.events.onPickStar?.(star.id, star.release.version);
+    } else {
+      s.selected = null;
+      s.deliveryVersion = null;
+      s.selectedRelease = star.release.version;
+      s.events.onPickRelease?.(star.release.version);
+    }
   };
   const double = (x: number, y: number) => {
     if (hitDoneLabel(s, x, y)) {
@@ -31,7 +48,7 @@ export function attachInput(s: SkyState) {
     }
     const release = pickAquarius(s, x, y);
     if (release) {
-      s.events.onPickRelease?.(release.star.release.version);
+      pickWater(release);
       return;
     }
     const hit = pickAt(s, x, y);
@@ -196,8 +213,7 @@ export function attachInput(s: SkyState) {
       lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     }
     if (d.release) {
-      clearTooltip(s);
-      s.events.onPickRelease?.(d.release.star.release.version);
+      pickWater(d.release);
       return;
     }
     if (hitDoneLabel(s, e.clientX, e.clientY)) {
@@ -209,6 +225,11 @@ export function attachInput(s: SkyState) {
       return;
     }
     clearTooltip(s);
+    if (s.deliveryVersion || s.selectedRelease) {
+      s.selected = s.selectedRelease = s.deliveryVersion = null;
+      s.events.onPickStar?.(null);
+      return;
+    }
     if (zoomDone(s, e.clientX, e.clientY)) return;
     const [x, y] = s.toWorld(e.clientX, e.clientY);
     if (!s.reduce.matches) s.ripple(x, y, COL.doing, 0.8);
