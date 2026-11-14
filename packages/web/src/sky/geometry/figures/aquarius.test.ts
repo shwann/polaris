@@ -141,7 +141,7 @@ it('keeps sub-threshold release clicks, consumes drags and never selects a task 
 });
 
 it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))))(
-  'propagates a 150px middle-version pull through $count releases at $fps Hz and returns within 1.5 seconds',
+  'propagates a 150px middle-version pull through $count releases at $fps Hz and eases home in sequence',
   ({ fps, count }) => {
     const { s, registry } = fixture(),
       detach = attachInput(s);
@@ -174,8 +174,20 @@ it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))
 
     expect(cameraBounds(s)).toEqual(bounds);
     pointer('pointerup', x + dx, y + dy, 1001);
-    for (let i = 1; i <= fps * 1.5; i++) constellation(s, [], 1000 / fps, 1001 + (i * 1000) / fps);
-    expect(Math.max(...aquariusParticles(s.aquarius!).map(displacement))).toBeLessThanOrEqual(150 * 0.04);
+    for (let i = 1; i <= fps * 2; i++) {
+      constellation(s, [], 1000 / fps, 1001 + (i * 1000) / fps);
+      if (i === Math.ceil(fps * 0.4)) expect(displacement(root.particle)).toBeGreaterThan(60);
+      if (i === Math.ceil(fps * 1.05)) {
+        expect(displacement(root.particle)).toBe(0);
+        expect(Math.max(...aquariusParticles(s.aquarius!).map(displacement))).toBeGreaterThan(4);
+      }
+    }
+    expect(aquariusParticles(s.aquarius!).every((p) => displacement(p) === 0)).toBe(true);
+    vi.mocked(s.ctx.ellipse).mockClear();
+    drawReleases(s);
+    expect(vi.mocked(s.ctx.ellipse).mock.calls).toHaveLength(4);
+    constellation(s, [], 500, 3501);
+    expect(s.aquarius!.returning).toBeUndefined();
     detach();
     registry.dispose();
   },
@@ -208,7 +220,7 @@ it('lets a jar point tension its neighbours, keeps tasks and hubs still, and sup
   pointer('pointerup', x, y - 150, 1001);
   expect(onPickRelease).not.toHaveBeenCalled();
   expect(tooltipAllowed(s)).toBe(false);
-  for (let i = 1; i <= 90; i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
+  for (let i = 1; i <= 120; i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
   expect(Math.max(...aquariusParticles(s.aquarius!).map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(6);
   detach();
   registry.dispose();

@@ -22,6 +22,11 @@ export interface AquariusBody {
   stars: AquariusStar[];
   jar: Omit<ReturnType<typeof aquariusJar>, 'nodes'> & { nodes: JarStar[] };
   soft: SoftBody;
+  returning?: {
+    elapsed: number;
+    lastDelay: number;
+    steps: Map<Particle, { from: Point; velocity: Point; delay: number }>;
+  };
 }
 export interface ReleaseDrag {
   star: AquariusStar | JarStar;
@@ -135,6 +140,7 @@ export function releaseStars(s: SkyState): AquariusStar[] {
       stars,
       jar,
       soft: sameTopology ? retained.soft : softBody(),
+      returning: sameTopology && retained.w === s.w && retained.h === s.h ? retained.returning : undefined,
     };
     if (s.drag?.release && !particles.includes(s.drag.release.particle)) {
       s.drag = null;

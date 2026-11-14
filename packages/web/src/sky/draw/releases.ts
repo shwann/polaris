@@ -4,6 +4,8 @@ import { aquariusFrame } from '../geometry/figures/aquariusJar';
 import { rgba } from '../palette';
 import type { Point, SkyState } from '../types';
 import { aquariusLabelZoom } from './aquariusLabels';
+import { RETURN_GLIDE, RETURN_SPLASH } from '../motion/aquarius';
+import type { Particle } from '../motion/softbody';
 
 import { releaseCaption, waterBanks } from './releasePaths';
 export { releaseCaption, waterBanks } from './releasePaths';
@@ -54,6 +56,25 @@ export function drawReleases(s: SkyState) {
     c.ellipse(...last, radius, radius * 0.23, 0, 0, Math.PI * 2);
     c.stroke();
   }
+  const returning = body.returning;
+  if (returning) {
+    const k = (returning.elapsed - returning.lastDelay - RETURN_GLIDE) / RETURN_SPLASH;
+    if (k > 0 && k < 1) {
+      const radius = (8 + 48 * k) * s.sz;
+      c.setLineDash([]);
+      c.strokeStyle = rgba(COL_APP, 0.72 * (1 - k) * s.skyK);
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.ellipse(...last, radius, radius * 0.28, 0, 0, Math.PI * 2);
+      c.stroke();
+    }
+  }
+  const returnGlow = (p: Particle) => {
+    const step = returning?.steps.get(p);
+    if (!returning || !step) return 0;
+    const k = (returning.elapsed - step.delay) / RETURN_GLIDE;
+    return k > 0 && k < 1 ? Math.sin(Math.PI * k) ** 2 : 0;
+  };
   const dot = (p: Point, radius: number, alpha: number, glow: number) => {
     if (glow) {
       c.globalAlpha = alpha * s.skyK;
@@ -67,18 +88,25 @@ export function drawReleases(s: SkyState) {
   };
   for (const node of jar.nodes) {
     const on = lit.has(node.id),
-      hovered = s.hoverItem?.id === node.id || (!!s.deliveryVersion && s.selected === node.id);
+      hovered = s.hoverItem?.id === node.id || (!!s.deliveryVersion && s.selected === node.id),
+      glow = returnGlow(node.particle);
     dot(
       at(node.point),
-      on || hovered ? 2.7 : node.bright ? 1.8 : 1.15,
-      hovering ? (on || hovered ? 1 : 0.13) : hovered ? 1 : node.bright ? 0.95 : 0.38,
-      on || hovered ? 15 * s.sz : 0,
+      (on || hovered ? 2.7 : node.bright ? 1.8 : 1.15) + glow * 0.7,
+      Math.max(glow * 0.85, hovering ? (on || hovered ? 1 : 0.13) : hovered ? 1 : node.bright ? 0.95 : 0.38),
+      (on || hovered ? 15 : 12 * glow) * s.sz,
     );
   }
   stars.forEach((star, i) => {
     const p = points[i]!,
-      on = (s.selectedRelease || s.hoverRelease?.release.version) === star.release.version;
-    dot(p, star.radius, star.alpha * (hovering && !on ? 0.35 : 1), (on ? 34 : i === stars.length - 1 ? 28 : 18) * s.sz);
+      on = (s.selectedRelease || s.hoverRelease?.release.version) === star.release.version,
+      glow = returnGlow(star.particle);
+    dot(
+      p,
+      star.radius + glow,
+      Math.max(glow * 0.95, star.alpha * (hovering && !on ? 0.35 : 1)),
+      ((on ? 34 : i === stars.length - 1 ? 28 : 18) + 10 * glow) * s.sz,
+    );
     if (on) {
       c.setLineDash([]);
       c.lineWidth = 1;

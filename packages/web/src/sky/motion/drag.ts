@@ -4,6 +4,7 @@ import { constellation, draggedParticle, moveHeld, syncHubs } from './constellat
 import { mobileWeights } from './mobile';
 import { record, velocity } from './inertia';
 import { launch, resetParticle, THROW_FROM } from './softbody';
+import { returnAquarius } from './aquarius';
 
 export function prepareDrag(s: SkyState, d: Drag, wx: number, wy: number) {
   if (!d.star && d.dip >= 0) s.soft.hubDrag = d.dip;
@@ -42,20 +43,13 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
     const v = velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp);
     // Slow star releases return immediately; a sub-frame launch must not creep past the pointer.
     const slow = (d.star || d.release) && Math.hypot(...v) / s.cam.s < THROW_FROM;
-    // Recover the water and the triangulated jar as independent fitted shapes in the same body.
-    const water = s.aquarius?.stars.map((star) => star.particle) ?? [];
-    const jar = s.aquarius?.jar.nodes.map((node) => node.particle) ?? [];
-    const group = d.release
-      ? water.includes(p)
-        ? water
-        : jar
-      : d.star
+    if (d.release) {
+      returnAquarius(s.aquarius!, p, slow ? [0, 0] : v, s.cam.s);
+    } else {
+      const group = d.star
         ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group)
         : s.hubParticles;
-    launch(p, slow ? [0, 0] : v, s.cam.s, body, group);
-    if (d.release) {
-      const other = water.includes(p) ? jar : water;
-      if (other.length) (body.recovery ??= []).push({ group: other, root: other[0]!, age: 0 });
+      launch(p, slow ? [0, 0] : v, s.cam.s, body, group);
     }
   }
   body.pin = undefined;
@@ -64,6 +58,7 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
     s.figureReturns.set(d.star.group, { root: d.star, elapsed: 0 });
   }
   if (d.release) {
+    if (e.type === 'pointercancel') s.aquarius!.returning = undefined;
     if (!s.reduce.matches && e.type !== 'pointercancel') {
       const [x, y] = s.at(p.baseX! + p.ox, p.baseY! + p.oy, 14);
       s.ripple(x, y, COL_APP, 0.8, true);
