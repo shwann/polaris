@@ -66,7 +66,7 @@ it.each([1, 3])(
     s.tetherHub.set('waiting', stars[0]!.id);
     const heart = stars.find((star) => star.figureRole!.main)!;
     expect(clusterTether(s, 3, [cx - 500, cy - 200], true)?.star).toBe(heart);
-    // Pulling a claw or the heart stretches its links while the rest of the template stays anchored.
+    // Pulling a claw or the heart carries nearby joints without rigidly translating the figure.
     for (const root of [stars.find((star) => star.figureRole!.slot === 'UJ1')!, heart]) {
       const dx = 130,
         dy = -80;
@@ -80,7 +80,7 @@ it.each([1, 3])(
         s.trees.get('waiting')!.flatMap(([a, b]) => (a === root ? [b] : b === root ? [a] : [])),
       );
       const others = stars.filter((star) => star !== root && !neighbors.has(star));
-      expect(Math.max(...others.map((star) => Math.hypot(star.ox, star.oy)))).toBeLessThan(Math.hypot(dx, dy) * 0.2);
+      expect(Math.max(...others.map((star) => Math.hypot(star.ox, star.oy)))).toBeLessThan(Math.hypot(dx, dy) * 0.6);
       releaseHeld(s, s.drag, new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent);
       s.drag = null;
       for (let i = 0; i < 180; i++) constellation(s, stars, 1000 / 120);

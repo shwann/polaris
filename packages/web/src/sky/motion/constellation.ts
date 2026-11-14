@@ -47,14 +47,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
   const hubs = s.hubParticles,
     edges: Constraint[] = [];
   for (const tree of s.trees.values())
-    for (const [a, b] of tree)
-      if (!a.dead && !b.dead && a.group === b.group)
-        edges.push({
-          a,
-          b,
-          // Long pulls stay local instead of stiffening short template segments into a rigid chain.
-          ...(s.figureMotion?.get(a.group) === 'elastic' ? { compliance: 0.08, stiffening: 0 } : {}),
-        });
+    for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
   if (hubDraggable(s)) {
     for (const [a, b] of [...DIPPER_LINES, [0, 7]])
       edges.push({

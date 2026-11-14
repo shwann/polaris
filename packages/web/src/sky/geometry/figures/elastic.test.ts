@@ -11,18 +11,22 @@ import type { Task } from '../../../domain/types';
 const lanes = ['done', 'waiting', 'doing', 'risk', 'release', 'planned'] as const;
 const figureTasks = (): Task[] =>
   lanes.flatMap((lane) =>
-    Array.from({ length: lane === 'done' ? 69 : lane === 'waiting' ? 19 : 12 }, (_, i) => ({
-      id: `${lane}${i}`,
-      lane,
-      systemKey: 'main',
-      code: `${lane}${i}`,
-      title: `${lane}${i}`,
-      status: '',
-      steps: [],
-      reqIds: [],
-      updatedAt: new Date(1700000000000 + i * 86400000).toISOString(),
-      progress: i,
-    })),
+    Array.from(
+      { length: lane === 'done' ? 69 : lane === 'waiting' ? 19 : lane === 'release' ? 9 : 12 },
+      (_, i): Task => ({
+        id: `${lane}${i}`,
+        lane,
+        systemKey: 'main',
+        code: `${lane}${i}`,
+        title: `${lane}${i}`,
+        status: '',
+        waitingOn: lane === 'waiting' ? (i < 8 ? (i % 2 ? 'dependency' : 'customer') : 'user') : undefined,
+        steps: [],
+        reqIds: [],
+        updatedAt: new Date(1700000000000 + i * 86400000).toISOString(),
+        progress: i,
+      }),
+    ),
   );
 function setup() {
   const f = fixture();
@@ -32,7 +36,7 @@ function setup() {
 }
 
 it.each(lanes.flatMap((lane) => [30, 60, 144].flatMap((fps) => [false, true].map((fast) => ({ lane, fps, fast })))))(
-  'pulls one $lane star at $fps Hz and returns home within 1.5 seconds (fast release: $fast)',
+  'transmits an elastic $lane pull at $fps Hz and returns within 1.5 seconds (fast release: $fast)',
   ({ lane, fps, fast }) => {
     const { s, registry } = setup();
     Object.assign(s, { w: 2000, h: 1250, unit: 1750 });
@@ -57,8 +61,14 @@ it.each(lanes.flatMap((lane) => [30, 60, 144].flatMap((fps) => [false, true].map
         dx = 150 * Math.cos(angle),
         dy = 150 * Math.sin(angle),
         neighbors = new Set((s.trees.get(lane) || []).flatMap(([a, b]) => (a === root ? [b] : b === root ? [a] : []))),
-        others = stars.filter((star) => star !== root && !neighbors.has(star));
-      let peak = 0;
+        distances = new Map([[root, 0]]);
+      // Breadth-first graph distance separates two-hop joints from genuinely distant stars.
+      for (const [star, distance] of distances)
+        for (const [a, b] of s.trees.get(lane) || []) {
+          const next = a === star ? b : b === star ? a : undefined;
+          if (next && !distances.has(next)) distances.set(next, distance + 1);
+        }
+      const distant = stars.filter((star) => distances.get(star)! > 2);
       s.drag = { star: root, dip: -1, moved: true, grab: [0, 0], samples: [], x0: 0, y0: 0, cx: 0, cy: 0 };
       for (let i = 1; i <= fps; i++) {
         const k = Math.min(1, i / (fps * 0.3));
@@ -67,10 +77,26 @@ it.each(lanes.flatMap((lane) => [30, 60, 144].flatMap((fps) => [false, true].map
         constellation(s, stars, 1000 / fps);
         expect(root.ox).toBeCloseTo(dx * k, 8);
         expect(root.oy).toBeCloseTo(dy * k, 8);
-        peak = Math.max(peak, ...others.map((star) => Math.hypot(star.ox, star.oy)));
       }
-      expect.soft(peak, `${lane}/${root.figureRole?.slot} nonadjacent peak`).toBeLessThan(150 * 0.2);
-      expect(Math.max(...[...neighbors].map((star) => Math.hypot(star.ox, star.oy)))).toBeGreaterThan(0.1);
+      const pulled = Math.hypot(root.ox, root.oy),
+        adjacent = [...neighbors].map((star) => Math.hypot(star.ox, star.oy)),
+        remotePeak = Math.max(...distant.map((star) => Math.hypot(star.ox, star.oy))),
+        center = Math.hypot(
+          stars.reduce((sum, star) => sum + star.ox, 0) / stars.length,
+          stars.reduce((sum, star) => sum + star.oy, 0) / stars.length,
+        );
+      // An outward pull tensions every adjacent link; a main-star pull can leave some links slack.
+      expect
+        .soft(
+          root === outer ? Math.min(...adjacent) : Math.max(...adjacent),
+          `${lane}/${root.figureRole?.slot} adjacent`,
+        )
+        .toBeGreaterThanOrEqual(pulled * 0.35);
+      // Bound the remote envelope: it must transmit beyond two hops without translating the whole figure.
+      if (root === outer)
+        expect.soft(remotePeak, `${lane}/${root.figureRole?.slot} remote peak`).toBeGreaterThanOrEqual(pulled * 0.1);
+      expect.soft(remotePeak, `${lane}/${root.figureRole?.slot} remote peak`).toBeLessThanOrEqual(pulled * 0.6);
+      expect.soft(center, `${lane}/${root.figureRole?.slot} center`).toBeLessThan(pulled * 0.7);
       const before = Math.hypot(root.ox, root.oy);
       const up = new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent;
       Object.defineProperty(up, 'timeStamp', { value: 1100 });

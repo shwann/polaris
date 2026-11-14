@@ -53,7 +53,7 @@ for (const lane of ['risk', 'release', 'planned'] as const) {
       const neighbors = new Set(s.trees.get(lane)!.flatMap(([a, b]) => (a === root ? [b] : b === root ? [a] : [])));
       const others = stars.filter((star) => star !== root && !neighbors.has(star));
       if (others.length)
-        expect(Math.max(...others.map((star) => Math.hypot(star.ox, star.oy)))).toBeLessThan(Math.hypot(130, 80) * 0.2);
+        expect(Math.max(...others.map((star) => Math.hypot(star.ox, star.oy)))).toBeLessThan(Math.hypot(130, 80) * 0.6);
       releaseHeld(s, s.drag, new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent);
       s.drag = null;
       for (let i = 0; i < 180; i++) constellation(s, stars, 1000 / 120);

@@ -57,6 +57,20 @@ describe('soft body', () => {
     expect(distance(c)).toBeGreaterThan(early);
     expect(distance(other)).toBe(0);
   });
+  it('carries a larger fraction of the neighbor as a long pull tightens the link', () => {
+    const follow = (pull: number) => {
+      const a = particle(),
+        b = particle(60),
+        body = softBody();
+      for (let i = 1; i <= 120; i++)
+        advance(body, [a, b], [{ a, b }], STEP * 1000, {
+          particle: a,
+          point: [-pull * Math.min(1, i / 36), 0],
+        });
+      return distance(b) / pull;
+    };
+    expect(follow(300)).toBeGreaterThan(follow(50) + 0.15);
+  });
   it('flings past the same endpoint farther with a fast hand and caps world-space speed at every zoom', () => {
     const peak = (speed: number) => {
       const p = particle(),
