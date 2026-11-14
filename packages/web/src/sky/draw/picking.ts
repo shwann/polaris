@@ -1,4 +1,4 @@
-import { pickRelease } from '../geometry/figures/aquarius';
+import { pickAquarius } from '../geometry/figures/aquarius';
 import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
@@ -33,7 +33,7 @@ export function pickAt(state: SkyState, X: number, Y: number) {
 
 export function drawPicking(state: SkyState, _t: number, list: Star[]) {
   const hit = state.onSky && !state.drag?.moved ? pickAt(state, state.px, state.py) : { star: null, dip: -1 };
-  state.hoverRelease = state.onSky && !state.drag ? pickRelease(state, state.px, state.py) : null;
+  state.hoverRelease = state.onSky && !state.drag ? (pickAquarius(state, state.px, state.py)?.star ?? null) : null;
   state.hover = state.hoverRelease ? null : state.drag?.star || hit.star;
   state.dipHover = state.hoverRelease ? -1 : hit.dip;
   if (state.px < -1e3 || state.drag?.moved) return;

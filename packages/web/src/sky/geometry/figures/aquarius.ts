@@ -1,5 +1,9 @@
 import type { Release } from '@polaris/core';
 import type { Point, SkyState } from '../../types';
+import { softBody, type Particle, type SoftBody } from '../../motion/softbody';
+import { MIN_SEPARATION } from '../../motion/separation';
+
+export const SATELLITE_RADIUS = 1.15;
 
 export interface ReleaseStar {
   release: Release;
@@ -7,6 +11,23 @@ export interface ReleaseStar {
   radius: number;
   alpha: number;
   satellites: Point[];
+}
+
+export interface AquariusStar extends ReleaseStar {
+  particle: Particle;
+  satelliteParticles: Particle[];
+}
+export interface AquariusBody {
+  system: string;
+  releases: Release[];
+  w: number;
+  h: number;
+  stars: AquariusStar[];
+  soft: SoftBody;
+}
+export interface ReleaseDrag {
+  star: AquariusStar;
+  particle: Particle;
 }
 
 /** Arc-length sampling keeps releases evenly spaced through three bends of falling water. */
@@ -85,12 +106,75 @@ export function aquarius(releases: Release[], w: number, h: number): ReleaseStar
   });
 }
 
-export const releaseStars = (s: SkyState) => (s.sky ? aquarius(s.releases ?? [], s.w, s.h) : []);
+/** Keep release particles separate from tasks while sharing one pose for drawing and picking. */
+export function releaseStars(s: SkyState): AquariusStar[] {
+  if (!s.sky) {
+    s.aquarius = undefined;
+    return [];
+  }
+  const previous = s.aquarius;
+  if (
+    !previous ||
+    previous.system !== s.sysSel ||
+    previous.releases !== s.releases ||
+    previous.w !== s.w ||
+    previous.h !== s.h
+  ) {
+    const retained = previous?.system === s.sysSel ? previous.stars : [];
+    const at = (point: Point, p: Particle = { ox: 0, oy: 0, vx: 0, vy: 0 }) => {
+      [p.baseX, p.baseY] = point;
+      return p;
+    };
+    const stars = aquarius(s.releases, s.w, s.h).map((star): AquariusStar => {
+      const old = retained.find((node) => node.release.version === star.release.version);
+      return {
+        ...star,
+        particle: at(star.point, old?.particle),
+        satelliteParticles: star.satellites.map((point, i) => at(point, old?.satelliteParticles[i])),
+      };
+    });
+    const particles = stars.flatMap((star) => [star.particle, ...star.satelliteParticles]);
+    // Tiny satellites use their visible radius, so a returning spoke cannot trap them across its parent.
+    for (const star of stars)
+      for (const satellite of star.satelliteParticles)
+        satellite.separation = Math.min(
+          MIN_SEPARATION,
+          star.radius + SATELLITE_RADIUS,
+          Math.hypot(satellite.baseX! - star.particle.baseX!, satellite.baseY! - star.particle.baseY!),
+        );
+    const sameTopology =
+      previous?.system === s.sysSel &&
+      stars.length === retained.length &&
+      stars.every(
+        (star, i) =>
+          star.particle === retained[i]!.particle &&
+          star.satelliteParticles.length === retained[i]!.satelliteParticles.length,
+      );
+    s.aquarius = {
+      system: s.sysSel,
+      releases: s.releases,
+      w: s.w,
+      h: s.h,
+      stars,
+      soft: sameTopology ? previous!.soft : softBody(),
+    };
+    if (s.drag?.release && !particles.includes(s.drag.release.particle)) {
+      s.drag = null;
+      s.pointers.clear();
+    }
+  }
+  for (const star of s.aquarius!.stars) {
+    const position = (p: Particle): Point => [p.baseX! + p.ox, p.baseY! + p.oy];
+    star.point = position(star.particle);
+    star.satellites = star.satelliteParticles.map(position);
+  }
+  return s.aquarius!.stars;
+}
 
-/** Decorative satellites never enter this hit test or the task-star collection. */
-export function pickRelease(s: SkyState, x: number, y: number): ReleaseStar | null {
+/** Version clicks and hover retain their original screen-space hit radius. */
+export function pickRelease(s: SkyState, x: number, y: number): AquariusStar | null {
   let best = 16,
-    hit: ReleaseStar | null = null;
+    hit: AquariusStar | null = null;
   for (const star of releaseStars(s)) {
     const p = s.toScreen(...s.at(...star.point, 14));
     const distance = Math.hypot(x - p[0], y - p[1]);
@@ -99,5 +183,23 @@ export function pickRelease(s: SkyState, x: number, y: number): ReleaseStar | nu
       hit = star;
     }
   }
+  return hit;
+}
+
+/** Satellites use a smaller hit area and never become selectable task stars. */
+export function pickAquarius(s: SkyState, x: number, y: number): ReleaseDrag | null {
+  const version = pickRelease(s, x, y);
+  let hit: ReleaseDrag | null = version ? { star: version, particle: version.particle } : null;
+  const p = version && s.toScreen(...s.at(...version.point, 14));
+  let best = p ? Math.hypot(x - p[0], y - p[1]) : Infinity;
+  for (const star of releaseStars(s))
+    star.satellites.forEach((point, i) => {
+      const p = s.toScreen(...s.at(...point, 14)),
+        distance = Math.hypot(x - p[0], y - p[1]);
+      if (distance < Math.min(best, 6)) {
+        best = distance;
+        hit = { star, particle: star.satelliteParticles[i]! };
+      }
+    });
   return hit;
 }

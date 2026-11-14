@@ -1,4 +1,4 @@
-import { pickRelease } from './geometry/figures/aquarius';
+import { pickAquarius } from './geometry/figures/aquarius';
 import { clearTooltip } from './tooltip';
 import { COL } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
@@ -29,9 +29,9 @@ export function attachInput(s: SkyState) {
       zoomDone(s, x, y);
       return;
     }
-    const release = pickRelease(s, x, y);
+    const release = pickAquarius(s, x, y);
     if (release) {
-      s.events.onPickRelease?.(release.release.version);
+      s.events.onPickRelease?.(release.star.release.version);
       return;
     }
     const hit = pickAt(s, x, y);
@@ -40,6 +40,7 @@ export function attachInput(s: SkyState) {
     else if (s.sky) s.zoomTo(x, y, s.camT.s * 1.6);
   };
   let touchDoubleAt = -Infinity;
+  let releaseDragAt = -Infinity;
   let lastTap: { x: number; y: number; t: number } | null = null;
   window.addEventListener(
     'pointermove',
@@ -85,6 +86,7 @@ export function attachInput(s: SkyState) {
   const cancel = () => {
     s.drag = null;
     s.soft.pin = undefined;
+    if (s.aquarius) s.aquarius.soft.pin = undefined;
     s.pointers.clear();
     stopCamera(s);
     s.px = s.py = -1e4;
@@ -130,7 +132,8 @@ export function attachInput(s: SkyState) {
           dip: -1,
         };
       } else {
-        const hit = pickAt(s, e.clientX, e.clientY);
+        const hit = pickAt(s, e.clientX, e.clientY),
+          release = pickAquarius(s, e.clientX, e.clientY);
         const [wx, wy] = s.toWorld(e.clientX, e.clientY);
         s.drag = {
           x0: e.clientX,
@@ -138,8 +141,9 @@ export function attachInput(s: SkyState) {
           cx: s.cam.x,
           cy: s.cam.y,
           moved: false,
-          star: pickRelease(s, e.clientX, e.clientY) ? null : hit.star,
-          dip: pickRelease(s, e.clientX, e.clientY) ? -1 : hit.dip,
+          star: release ? null : hit.star,
+          dip: release ? -1 : hit.dip,
+          release: release ?? undefined,
           grab: [0, 0],
           samples: [{ x: e.clientX, y: e.clientY, t: e.timeStamp }],
         };
@@ -167,8 +171,10 @@ export function attachInput(s: SkyState) {
       }
     }
     if (!d) return;
+    if (d.release && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) >= 5) d.moved = true;
+    if (d.release && d.moved) releaseDragAt = e.timeStamp;
     if (d.moved || e.type === 'pointercancel') lastTap = null;
-    if ((d.star || (s.w > 560 && d.dip >= 0)) && d.moved) {
+    if ((d.star || d.release || (s.w > 560 && d.dip >= 0)) && d.moved) {
       releaseHeld(s, d, e);
       s.drag = null;
       return;
@@ -189,10 +195,9 @@ export function attachInput(s: SkyState) {
       }
       lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     }
-    const release = pickRelease(s, e.clientX, e.clientY);
-    if (release) {
+    if (d.release) {
       clearTooltip(s);
-      s.events.onPickRelease?.(release.release.version);
+      s.events.onPickRelease?.(d.release.star.release.version);
       return;
     }
     if (hitDoneLabel(s, e.clientX, e.clientY)) {
@@ -217,7 +222,7 @@ export function attachInput(s: SkyState) {
   window.addEventListener(
     'dblclick',
     (e) => {
-      if (!blocked(e.target) && e.timeStamp - touchDoubleAt > 500) {
+      if (!blocked(e.target) && e.timeStamp - touchDoubleAt > 500 && e.timeStamp - releaseDragAt > 500) {
         e.preventDefault();
         double(e.clientX, e.clientY);
       }

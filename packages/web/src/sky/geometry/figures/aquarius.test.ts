@@ -1,6 +1,6 @@
 import '../../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { aquarius, pickRelease } from './aquarius';
+import { aquarius, pickRelease, releaseStars, pickAquarius } from './aquarius';
 import { drawReleases } from '../../draw/releases';
 import { attachInput } from '../../input';
 import { fixture, pointer } from '../../testFixture';
@@ -9,6 +9,9 @@ import { goRelease } from '../../../hooks/skyBridge';
 import { uiStore } from '../../../store/uiStore';
 import { emitTooltip } from '../../tooltip';
 import type { Release } from '@polaris/core';
+import { constellation } from '../../motion/constellation';
+import { cameraBounds } from '../../motion/cameraMotion';
+import { tooltipAllowed } from '../../tooltip';
 
 const releases = (n: number): Release[] =>
   Array.from({ length: n }, (_, i) => ({
@@ -18,6 +21,21 @@ const releases = (n: number): Release[] =>
     tag: 'fix',
     items: Array.from({ length: 10 }, (_, j) => ({ id: `t${j}`, code: `FIX-${j}`, title: '修复', kind: 'fix' })),
   }));
+
+const waterReleases = () =>
+  releases(11).map((release, i) => ({
+    ...release,
+    items: release.items!.slice(0, [1, 1, 5, 4, 5, 3, 7, 4, 7, 3, 6][i]),
+  }));
+
+it('opens at the exact existing layout and keeps the resting water and satellites still', () => {
+  const { s, registry } = fixture();
+  Object.assign(s, { w: 2000, h: 1250, releases: releases(12) });
+  const rest = aquarius(s.releases, s.w, s.h);
+  for (let i = 0; i < 120; i++) constellation(s, [], 1000 / 60);
+  expect(releaseStars(s).map(({ particle: _p, satelliteParticles: _s, ...star }) => star)).toEqual(rest);
+  registry.dispose();
+});
 
 it.each([0, 1, 2, 6, 11, 12, 20])(
   'keeps %s releases deterministic, chronologically connected and evenly placed with a larger latest star',
@@ -47,7 +65,7 @@ it.each([0, 1, 2, 6, 11, 12, 20])(
   },
 );
 
-it('clicks a version into board history without selecting a task; dragging pans, satellites are decorative', () => {
+it('keeps sub-threshold release clicks, consumes drags and never selects a task or pans the canvas', () => {
   const picked = vi.fn(),
     onPickRelease = vi.fn(goRelease);
   const { s, registry } = fixture(true, { onPickStar: picked, onPickRelease });
@@ -59,7 +77,9 @@ it('clicks a version into board history without selecting a task; dragging pans,
   expect(pickRelease(s, x, y)?.release.version).toBe('.5');
   pointer('pointerdown', x, y, 0);
   expect(s.drag?.star).toBeNull();
-  pointer('pointerup', x, y, 10);
+  expect(s.drag?.release?.particle).toBe(releaseStars(s)[5]!.particle);
+  pointer('pointermove', x + 4, y, 5);
+  pointer('pointerup', x + 4, y, 10);
   expect(onPickRelease).toHaveBeenCalledWith('.5');
   expect(uiStore.getState()).toMatchObject({ sky: false, releaseFocus: '.5' });
   expect(picked).not.toHaveBeenCalled();
@@ -72,9 +92,160 @@ it('clicks a version into board history without selecting a task; dragging pans,
   const [dx, dy] = aquarius(s.releases, s.w, s.h)[0]!.point;
   pointer('pointerdown', dx, dy, 100);
   pointer('pointermove', dx + 80, dy, 140);
+  constellation(s, [], 40, 140);
+  expect(releaseStars(s)[0]!.particle.ox).toBeCloseTo(80);
   pointer('pointerup', dx + 80, dy, 160);
   expect(onPickRelease).toHaveBeenCalledTimes(1);
+  expect(s.cam).toEqual({ x: 0, y: 0, s: 1 });
+  expect(s.camT).toEqual(s.cam);
+  expect(releaseStars(s)[0]!.particle.ox).toBe(0);
   detach();
+  registry.dispose();
+});
+
+it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))))(
+  'propagates a 150px middle-version pull through $count releases at $fps Hz and returns within 1.5 seconds',
+  ({ fps, count }) => {
+    const { s, registry } = fixture(),
+      detach = attachInput(s);
+    const input = count === 11 ? waterReleases() : releases(count);
+    Object.assign(s, { w: 2000, h: 1250, releases: input });
+    const stars = releaseStars(s),
+      index = count === 11 ? 6 : 4,
+      root = stars[index]!,
+      [x, y] = root.point,
+      a = stars[index - 1]!.point,
+      b = stars[index + 1]!.point,
+      normal = [a[1] - b[1], b[0] - a[0]],
+      sign = normal[0]! > 0 ? -1 : 1,
+      dx = (normal[0]! / Math.hypot(...normal)) * 150 * sign,
+      dy = (normal[1]! / Math.hypot(...normal)) * 150 * sign,
+      bounds = cameraBounds(s);
+    pointer('pointerdown', x, y, 0);
+    for (let i = 1; i <= fps; i++) {
+      const k = Math.min(1, i / (fps * 0.3));
+      pointer('pointermove', x + dx * k, y + dy * k, (i * 1000) / fps);
+      constellation(s, [], 1000 / fps, (i * 1000) / fps);
+    }
+    const displacement = (p: { ox: number; oy: number }) => Math.hypot(p.ox, p.oy),
+      adjacent = [stars[index - 1]!, stars[index + 1]!].map((star) => displacement(star.particle)),
+      distant = stars.filter((_, i) => Math.abs(i - index) > 2).map((star) => displacement(star.particle));
+    expect(displacement(root.particle)).toBeCloseTo(150, 6);
+    expect(Math.min(...adjacent)).toBeGreaterThanOrEqual(150 * 0.35);
+    expect(Math.max(...distant)).toBeGreaterThanOrEqual(150 * 0.1);
+    expect(Math.max(...distant)).toBeLessThanOrEqual(150 * 0.6);
+    expect(Math.min(...root.satelliteParticles.map(displacement))).toBeGreaterThan(150 * 0.5);
+    expect(cameraBounds(s)).toEqual(bounds);
+    pointer('pointerup', x + dx, y + dy, 1001);
+    for (let i = 1; i <= fps * 1.5; i++) constellation(s, [], 1000 / fps, 1001 + (i * 1000) / fps);
+    expect(
+      Math.max(...stars.flatMap((star) => [star.particle, ...star.satelliteParticles]).map(displacement)),
+    ).toBeLessThanOrEqual(150 * 0.04);
+    detach();
+    registry.dispose();
+  },
+);
+
+it('lets a satellite tension its version, keeps tasks and hubs still, and suppresses hover until settled', () => {
+  const onPickRelease = vi.fn(),
+    { s, star, registry } = fixture(false, { onPickRelease }),
+    task = star('task', 500, 500),
+    detach = attachInput(s);
+  Object.assign(task, { baseX: 500, baseY: 500 });
+  Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
+  const root = releaseStars(s)[6]!,
+    satellite = root.satelliteParticles[0]!,
+    [x, y] = root.satellites[0]!;
+  expect(pickAquarius(s, x, y)?.particle).toBe(satellite);
+  pointer('pointerdown', x, y, 0);
+  for (let i = 1; i <= 60; i++) {
+    pointer('pointermove', x, y - 150 * Math.min(1, i / 18), (i * 1000) / 60);
+    constellation(s, [task], 1000 / 60, (i * 1000) / 60);
+  }
+  expect(Math.hypot(root.particle.ox, root.particle.oy)).toBeGreaterThan(15);
+  expect(Math.hypot(task.ox, task.oy)).toBe(0);
+  expect(s.hubParticles.every((p) => Math.hypot(p.ox, p.oy) === 0)).toBe(true);
+  pointer('pointerup', x, y - 150, 1001);
+  expect(onPickRelease).not.toHaveBeenCalled();
+  expect(tooltipAllowed(s)).toBe(false);
+  for (let i = 1; i <= 90; i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
+  expect(
+    Math.max(
+      ...releaseStars(s)
+        .flatMap((star) => [star.particle, ...star.satelliteParticles])
+        .map((p) => Math.hypot(p.ox, p.oy)),
+    ),
+  ).toBeLessThan(6);
+  detach();
+  registry.dispose();
+});
+
+it('does not disturb Aquarius when a task is dragged, and preserves release particles across data refreshes', () => {
+  const { s, star, registry } = fixture(),
+    task = star('task', 500, 500),
+    detach = attachInput(s);
+  Object.assign(s, { w: 2000, h: 1250, releases: releases(12) });
+  Object.assign(task, { baseX: 500, baseY: 500 });
+  const before = releaseStars(s);
+  pointer('pointerdown', 500, 500, 0);
+  pointer('pointermove', 650, 500, 300);
+  for (let i = 1; i <= 60; i++) constellation(s, [task], 1000 / 60, (i * 1000) / 60);
+  expect(
+    before.every((star) => [star.particle, ...star.satelliteParticles].every((p) => Math.hypot(p.ox, p.oy) < 1e-6)),
+  ).toBe(true);
+  s.releases = releases(12);
+  expect(releaseStars(s)[4]!.particle).toBe(before[4]!.particle);
+  s.sysSel = 'other';
+  expect(releaseStars(s)[4]!.particle).not.toBe(before[4]!.particle);
+  detach();
+  registry.dispose();
+});
+
+it.each([1, 2])('picks and holds the same release in scaled coordinates at zoom %s', (zoom) => {
+  const onPickRelease = vi.fn(),
+    { s, registry } = fixture(false, { onPickRelease }),
+    detach = attachInput(s);
+  Object.assign(s, { w: 2000, h: 1250, releases: releases(12), mx: 0.3, my: -0.2 });
+  Object.assign(s.cam, { s: zoom, x: -600, y: -200 });
+  Object.assign(s.camT, s.cam);
+  const star = releaseStars(s)[4]!,
+    [x, y] = s.toScreen(...s.at(...star.point, 14));
+  pointer('pointerdown', x, y, 0);
+  // A pointerup beyond the threshold consumes the gesture even without a final move event.
+  pointer('pointerup', x + 150, y, 300);
+  expect(star.particle.ox).toBeCloseTo(150 / zoom);
+  expect(star.particle.oy).toBeCloseTo(0);
+  const double = new MouseEvent('dblclick', { clientX: x, clientY: y });
+  Object.defineProperty(double, 'timeStamp', { value: 301 });
+  window.dispatchEvent(double);
+  expect(onPickRelease).not.toHaveBeenCalled();
+  expect(s.cam).toEqual(s.camT);
+  detach();
+  registry.dispose();
+});
+
+it('uses live endpoints for water, satellites, tether and captions while a version is held', () => {
+  const { s, registry } = fixture();
+  Object.assign(s, { w: 2000, h: 1250, releases: releases(12) });
+  const stars = releaseStars(s),
+    first = stars[0]!;
+  first.particle.ox = -150;
+  first.satelliteParticles[0]!.ox = -120;
+  drawReleases(s);
+  expect(vi.mocked(s.ctx.lineTo).mock.calls[0]).toEqual([first.particle.baseX! - 150, first.particle.baseY]);
+  expect(vi.mocked(s.ctx.moveTo).mock.calls).toContainEqual(first.point);
+  expect(vi.mocked(s.ctx.lineTo).mock.calls).toContainEqual(first.satellites[0]);
+  expect(vi.mocked(s.ctx.fillText).mock.calls).toContainEqual([
+    first.release.version,
+    first.point[0] - 10,
+    first.point[1] - 12,
+  ]);
+  expect(vi.mocked(s.ctx.fillText).mock.calls).toContainEqual([
+    '水瓶 · 发布记录',
+    first.point[0] - 10,
+    first.point[1] + 20,
+  ]);
+  expect(pickRelease(s, ...first.point)).toBe(first);
   registry.dispose();
 });
 

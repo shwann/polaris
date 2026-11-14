@@ -4,6 +4,7 @@ import { hubHomes } from '../layout';
 import type { Drag, Point, SkyState, Star } from '../types';
 import { advance, HOME, DAMPING, resetParticle, type Constraint, type Particle } from './softbody';
 import { MIN_SEPARATION } from './separation';
+import { moveAquarius } from './aquarius';
 
 export const HUB_HOME = 100;
 export const HUB_DAMPING = 16;
@@ -11,7 +12,7 @@ export const HUB_COMPLIANCE = 0.08;
 export const POLAR_COMPLIANCE = 0.012;
 export const hubDraggable = (s: SkyState) => s.sky && s.w > 560 && !s.reduce.matches;
 export const draggedParticle = (s: SkyState, d: Drag) =>
-  d.star || (hubDraggable(s) ? s.hubParticles[d.dip] : undefined);
+  d.star || d.release?.particle || (hubDraggable(s) ? s.hubParticles[d.dip] : undefined);
 
 export function syncHubs(s: SkyState) {
   hubHomes(s).forEach(([x, y], i) => {
@@ -27,7 +28,7 @@ export function moveHeld(s: SkyState, d: Drag, x = s.px, y = s.py): Point | unde
   const p = draggedParticle(s, d);
   if (!p) return;
   const [wx, wy] = s.toWorld(x, y),
-    parallax = d.star ? 14 : 0;
+    parallax = d.star || d.release ? 14 : 0;
   const point: Point = [wx - s.mx * parallax + d.grab[0] - p.baseX!, wy - s.my * parallax + d.grab[1] - p.baseY!];
   if (d.star) {
     d.star.x = p.baseX! + point[0];
@@ -62,7 +63,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
     }
   }
-  const particle = d ? draggedParticle(s, d) : undefined,
+  const particle = d && !d.release ? draggedParticle(s, d) : undefined,
     point = d && particle ? moveHeld(s, d) : undefined;
   if (s.reduce.matches || s.w <= 560) {
     // Preserve the existing mobile motion path in physics.ts; reduced motion moves only the held star.
@@ -113,6 +114,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       s.figureMotion.delete(lane);
   }
   for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
+  moveAquarius(s, dt, time);
 }
 
 /** One selection path keeps the dotted endpoint and the simulated attachment identical. */

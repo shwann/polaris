@@ -10,7 +10,11 @@ export function cameraBounds(s: SkyState, scale = s.camT.s) {
   const points = [...s.stars.values()]
     .filter((star) => !star.dead)
     .map((star) => s.at(star.baseX ?? star.x - star.ox, star.baseY ?? star.y - star.oy, 14));
-  points.push(...releaseStars(s).flatMap((star) => [star.point, ...star.satellites].map((p) => s.at(...p, 14))));
+  points.push(
+    ...releaseStars(s).flatMap((star) =>
+      [star.particle, ...star.satelliteParticles].map((p) => s.at(p.baseX!, p.baseY!, 14)),
+    ),
+  );
   const bar = s.registry.get('skybar'),
     bottomInset = bar && bar.height > 0 ? Math.max(0, s.h - bar.top) : 0;
   const hubs = s.hubs().map(([x, y], i): import('../types').Point => {

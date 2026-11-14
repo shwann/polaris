@@ -1,9 +1,9 @@
 import { COL_APP } from '../../domain/lanes';
-import { releaseStars } from '../geometry/figures/aquarius';
+import { releaseStars, SATELLITE_RADIUS } from '../geometry/figures/aquarius';
 import { rgba } from '../palette';
 import type { Point, SkyState } from '../types';
 
-/** A separate draw layer keeps release markers out of task selection and soft-body dragging. */
+/** Every edge and caption reads the same live pose, independently of task selection. */
 export function drawReleases(s: SkyState) {
   const stars = releaseStars(s);
   if (!stars.length) return;
@@ -29,7 +29,7 @@ export function drawReleases(s: SkyState) {
       line(p, q, star.alpha * 0.25);
       c.fillStyle = rgba(COL_APP, star.alpha * 0.5 * s.skyK);
       c.beginPath();
-      c.arc(...q, 1.15 * s.sz, 0, Math.PI * 2);
+      c.arc(...q, SATELLITE_RADIUS * s.sz, 0, Math.PI * 2);
       c.fill();
     }
     const glow = (lit ? 34 : i === stars.length - 1 ? 28 : 18) * s.sz;

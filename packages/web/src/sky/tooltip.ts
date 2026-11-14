@@ -11,9 +11,11 @@ export function clearTooltip(s: SkyState) {
 export function tooltipAllowed(s: SkyState): boolean {
   if (s.drag) return false;
   if (s.tooltipSettling) {
-    const moving = [...s.stars.values(), ...s.hubParticles].some(
-      (p) => Math.hypot(p.ox, p.oy) > 0.5 || Math.hypot(p.vx, p.vy) > 4,
-    );
+    const moving = [
+      ...s.stars.values(),
+      ...s.hubParticles,
+      ...(s.aquarius?.stars.flatMap((star) => [star.particle, ...star.satelliteParticles]) ?? []),
+    ].some((p) => Math.hypot(p.ox, p.oy) > 0.5 || Math.hypot(p.vx, p.vy) > 4);
     if (moving) return false;
     s.tooltipSettling = false;
     s.tooltipGate = null;
