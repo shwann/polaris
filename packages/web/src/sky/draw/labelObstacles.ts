@@ -32,20 +32,48 @@ export function steadyHaloRadius(s: SkyState, star: Star) {
     r = (MAG[star.group] || 1.7) * s.sz * (held ? 1.25 : 1);
   return r * (5.5 + (held ? 7 : s.hover === star ? 4 : 0)) * HALO_KEEP;
 }
+/** DOM panels over the chart (tool bar, legend) in world coordinates; labels never sit under them. */
+export function domBoxes(s: SkyState): Box[] {
+  return (['skybar', 'legend'] as const).flatMap((key) => {
+    const r = s.registry.get(key);
+    return r && r.width > 0 && r.height > 0
+      ? [[...s.toWorld(r.left, r.top), ...s.toWorld(r.right, r.bottom)] as Box]
+      : [];
+  });
+}
+/** Distance from each star to its nearest visible neighbour, as drawn. */
+export function nearestGaps(points: Point[]): number[] {
+  return points.map((p, i) =>
+    points.reduce((best, q, j) => (i === j ? best : Math.min(best, Math.hypot(p[0] - q[0], p[1] - q[1]))), Infinity),
+  );
+}
+/** Layout halos never exceed half the gap to the nearest star, so two neighbours never block each other's labels. */
+export function starHalos(s: SkyState): Halo[] {
+  const live = [...s.stars.values()].filter((p) => !p.dead && p.alpha > 0.02),
+    points = live.map((p) => s.at(p.x, p.y, 14)),
+    gaps = nearestGaps(points);
+  return live.map((p, i) => ({
+    id: p.id,
+    point: points[i]!,
+    radius: Math.min(steadyHaloRadius(s, p), gaps[i]! / 2),
+  }));
+}
+/** Clearance, in sz, kept between a Dipper caption and any task label, so the two never read as one line. */
+export const HUB_MARGIN = 6;
+/** Radius, in sz, around a Dipper star that task labels keep clear of. */
+export const HUB_STAR_KEEP = 11;
+/** Dipper captions come first: their boxes, then the DOM panels, then every star's bright halo core. */
 export function labelObstacles(s: SkyState) {
-  const bar = s.registry.get('skybar');
+  const m = HUB_MARGIN * s.sz;
   return {
-    boxes:
-      bar && bar.width > 0 && bar.height > 0
-        ? [[...s.toWorld(bar.left, bar.top), ...s.toWorld(bar.right, bar.bottom)] as Box]
-        : [],
-    halos: [...s.stars.values()]
-      .filter((p) => !p.dead && p.alpha > 0.02)
-      .map((p) => ({
-        id: p.id,
-        point: s.at(p.x, p.y, 14),
-        radius: steadyHaloRadius(s, p),
-      })),
+    boxes: [
+      ...(s.hubLabelBoxes || []).flatMap((b) => b || []).map((b): Box => [b[0] - m, b[1] - m, b[2] + m, b[3] + m]),
+      ...domBoxes(s),
+    ],
+    halos: [
+      ...starHalos(s),
+      ...(s.sky ? s.dipPos : []).map((point, k) => ({ id: `hub-${k}`, point, radius: HUB_STAR_KEEP * s.sz })),
+    ],
   };
 }
 /** One alpha controls fill, outline and shadow together, including fully hidden labels. */

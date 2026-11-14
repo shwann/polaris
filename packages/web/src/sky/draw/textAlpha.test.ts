@@ -4,7 +4,7 @@ import { fixture } from '../testFixture';
 import { outlinedText, hitsHalo, labelObstacles } from './labelObstacles';
 import { drawDoneOverview } from './doneOverview';
 import { drawStarLabels } from './starLabels';
-import { drawHubLabels } from './labels';
+import { drawHubLabels, paintHubLabels } from './labels';
 
 function inkContext(ctx: CanvasRenderingContext2D) {
   const stack: number[] = [],
@@ -60,7 +60,9 @@ it('multiplies the full Dipper label fade by its parent transition alpha', () =>
     calls = inkContext(s.ctx);
   s.dipPos = [[100, 100]];
   s.skyK = 0.3;
+  s.board = { ...s.board, nextRelease: '.40' };
   drawHubLabels(s);
+  paintHubLabels(s);
   expect(calls.filter((c, i) => i > 0).map((c) => c.alpha)).toEqual([0.3 * 0.95, 0.3 * 0.95, 0.3 * 0.6, 0.3 * 0.6]);
   registry.dispose();
 });

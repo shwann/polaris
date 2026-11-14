@@ -2,6 +2,9 @@ import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { Color, SkyState, Star } from '../types';
 
+/** Task constellation lines in the sky view sit a step below the Dipper's own lines. */
+export const TASK_LINK_SKY = 0.85;
+
 export function drawClusters(state: SkyState, t: number, list: Star[]) {
   // Constellation bodies: a soft cloud in the lane's colour follows each figure, breathing slowly.
   state.ctx.globalCompositeOperation = 'lighter';
@@ -9,8 +12,8 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
     const c = COL[st.group]! || COL.planned,
       lit = (state.hover && state.hover.group === st.group) || state.litGroup === st.group,
       [x, y] = state.at(st.x, st.y, 14);
-    const R = state.unit * (st.group === 'done' ? 0.045 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
-      a = (st.group === 'done' ? 0.08 : 0.11) * (state.sky ? 1.5 : 1) * (lit ? 1.8 : 1) * st.alpha;
+    const R = state.unit * (st.group === 'done' ? 0.035 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
+      a = (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) * (state.sky ? 1.5 : 1) * (lit ? 1.8 : 1) * st.alpha;
     state.ctx.globalAlpha = a;
     state.ctx.drawImage(state.tint(c), x - R, y - R, R * 2, R * 2);
   }
@@ -33,7 +36,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
     if (fade < 0.01) continue;
     const lit = (state.hover && state.hover.group === g) || state.litGroup === g,
       c = COL[g]! || COL.planned,
-      base = 0.5 * (state.sky ? 1.4 : 1) * (lit ? 1.6 : 1) * fade;
+      base = 0.5 * (state.sky ? TASK_LINK_SKY : 1) * (lit ? 1.6 : 1) * fade;
     for (const [a, b] of edges) {
       const [ax, ay] = state.at(a.x, a.y, 14),
         [bx, by] = state.at(b.x, b.y, 14),

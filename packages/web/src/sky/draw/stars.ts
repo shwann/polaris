@@ -1,25 +1,35 @@
-import { haloRadius } from './labelObstacles';
+import { haloRadius, nearestGaps } from './labelObstacles';
 import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
 import { drawStarLabels, labelLines, placeLabel } from './starLabels';
 
+/** Older shipped stars recede: smaller and dimmer than work shipped in the last few days. */
+export const OLD_DONE = { size: 0.7, alpha: 0.4 };
+
 export function drawStars(state: SkyState, t: number, list: Star[]) {
-  const labels = [];
+  const labels = [],
+    live = list.filter((s) => !s.dead && s.alpha > 0.02),
+    gaps = new Map(nearestGaps(live.map((s) => state.at(s.x, s.y, 14))).map((g, i) => [live[i]!, g]));
   // Stars: halo, core, diffraction spikes on bright ones, a slow orbit ring on active work, a throb on overdue asks.
   for (const s of list) {
-    const held = state.drag?.star === s;
+    const held = state.drag?.star === s,
+      old = s.group === 'done' && !s.recent;
     const c = COL[s.group]! || COL.planned,
       [x, y] = state.at(s.x, s.y, 14),
-      r = (MAG[s.group]! || 1.7) * state.sz * (held ? 1.25 : 1),
+      r = (MAG[s.group]! || 1.7) * state.sz * (held ? 1.25 : 1) * (old ? OLD_DONE.size : 1),
       q = state.sz;
     const tw = 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
       throb = s.late ? 0.5 + 0.5 * Math.sin(t / 420 + s.ph) : 0,
-      a0 = (s.group === 'done' ? 0.85 : 1) * s.alpha;
-    const hr = haloRadius(state, s, t);
+      a0 = (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * s.alpha;
+    // In a dense cluster a halo stops at its nearest neighbour instead of piling onto it.
+    const hr = Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) * (old ? OLD_DONE.size : 1);
     state.ctx.globalAlpha = Math.min(
       1,
-      ((s.group === 'done' ? 0.3 : 0.5) + throb * 0.4 + s.flare * 0.9 + (held ? 0.65 : state.hover === s ? 0.4 : 0)) *
+      ((s.group === 'done' ? (old ? 0.12 : 0.45) : 0.5) +
+        throb * 0.4 +
+        s.flare * 0.9 +
+        (held ? 0.65 : state.hover === s ? 0.4 : 0)) *
         s.alpha,
     );
     state.ctx.drawImage(state.tint(c), x - hr, y - hr, hr * 2, hr * 2);
@@ -124,7 +134,14 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     )
       labels.push({
         id: s.id,
-        lines: labelLines(state.sky ? s.skyCode || s.code : s.code, s.title, state.cam.s, state.sky, state.w > 560),
+        lines: labelLines(
+          state.sky ? s.skyCode || s.code : s.code,
+          s.title,
+          state.cam.s,
+          state.sky,
+          state.w > 560,
+          s.skyTitle,
+        ),
         x,
         gap: r + 6 * q,
         y: y - r - 3 * q,

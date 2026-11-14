@@ -2,6 +2,7 @@ import { TITLE_BAND } from '../motion/labelZoom';
 import type { Box, Color, SkyState } from '../types';
 import { labelFits, labelObstacles, outlinedText } from './labelObstacles';
 import { rgba } from '../palette';
+import { labelSize } from '../geometry/spacing';
 
 /**
  * Semantic zoom for star labels in the sky view: the further in, the more of the task title shows.
@@ -12,8 +13,11 @@ import { rgba } from '../palette';
 export const TITLE_FROM = 2.4;
 /** From this camera scale the whole title shows, wrapped. */
 export const FULL_FROM = 3.6;
-const SHORT_MIN = 4;
-const SHORT_MAX = 12;
+/** Characters of title at the first title zoom: enough to tell neighbours apart. */
+export const SHORT_MIN = 8;
+/** Characters of title just before the full wrapped title takes over. */
+export const SHORT_MAX = 16;
+const SHORT_STEP = 4;
 const WRAP = 16;
 const MAX_LINES = 3;
 
@@ -26,7 +30,7 @@ export function shortLength(zoom: number, stepped = true): number {
       SHORT_MIN + Math.min(1, Math.max(0, (zoom - TITLE_FROM) / (FULL_FROM - TITLE_FROM))) * (SHORT_MAX - SHORT_MIN),
     );
   const band = Math.min(2, Math.max(0, Math.floor((zoom - TITLE_FROM + 1e-8) / TITLE_BAND)));
-  return zoom >= FULL_FROM ? SHORT_MAX : SHORT_MIN + band * 4;
+  return zoom >= FULL_FROM ? SHORT_MAX : SHORT_MIN + band * SHORT_STEP;
 }
 
 /** Wrap a title into lines of WRAP characters, at most MAX_LINES, the last one clipped. */
@@ -40,11 +44,19 @@ export function wrapTitle(title: string): string[] {
 /**
  * Lines for one star label: the code first, then as much title as the zoom allows.
  * @param sky - Only the full sky view grows labels; the header chart keeps codes.
+ * @param short - The title without the lead-in it shares with its cluster, used while the title is clipped.
  */
-export function labelLines(code: string, title: string, zoom: number, sky: boolean, stepped = true): string[] {
+export function labelLines(
+  code: string,
+  title: string,
+  zoom: number,
+  sky: boolean,
+  stepped = true,
+  short?: string,
+): string[] {
   const text = title.trim();
   if (!sky || !text || zoom < TITLE_FROM) return [code];
-  if (zoom < FULL_FROM) return [code, clip(text, shortLength(zoom, stepped))];
+  if (zoom < FULL_FROM) return [code, clip(short?.trim() || text, shortLength(zoom, stepped))];
   return [code, ...wrapTitle(text)];
 }
 
@@ -132,6 +144,8 @@ const memory = new WeakMap<object, Map<string, LabelChoice>>();
 const revisions = new WeakMap<object, number>();
 /** Extra clearance, in sz, a code-only label needs before it grows its title back. */
 export const LABEL_UPGRADE_MARGIN = 6;
+/** Clear space, in sz, kept between two task labels so stacked codes never read as one two-line label. */
+export const LABEL_GAP = 2;
 const grow = (b: Box, m: number) => [b[0] - m, b[1] - m, b[2] + m, b[3] + m] as Box;
 
 /**
@@ -140,7 +154,7 @@ const grow = (b: Box, m: number) => [b[0] - m, b[1] - m, b[2] + m, b[3] + m] as 
  */
 export function drawStarLabels(state: SkyState, labels: Label[]) {
   const ctx = state.ctx,
-    size = Math.max(10, state.unit * 0.0098) * state.sz,
+    size = labelSize(state.unit) * state.sz,
     view = [...state.toWorld(8, 8), ...state.toWorld(state.w - 8, state.h - 8)] as Box,
     placed: Box[] = [];
   const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
@@ -190,7 +204,8 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
       const margin = upgrading && t.full ? LABEL_UPGRADE_MARGIN * state.sz : 0;
       if (
         placement.width <= m.left ||
-        !labelFits(grow(placement.box, margin), [...placed, ...obstacles.boxes], obstacles.halos)
+        !labelFits(grow(placement.box, margin), obstacles.boxes, obstacles.halos) ||
+        placed.some((b) => overlaps(grow(placement.box, margin + LABEL_GAP * state.sz), b))
       )
         continue;
       const { x, y, width, align, box } = placement,

@@ -109,7 +109,8 @@ it('chooses a clear Polaris overview using long current Dipper captions before m
         p.top < b[3] + p.pan[1] &&
         p.top + 600 > b[1] + p.pan[1],
     ).toBe(false);
-  expect(engine.hubObstacles(7)).toHaveLength(21);
+  // Seven hub disks and seven one-line captions; only 天枢 carries a supplement line in the sample.
+  expect(engine.hubObstacles(7)).toHaveLength(15);
   engine.destroy();
   registry.dispose();
 });

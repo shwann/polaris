@@ -39,12 +39,4 @@ export const COL: Record<Lane, Color> = {
   done: [44, 245, 160],
 };
 export const MAG: Record<Lane, number> = { doing: 3.6, waiting: 3.2, release: 3, risk: 3, planned: 2.4, done: 2.1 };
-export const LATIN = {
-  planned: 'QUEUED',
-  doing: 'ACTIVE',
-  waiting: 'NEEDS YOU',
-  release: 'RELEASE',
-  risk: 'RISK',
-  done: 'SHIPPED',
-};
 export const GOLD: Color = [255, 214, 140];

@@ -12,6 +12,7 @@ export type LayoutKey =
   | 'tabs'
   | 'figures'
   | 'skybar'
+  | 'legend'
   | 'dipcard';
 export class LayoutRegistry {
   private nodes = new Map<LayoutKey, { node: HTMLElement; text: boolean }>();

@@ -8,6 +8,8 @@ import { advanceCamera, cameraMoving } from './motion/cameraMotion';
 import { drawDust } from './draw/dust';
 import type { SkyState } from './types';
 import { advanceSpin } from './geometry/clusters';
+import { pausedGroups, stillPointer } from './motion/pause';
+import { paintHubLabels } from './draw/labels';
 
 export function frame(state: SkyState, t: number) {
   const dt = Math.max(0, state.last ? t - state.last : 16);
@@ -17,9 +19,10 @@ export function frame(state: SkyState, t: number) {
   if (state.w < 2 || state.h < 2) return; // Wait until layout gives the canvas room.
   const moving = cameraMoving(state);
   advanceCamera(state, dt);
+  state.paused = pausedGroups(state);
   advanceSpin(state, dt);
   if (!state.drag && !moving && !cameraMoving(state)) {
-    if (state.px > -1e3 && !state.reduce.matches) {
+    if (state.px > -1e3 && !state.reduce.matches && !stillPointer(state)) {
       state.tx = (state.px / state.w - 0.5) * -1;
       state.ty = (state.py / state.h - 0.5) * -1;
     }
@@ -98,6 +101,7 @@ export function frame(state: SkyState, t: number) {
     state.lwk = state.sz;
     state.drawHubLabels();
     state.drawStars(t, list);
+    paintHubLabels(state);
     state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
     state.lwk = 1;
     drawDoneOverview(state);
