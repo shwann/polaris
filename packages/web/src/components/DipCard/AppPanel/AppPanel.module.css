@@ -40,37 +40,6 @@
 [data-dipcard] .dc-kv dd.warn {
   color: var(--amber);
 }
-[data-dipcard] .dc-tl {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-[data-dipcard] .dc-tl li {
-  display: grid;
-  justify-items: center;
-  padding: 0.2rem 0.45rem;
-  border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
-  font-family: var(--mono);
-  line-height: 1.2;
-}
-[data-dipcard] .dc-tl li b {
-  font-size: var(--fs-xs);
-  color: var(--ink-2);
-}
-[data-dipcard] .dc-tl li span {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-[data-dipcard] .dc-tl li.cur {
-  border-color: var(--c);
-  background: color-mix(in srgb, var(--c) 14%, transparent);
-}
-[data-dipcard] .dc-tl li.cur b {
-  color: var(--c);
-}
 [data-dipcard] .dc-app {
   display: grid;
   gap: 0.4rem;

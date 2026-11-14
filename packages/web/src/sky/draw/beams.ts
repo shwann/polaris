@@ -1,27 +1,18 @@
-import { COL, COL_APP, FIG_LANE } from '../../domain/lanes';
 import { rgba } from '../palette';
-import type { Color, SkyState } from '../types';
+import type { SkyState } from '../types';
+import { beamTargets } from './beamTargets';
 export function drawBeams(s: SkyState, t: number) {
-  // While a card is open its star drives the links; after it closes they stay on the last star, slightly fainter.
-  const sel = s.dipSel >= 1 ? s.dipSel : s.dipSel < 0 ? s.beamSel : -1,
-    open = s.dipSel >= 1;
-  if (sel < 1 || !s.dipIds || !s.dipPos[sel]) return;
-  type End = [number, number, Color, number, boolean?];
-  const ends: End[] =
-    sel === 7
-      ? s.dipPos.slice(0, 7).map(([x, y], k) => [x, y, k ? COL[FIG_LANE[k]!] : COL_APP, 1])
-      : s.dipIds.flatMap((item) => {
-          const o = typeof item === 'string' ? { id: item, dash: true } : item,
-            star = s.stars.get(o.id);
-          if (!star) return [];
-          const [x, y] = s.at(star.x, star.y, 14);
-          return [[x, y, COL[FIG_LANE[sel]!] || COL.doing, star.alpha, o.dash !== false] as End];
-        });
-  const [ox, oy] = s.dipPos[sel]!,
+  const targets = beamTargets(s);
+  if (!targets) return;
+  const {
+      origin: [ox, oy],
+      ends,
+      open,
+    } = targets,
     al = Math.min(0.6, 1.8 / Math.sqrt(ends.length + 1)) * (open ? 1 : 0.7),
     ctx = s.ctx;
   ctx.lineDashOffset = -t / 45;
-  ends.forEach(([x, y, c, alpha, dash = true], k) => {
+  ends.forEach(({ point: [x, y], color: c, alpha, dash }, k) => {
     ctx.setLineDash(dash ? [3, 5] : []);
     const bx = (ox + x) / 2 + (y - oy) * 0.12,
       by = (oy + y) / 2 - (x - ox) * 0.12;

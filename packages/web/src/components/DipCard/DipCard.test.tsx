@@ -3,6 +3,8 @@ import { it, expect } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { DipCard } from './DipCard';
 import { uiStore, openDip } from '../../store/uiStore';
+import { dataStore } from '../../store/dataStore';
+import { StarCard } from '../StarCard/StarCard';
 it('shows formal app layers, shipped work, unverified work, next candidates and release history', () => {
   uiStore.setState({ dip: 0 });
   render(<DipCard />);
@@ -30,4 +32,31 @@ it('shows a group waiting age and replaces the group with a task', () => {
   expect(uiStore.getState()).toMatchObject({ selected: 'EXPORT', dip: -1 });
   act(() => openDip(1));
   expect(screen.getByText('待开工')).toBeTruthy();
+});
+
+it('lists every release newest first with summaries and opens the existing release card', () => {
+  const snapshot = structuredClone(dataStore.getState().snapshot!);
+  snapshot.systems[0]!.releases = [
+    { version: '.32', releasedAt: '2026-11-09T21:20:00+08:00', note: '较早版本。后续说明。' },
+    { version: '.33', releasedAt: '2026-11-10T21:20:00+08:00', title: '最新交付' },
+  ];
+  dataStore.setState({ snapshot });
+  uiStore.setState({ sky: true, dip: 0 });
+  render(
+    <>
+      <DipCard />
+      <StarCard />
+    </>,
+  );
+  const panel = screen.getByRole('dialog', { name: '北斗分组' });
+  expect(within(panel).getByText('星图上连着全部 2 个版本 · 点一项看详情')).toBeTruthy();
+  const releases = within(panel)
+    .getAllByRole('button')
+    .filter((button) => button.querySelector('[data-code]')?.textContent?.startsWith('.'));
+  expect(releases.map((button) => button.querySelector('[data-code]')!.textContent)).toEqual(['.33', '.32']);
+  expect(releases[0]!.textContent).toContain('最新交付');
+  expect(releases[1]!.textContent).toContain('较早版本');
+  fireEvent.click(releases[0]!);
+  expect(screen.getByRole('dialog', { name: '版本详情' }).dataset.releaseVersion).toBe('.33');
+  expect(uiStore.getState()).toMatchObject({ dip: -1, selectedRelease: '.33', sky: true, releaseFocus: null });
 });

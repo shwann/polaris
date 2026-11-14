@@ -31,8 +31,6 @@ export function drawReleases(s: SkyState) {
     c.stroke();
   };
   const at = (p: Point) => s.at(...p, 14);
-  const selected = stars.find((star) => star.release.version === s.selectedRelease);
-  if (selected) for (const node of jar.nodes) if (lit.has(node.id)) path([at(node.point), at(selected.point)], 0.22);
   const mouth = jar.nodes[jar.mouth]?.point ?? jar.poly[1]!;
   path([s.hubs()[0]!, at(mouth)], 0.2);
   for (const edge of jar.edges) {

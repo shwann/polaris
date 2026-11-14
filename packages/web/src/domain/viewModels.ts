@@ -91,7 +91,7 @@ export function appPanelModel(v: BoardView) {
     releases: v.releases.map((r) => ({
       ...r,
       current: r.version === cur,
-      title: [r.version, fmt(r.releasedAt, true), r.ref, r.note].filter(Boolean).join(' · '),
+      tooltip: [r.version, fmt(r.releasedAt, true), r.ref, r.note].filter(Boolean).join(' · '),
       date: fmt(r.releasedAt, true).slice(0, 5),
     })),
   };

@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { it, expect } from 'vitest';
 import { embedData } from '@polaris/core';
-import { legacySample } from './fixtures/sample';
+import { legacySample, sample } from './fixtures/sample';
 import { createPage, ready, text } from './parityHarness';
 import { inlineCss, rules, matchingRules, hasDeclaration } from './cssHarness';
 const styleSample = {
@@ -97,11 +97,11 @@ it('matches the same key elements to real CSS rules in the original and built pa
       ['.tip', '.p-SkyCanvas-tip'],
       ['#dipcard', '#dipcard'],
     ];
-    const checkPair = (before: string, after: string) => {
+    const checkPair = (before: string, after: string, added = 0) => {
       const a = old.document.querySelectorAll(before),
         b = next.document.querySelectorAll(after);
       expect(a.length, before).toBeGreaterThan(0);
-      expect(b.length, after).toBe(a.length);
+      expect(b.length, after).toBe(a.length + added);
       for (const [elements, cssRules] of [
         [a, oldRules],
         [b, nextRules],
@@ -148,7 +148,8 @@ it('matches the same key elements to real CSS rules in the original and built pa
     click(next, '#w-next');
     await ready(next, '.p-AppPanel-dc-body');
     checkPair('#dipcard .dc-body', '#dipcard .p-AppPanel-dc-body');
-    checkPair('#dipcard li button', '#dipcard li button');
+    // Release history now adds one styled detail button for each version.
+    checkPair('#dipcard li button', '#dipcard li button', sample.systems[0]!.releases.length);
     click(old, '#pole');
     click(next, '#pole');
     await ready(next, '.p-PolePanel-dc-body');
