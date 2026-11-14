@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { figureFor } from './index';
 import { LIBRA_OMIT, LIBRA_SLOTS, libra } from './libra';
-import { LEO_OMIT, LEO_SLOTS, leo } from './leo';
+import { TAURUS_OMIT, TAURUS_SLOTS, taurus } from './taurus';
 import { ARIES_OMIT, ARIES_SLOTS, aries } from './aries';
 import { localPoint } from '../../draw/figures';
 import type { FigureTask } from './types';
@@ -14,7 +14,7 @@ const tasks = (n: number): FigureTask[] =>
 
 for (const [lane, slots, omit] of [
   ['risk', LIBRA_SLOTS, LIBRA_OMIT],
-  ['release', LEO_SLOTS, LEO_OMIT],
+  ['release', TAURUS_SLOTS, TAURUS_OMIT],
   ['planned', ARIES_SLOTS, ARIES_OMIT],
 ] as const) {
   it(`${lane} preserves the omission order at every partial count and the template's proportions`, () => {
@@ -84,7 +84,7 @@ it('places unknown dates after known dates and resolves ties by ID', () => {
     { id: '0' },
     { id: '1', updatedAt: 'invalid' },
   ];
-  expect(leo(input, [0, 0, 100]).nodes[0]!.id).toBe('a');
+  expect(taurus(input, [0, 0, 100]).nodes[0]!.id).toBe('a');
 });
 it('draws two downward curved Libra rims of width .16 without creating stars or graph edges', () => {
   for (const n of [0, 1, 2, 3, 4, 8]) {
@@ -104,17 +104,62 @@ it('draws two downward curved Libra rims of width .16 without creating stars or 
     }
   }
 });
-it('preserves the Leo sickle and body paths at nine stars', () => {
-  const f = leo(tasks(9), [0, 0, 100]);
+it('preserves exactly the Taurus horns, brow and face paths at nine stars', () => {
+  const f = taurus(tasks(9), [0, 0, 100]);
   expect(f.edges.map((edge) => [f.nodes[edge.a]!.slot, f.nodes[edge.b]!.slot])).toEqual([
-    ['Regulus', 'eta'],
-    ['eta', 'Algieba'],
-    ['Algieba', 'zeta'],
-    ['zeta', 'mu'],
-    ['mu', 'eps'],
-    ['Algieba', 'Zosma'],
-    ['Zosma', 'Denebola'],
-    ['Denebola', 'Chertan'],
-    ['Chertan', 'Regulus'],
+    ['tipL', 'hornL'],
+    ['hornL', 'browL'],
+    ['browL', 'browR'],
+    ['browR', 'hornR'],
+    ['hornR', 'tipR'],
+    ['browL', 'cheekL'],
+    ['cheekL', 'muzzle'],
+    ['muzzle', 'cheekR'],
+    ['cheekR', 'browR'],
   ]);
+  expect(f.edges.every((edge) => edge.bright)).toBe(true);
+});
+it.each([...Array.from({ length: 15 }, (_, i) => i), 25])('keeps Taurus connected at %i stars', (n) => {
+  const f = taurus(tasks(n), [10, 20, 100]);
+  expect(f.nodes).toHaveLength(n);
+  expect(f.nodes.every((node) => node.point.every(Number.isFinite))).toBe(true);
+  const seen = new Set(n ? [0] : []);
+  for (let i = 0; i < n; i++)
+    for (const edge of f.edges) {
+      if (seen.has(edge.a)) seen.add(edge.b);
+      if (seen.has(edge.b)) seen.add(edge.a);
+    }
+  expect(seen.size).toBe(n);
+  if (n < 2) expect(f.edges).toEqual([]);
+  if (n === 1) expect(f.nodes[0]).toMatchObject({ slot: 'muzzle', point: [10, 20], main: true });
+});
+it('omits Taurus cheeks before horn joints, horn tips and brows, preserving the muzzle', () => {
+  const omit = ['cheekR', 'cheekL', 'hornR', 'hornL', 'tipR', 'tipL', 'browR', 'browL'];
+  let remaining = ['muzzle', 'browL', 'browR', 'hornL', 'hornR', 'tipL', 'tipR', 'cheekL', 'cheekR'];
+  for (const slot of omit) {
+    remaining = remaining.filter((name) => name !== slot);
+    expect(taurus(tasks(remaining.length), [0, 0, 100]).nodes.map((node) => node.slot)).toEqual(remaining);
+  }
+});
+it('fills dim Taurus ears and eyes in order before random overflow stars', () => {
+  const f = taurus(tasks(14), [0, 0, 100]);
+  const extras = [
+    [0.2, 0.42],
+    [0.8, 0.42],
+    [0.42, 0.5],
+    [0.58, 0.5],
+  ];
+  extras.forEach(([x, y], i) => {
+    const node = f.nodes[9 + i]!;
+    expect(node.bright).toBe(false);
+    expect(node.point[0]).toBeCloseTo((x! - 0.5) * 170);
+    expect(node.point[1]).toBeCloseTo((y! - 0.5) * 170);
+  });
+  expect(f.nodes[13]!.bright).toBe(false);
+});
+it('puts the earliest updatedAt task at the Taurus muzzle regardless of creation time or input order', () => {
+  const input = tasks(13).map((task, i) => ({ ...task, createdAt: i ? '2001-01-01' : '1990-01-01' }));
+  input[7]!.updatedAt = '2000-01-01';
+  const f = taurus(input.reverse(), [0, 0, 100]);
+  expect(f.nodes.find((node) => node.main)).toMatchObject({ id: 'task-7', slot: 'muzzle', bright: true });
 });
