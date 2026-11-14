@@ -84,9 +84,9 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       MIN_SEPARATION / s.cam.s,
     );
   }
-  // Project these fixed silhouettes onto one translation after the existing solver. A held star leads the figure;
-  // otherwise the mean preserves its spring return and pointer response without bending the claws or tail.
-  for (const lane of ['waiting', 'risk', 'release', 'planned'] as const) {
+  // Every template keeps one translation after the solver, including during board-to-sky migration.
+  // A held star leads; otherwise the mean preserves spring return and pointer response without bending the figure.
+  for (const lane of s.figures.keys()) {
     const figure = list.filter((p) => !p.dead && p.group === lane && p.figureRole);
     if (!s.sky || !figure.length) continue;
     const held = figure.find((p) => p === particle),
