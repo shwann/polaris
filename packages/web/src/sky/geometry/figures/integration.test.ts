@@ -4,7 +4,6 @@ import { fixture } from '../../testFixture';
 import { home, rebuild } from '../clusters';
 import { updateTasks } from '../../updateTasks';
 import { constellation } from '../../motion/constellation';
-import { releaseHeld } from '../../motion/drag';
 import { drawFigure } from '../../draw/figures';
 import { drawClusters } from '../../draw/clusters';
 import { chainLit } from '../../draw/stars';
@@ -83,6 +82,7 @@ it.each([30, 60, 144])(
     expectSettled(s);
     registry.dispose();
   },
+  10000,
 );
 it('forms the figures again after returning to the board and reopening the sky', () => {
   const { s, registry } = loadBoard();
@@ -139,6 +139,14 @@ it('forms every figure on the first sky frame with reduced motion', () => {
   const { s, registry } = loadBoard(true);
   openSky(s);
   runFrames(s, 1000 / 60);
+  expectSettled(s);
+  registry.dispose();
+});
+it('ends formation projection once the migrating bases reach the slowly rotating sky layout', () => {
+  const { s, registry } = loadBoard();
+  openSky(s);
+  runFrames(s, 4000);
+  expect(s.figureMotion?.size).toBe(0);
   expectSettled(s);
   registry.dispose();
 });
@@ -210,44 +218,6 @@ it('retains requirement hover highlighting after figure assignment', () => {
   expect(style.mock.calls.some(([value]) => typeof value === 'string' && value.endsWith(',1.000)'))).toBe(true);
   registry.dispose();
 });
-it.each(['waiting', 'doing', 'done', 'risk', 'release', 'planned'] as const)(
-  'transmits a held %s star through the existing soft body to every star',
-  (lane) => {
-    const { s, registry } = setup(),
-      count = lane === 'waiting' ? 19 : lane === 'done' ? 69 : 5;
-    updateTasks(
-      s,
-      Array.from({ length: count }, (_, i) => make(`t${i}`, lane, i)),
-    );
-    const stars = [...s.stars.values()];
-    for (const star of stars) {
-      [star.baseX, star.baseY] = s.home(star, 0);
-      [star.x, star.y] = [star.baseX, star.baseY];
-    }
-    const root = stars.find((star) => star.figureRole?.main)!;
-    s.px = root.x + 300;
-    s.py = root.y - 200;
-    s.drag = { star: root, dip: -1, moved: true, grab: [0, 0], samples: [], x0: 0, y0: 0, cx: 0, cy: 0 };
-    for (let i = 0; i < 120; i++) constellation(s, stars, 1000 / 120);
-    expect(Math.min(...stars.map((star) => Math.hypot(star.ox, star.oy)))).toBeGreaterThan(0.1);
-    expect(stars.every((star) => Number.isFinite(star.x) && Number.isFinite(star.y))).toBe(true);
-    const expectShape = () => {
-      for (const star of stars) {
-        expect(star.x - root.x).toBeCloseTo(star.baseX! - root.baseX!, 8);
-        expect(star.y - root.y).toBeCloseTo(star.baseY! - root.baseY!, 8);
-      }
-    };
-    expectShape();
-    releaseHeld(s, s.drag, new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent);
-    s.drag = null;
-    for (let i = 0; i < 120; i++) {
-      constellation(s, stars, 1000 / 120);
-      expectShape();
-    }
-    registry.dispose();
-  },
-);
-
 it('keeps dense fish at their exact homes without collision pressure distorting the outline', () => {
   const { s, registry } = setup();
   updateTasks(

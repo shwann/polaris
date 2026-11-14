@@ -123,6 +123,8 @@ export function home(state: SkyState, s: Star, t: number): Point {
 /** Recompute only when data, viewport or a zoom-out spacing bucket changes. */
 export function layoutHomes(state: SkyState) {
   state.layoutScale = Math.max(0.5, Math.floor(Math.min(1, state.camT.s) * 10) / 10);
+  state.figureMotion ??= new Map();
+  if (!state.sky) state.figureMotion.clear();
   state.figures.clear();
   for (const group of ['done', 'risk', 'release', 'waiting', 'doing', 'planned'] as const) {
     const list = [...state.stars.values()]
@@ -142,6 +144,7 @@ export function layoutHomes(state: SkyState) {
       : null;
     if (figure) {
       state.figures.set(group, figure);
+      if (state.figureMotion.get(group) !== 'elastic') state.figureMotion.set(group, 'forming');
       for (const role of figure.nodes) {
         const star = state.stars.get(role.id)!;
         [star.layoutX, star.layoutY] = role.point;
@@ -159,6 +162,7 @@ export function layoutHomes(state: SkyState) {
       );
       continue;
     }
+    state.figureMotion.delete(group);
     const points = list.map((s): Point => {
       const r = (group === 'done' ? s.rad ** 1.9 : s.rad) * R;
       return [Math.cos(s.ang) * r * 1.25, Math.sin(s.ang) * r * 0.85];

@@ -200,6 +200,8 @@ export interface SkyState extends SkyMethods {
   stars: Map<string, Star>;
   trees: Map<Lane, [Star, Star][]>;
   figures: Map<Lane, Figure>;
+  /** Projection is reserved for layout migration; elastic motion runs until every member settles. */
+  figureMotion?: Map<Lane, 'forming' | 'elastic'>;
   dust: { x: number; y: number; m: number; ph: number }[];
   ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Star> }[];
   comets: { x: number; y: number; vx: number; vy: number; delay: number }[];

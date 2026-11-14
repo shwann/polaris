@@ -39,10 +39,22 @@ export function moveHeld(s: SkyState, d: Drag, x = s.px, y = s.py): Point | unde
 /** Hub tethers transmit gently outward only; a task drag cannot disturb other lanes via the Dipper. */
 export function constellation(s: SkyState, list: Star[], dt: number, time?: number) {
   syncHubs(s);
+  const d = s.drag?.moved ? s.drag : null;
+  if (d?.star?.figureRole) {
+    s.figureMotion ??= new Map();
+    s.figureMotion.set(d.star.group, 'elastic');
+  }
   const hubs = s.hubParticles,
     edges: Constraint[] = [];
   for (const tree of s.trees.values())
-    for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
+    for (const [a, b] of tree)
+      if (!a.dead && !b.dead && a.group === b.group)
+        edges.push({
+          a,
+          b,
+          // Long pulls stay local instead of stiffening short template segments into a rigid chain.
+          ...(s.figureMotion?.get(a.group) === 'elastic' ? { compliance: 0.08, stiffening: 0 } : {}),
+        });
   if (hubDraggable(s)) {
     for (const [a, b] of [...DIPPER_LINES, [0, 7]])
       edges.push({
@@ -57,8 +69,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
     }
   }
-  const d = s.drag?.moved ? s.drag : null,
-    particle = d ? draggedParticle(s, d) : undefined,
+  const particle = d ? draggedParticle(s, d) : undefined,
     point = d && particle ? moveHeld(s, d) : undefined;
   if (s.reduce.matches || s.w <= 560) {
     // Preserve the existing mobile motion path in physics.ts; reduced motion moves only the held star.
@@ -84,16 +95,29 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       MIN_SEPARATION / s.cam.s,
     );
   }
-  // Every template keeps one translation after the solver, including during board-to-sky migration.
-  // A held star leads; otherwise the mean preserves spring return and pointer response without bending the figure.
+  // Keep templates coherent only while their base positions migrate into a new layout.
+  // A drag and its spring return retain each star's individual offset, even across a rebuild.
   for (const lane of s.figures.keys()) {
     const figure = list.filter((p) => !p.dead && p.group === lane && p.figureRole);
     if (!s.sky || !figure.length) continue;
-    const held = figure.find((p) => p === particle),
-      mean = (key: 'ox' | 'oy' | 'vx' | 'vy') =>
-        held ? held[key] : figure.reduce((sum, p) => sum + p[key], 0) / figure.length;
+    if (s.figureMotion?.get(lane) === 'elastic') {
+      if (!d && figure.every((p) => Math.hypot(p.ox, p.oy) < 0.015 && Math.hypot(p.vx, p.vy) < 0.1))
+        s.figureMotion.delete(lane);
+      continue;
+    }
+    if (s.drag || s.figureMotion?.get(lane) !== 'forming') continue;
+    const mean = (key: 'ox' | 'oy' | 'vx' | 'vy') => figure.reduce((sum, p) => sum + p[key], 0) / figure.length;
     const [ox, oy, vx, vy] = [mean('ox'), mean('oy'), mean('vx'), mean('vy')];
     for (const p of figure) Object.assign(p, { ox, oy, vx, vy });
+    if (
+      s.skyK === 1 &&
+      figure.every((p) => {
+        const [x, y] = s.home(p, time ?? s.last);
+        // Allow the small steady easing lag of the figures that slowly rotate at overview zoom.
+        return Math.hypot(p.baseX! - x, p.baseY! - y) < Math.max(0.5, Math.hypot(p.layoutX!, p.layoutY!) * 0.01);
+      })
+    )
+      s.figureMotion.delete(lane);
   }
   for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
 }
