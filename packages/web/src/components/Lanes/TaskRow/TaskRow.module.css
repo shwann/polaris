@@ -128,3 +128,19 @@
 .right > .chip {
   flex: 0 1 auto;
 }
+.row[data-wait='customer'] .title {
+  color: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+.row[data-wait='dependency'] .title {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.row.compact {
+  padding: 0.55rem 1.2rem;
+  gap: 0.2rem 1rem;
+}
+.row.compact::before {
+  top: 0.6rem;
+  bottom: 0.6rem;
+  opacity: 0.25;
+}

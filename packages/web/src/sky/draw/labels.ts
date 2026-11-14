@@ -1,4 +1,4 @@
-import { hubCaption, hubFonts, hubLabelAnchor } from '../geometry/hubLabels';
+import { captionFit, hubCaption, hubFonts, hubLabelAnchor } from '../geometry/hubLabels';
 import { FIG_LANE as CARD_LANE, DIPPER, GOLD } from '../../domain/lanes';
 import { textBox } from '../geometry/hubObstacles';
 import { domBoxes, labelFits, outlinedText, starHalos } from './labelObstacles';
@@ -6,6 +6,8 @@ import { SMALL_LABEL } from '../constants';
 import { rgba } from '../palette';
 import type { Box, Color, SkyState } from '../types';
 
+/** Sky-coloured, half see-through plate under a caption that cannot avoid a Dipper line. */
+export const HUB_BACKDROP = 'rgba(4,10,20,0.72)';
 export interface HubLine {
   text: string;
   font: string;
@@ -20,6 +22,8 @@ export interface HubLabel {
   align: CanvasTextAlign;
   alpha: number;
   lines: HubLine[];
+  /** No side clears the Dipper lines: paint a plate the colour of the sky under the text. */
+  backdrop?: boolean;
 }
 
 /** Small header Dipper: just the star's name, placed so neighbours never collide (fades out as the sky view opens). */
@@ -73,7 +77,7 @@ export function drawHubLabels(state: SkyState) {
   state.ctx.textAlign = 'center';
   state.dipPos.forEach(([x, y], k) => {
     const { l1, l2, c } = hubCaption(state, k),
-      anchor = hubLabelAnchor(state, k, [x, y], state.sz),
+      anchor = hubLabelAnchor(state, k, [x, y], state.sz, captionFit(state.ctx, f, state.dipPos, l1, l2)),
       g = CARD_LANE[k];
     const on =
       state.sky ||
@@ -113,7 +117,7 @@ export function drawHubLabels(state: SkyState) {
         alpha: on ? 0.6 : 0.35,
       });
     }
-    queue.push({ k, align: anchor.align, alpha, lines });
+    queue.push({ k, align: anchor.align, alpha, lines, backdrop: anchor.backdrop });
   });
   if (deferred) dropCrowdedSupplements(state, queue);
   state.hubLabelBoxes = [];
@@ -139,6 +143,19 @@ export function paintHubLabels(state: SkyState) {
     outlined = state.sky && state.w > 560;
   for (const label of queue) {
     state.ctx.globalAlpha = label.alpha;
+    if (label.backdrop) {
+      const b = label.lines.reduce<Box>(
+        (u, l) => [
+          Math.min(u[0], l.box[0]),
+          Math.min(u[1], l.box[1]),
+          Math.max(u[2], l.box[2]),
+          Math.max(u[3], l.box[3]),
+        ],
+        [...label.lines[0]!.box],
+      );
+      state.ctx.fillStyle = HUB_BACKDROP;
+      state.ctx.fillRect(b[0], b[1], b[2] - b[0], b[3] - b[1]);
+    }
     state.ctx.textAlign = label.align;
     for (const line of label.lines) {
       state.ctx.font = line.font;

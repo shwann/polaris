@@ -21,7 +21,7 @@ it('keeps only the doing and waiting figure cards vivid', () => {
   const vivid = [...document.querySelectorAll('#figures [data-tone="vivid"]')].map((n) => n.textContent);
   expect(vivid).toHaveLength(2);
   expect(vivid[0]).toContain('开发中');
-  expect(vivid[1]).toContain('等你回复');
+  expect(vivid[1]).toContain('等你');
   expect(document.querySelectorAll('#figures [data-tone="quiet"]')).toHaveLength(5);
 });
 

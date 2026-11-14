@@ -1,3 +1,4 @@
+import { waitingOnOf } from '@polaris/core';
 import { EditToggle, TaskEditor, useTaskEdit } from '../../LocalEdit/TaskEditor';
 import styles from './ActiveTask.module.css';
 import sharedStyles from '../../Shared/Shared.module.css';
@@ -70,7 +71,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
       {t.detail && <Clamp className={styles['a-detail']} id={t.id + ':d'} text={t.detail} />}
       <TaskExecution task={t} />
       <TaskEditor task={t} open={edit.open} />
-      <Needs text={t.needs} />
+      <Needs text={t.needs} wait={waitingOnOf(t)} />
       <RefLine parts={[t.owner, t.ref, fmt(t.updatedAt)]} reference={t.ref} />
     </article>
   );

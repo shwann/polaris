@@ -2,6 +2,7 @@ import { FIG_LANE } from '../../domain/lanes';
 import type { Lane } from '../../domain/types';
 import { fit } from './dipper';
 import { clusterSpacing, DONE_SPACING, separatePoints } from './spacing';
+import { assignSlots, chainEdges } from './chains';
 import type { Point, SkyState, Star } from '../types';
 
 /** How far past the bowl's resting radius the waiting cluster may grow with its count. */
@@ -129,27 +130,20 @@ export function layoutHomes(state: SkyState) {
 export function rebuild(state: SkyState) {
   state.counts.clear();
   for (const s of state.stars.values()) if (!s.dead) state.counts.set(s.group, (state.counts.get(s.group) || 0) + 1);
+  // Stars of one requirement (or module) take neighbouring places before the layout spaces them out.
+  for (const g of new Set([...state.stars.values()].map((s) => s.group)))
+    assignSlots(
+      [...state.stars.values()].filter((s) => !s.dead && s.group === g),
+      g === 'done',
+    );
   layoutHomes(state);
   state.trees = new Map();
-  const byLane = new Map<import('../../domain/types').Lane, Star[]>();
+  const byLane = new Map<Lane, Star[]>();
   for (const s of state.stars.values())
     if (!s.dead) (byLane.get(s.group) || byLane.set(s.group, []).get(s.group))!.push(s);
-  for (const [g, list] of byLane) {
-    const pts = list.map((s) => state.home(s, 0)),
-      inT = new Set([0]),
-      edges: [Star, Star][] = [];
-    while (inT.size < list.length) {
-      let best: [number, number, number] | null = null;
-      for (const i of inT)
-        for (let j = 0; j < list.length; j++) {
-          if (inT.has(j)) continue;
-          const d = (pts[i]![0]! - pts[j]![0]!) ** 2 + (pts[i]![1]! - pts[j]![1]!) ** 2;
-          if (!best || d < best[2]!) best = [i, j, d];
-        }
-      if (!best) break;
-      inT.add(best[1]!);
-      edges.push([list[best[0]!]!, list[best[1]!]!]);
-    }
-    state.trees.set(g, edges);
-  }
+  for (const [g, list] of byLane)
+    state.trees.set(
+      g,
+      chainEdges(list, (s) => state.home(s, 0)),
+    );
 }

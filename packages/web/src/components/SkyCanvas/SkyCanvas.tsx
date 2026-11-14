@@ -37,9 +37,12 @@ export function SkyCanvas() {
       tip.hidden = !text;
       if (!text) return;
       tip.replaceChildren(document.createTextNode(text));
-      const small = document.createElement('small');
-      small.textContent = detail;
-      tip.append(small);
+      // Each detail line (group hint, then the star's requirement or module) gets its own row.
+      for (const line of detail.split('\n')) {
+        const small = document.createElement('small');
+        small.textContent = line;
+        tip.append(small);
+      }
       tip.className = cn(styles.tip, !!text && styles.on);
       tip.style.left = Math.min(x + 14, innerWidth - tip.offsetWidth - 8) + 'px';
       tip.style.top = y + 18 + 'px';

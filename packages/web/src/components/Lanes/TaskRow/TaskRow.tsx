@@ -1,3 +1,4 @@
+import { waitingOnOf, type WaitingOn } from '@polaris/core';
 import { EditToggle, TaskEditor, useTaskEdit } from '../../LocalEdit/TaskEditor';
 import styles from './TaskRow.module.css';
 import sharedStyles from '../../Shared/Shared.module.css';
@@ -25,9 +26,15 @@ function useCut(text?: string) {
   }, [text]);
   return [ref, cut] as const;
 }
+/** Waiting cards take their section's colour: 等你 coral, 等客户 amber, 等前置 slate. */
+export const WAIT_COLORS: Record<WaitingOn, string> = { user: '--coral', customer: '--amber', dependency: '--slate' };
 export function TaskRow({ task: t, changed }: { task: Task; changed: boolean }) {
-  const l = laneInfo(t.lane),
-    [age, late] = t.lane === 'waiting' ? ageText(t) : ['', false],
+  const wait = waitingOnOf(t),
+    tone = t.lane === 'waiting' && wait ? WAIT_COLORS[wait] : laneInfo(t.lane).c,
+    // 等前置 cards stay compact: code, title, status and the ask line only.
+    compact = t.lane === 'waiting' && wait === 'dependency',
+    [age, lateAge] = t.lane === 'waiting' ? ageText(t) : ['', false],
+    late = lateAge && wait === 'user',
     edit = useTaskEdit(),
     [chip, chipCut] = useCut(t.status),
     // A status cut to one line is shown in full when the body is expanded.
@@ -37,18 +44,19 @@ export function TaskRow({ task: t, changed }: { task: Task; changed: boolean }) 
     <div
       data-id={t.id}
       data-task-row
-      className={cn(styles.row, changed && sharedStyles.changed, late && styles.late)}
-      style={vars({ '--c': `var(${l.c})` })}
+      className={cn(styles.row, changed && sharedStyles.changed, late && styles.late, compact && styles.compact)}
+      style={vars({ '--c': `var(${tone})` })}
+      data-wait={t.lane === 'waiting' ? wait : undefined}
       data-sky-block
       onKeyDown={edit.onKeyDown}
     >
       <div className={styles.code}>{t.code}</div>
       <div className={styles.body}>
         <div className={styles.title}>{t.title}</div>
-        {(body || extra) && <Clamp className={styles.detail} id={t.id + ':d'} text={body} extra={extra} />}
+        {!compact && (body || extra) && <Clamp className={styles.detail} id={t.id + ':d'} text={body} extra={extra} />}
         <TaskEditor task={t} open={edit.open} />
-        <Needs text={t.needs} />
-        <RefLine parts={[t.owner, t.ref]} reference={t.ref} />
+        <Needs text={t.needs} wait={wait} />
+        {!compact && <RefLine parts={[t.owner, t.ref]} reference={t.ref} />}
       </div>
       <div className={styles.right}>
         <button
@@ -60,7 +68,7 @@ export function TaskRow({ task: t, changed }: { task: Task; changed: boolean }) 
           ✦ 星图定位
         </button>
         <EditToggle edit={edit} code={t.code} />
-        {t.unverified && (
+        {!compact && t.unverified && (
           <span className={styles.chip} style={vars({ '--c': 'var(--amber)' })} title={`待实证：${t.unverified}`}>
             待实证
           </span>
@@ -70,12 +78,12 @@ export function TaskRow({ task: t, changed }: { task: Task; changed: boolean }) 
             {t.status}
           </span>
         )}
-        {age ? (
+        {compact ? null : age ? (
           <span className={cn(styles.age, late && styles.late)}>{age}</span>
         ) : (
           t.updatedAt && <span className={styles.when}>{fmt(t.updatedAt, true)}</span>
         )}
-        {(t.shippedIn || t.targetRelease) && (
+        {!compact && (t.shippedIn || t.targetRelease) && (
           <span className={styles.ship}>{t.shippedIn ? `随 ${t.shippedIn}` : `候选 ${t.targetRelease}`}</span>
         )}
       </div>

@@ -1,14 +1,17 @@
+import { waitingOnOf } from '@polaris/core';
 import { clusterTitles, skyNames } from './taskNames';
+import { chainsOf } from './geometry/chains';
 import { COL } from '../domain/lanes';
 import { ageText, isOld } from '../domain/time';
 import type { Task } from '../domain/types';
 import { hash } from './palette';
 import type { SkyState, Star } from './types';
-export function updateTasks(s: SkyState, list: Task[]) {
+export function updateTasks(s: SkyState, list: Task[], reqTitles: ReadonlyMap<string, string> = new Map()) {
   s.unvN = list.filter((t) => t.unverified).length;
   const seen = new Set<string>(),
     names = skyNames(list),
-    titles = clusterTitles(list);
+    titles = clusterTitles(list),
+    chains = chainsOf(list, reqTitles);
   let moved = false;
   for (const t of list) {
     seen.add(t.id);
@@ -50,7 +53,13 @@ export function updateTasks(s: SkyState, list: Task[]) {
     star.title = t.title;
     star.skyTitle = titles.get(t.id);
     star.recent = t.lane === 'done' && !isOld(t);
-    star.late = t.lane === 'waiting' && ageText(t)[1];
+    star.wait = t.lane === 'waiting' ? waitingOnOf(t) : undefined;
+    // Only 等你 throbs when overdue; 等客户 and 等前置 wait on someone else.
+    star.late = t.lane === 'waiting' && star.wait === 'user' && ageText(t)[1];
+    const chain = chains.get(t.id);
+    if (star.chain !== chain?.key) moved = true;
+    star.chain = chain?.key;
+    star.chainLabel = chain?.label;
     star.dead = false;
   }
   for (const star of s.stars.values())

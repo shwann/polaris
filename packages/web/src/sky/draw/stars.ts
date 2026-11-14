@@ -6,6 +6,12 @@ import { drawStarLabels, labelLines, placeLabel } from './starLabels';
 
 /** Older shipped stars recede: smaller and dimmer than work shipped in the last few days. */
 export const OLD_DONE = { size: 0.7, alpha: 0.4 };
+/** 等客户 and 等前置 stars sit a step below 等你: dimmer, smaller halo, steady (no twinkle or sonar). */
+export const QUIET_WAIT = { size: 0.85, alpha: 0.6, halo: 0.55 };
+export const quietWait = (s: Star) => s.group === 'waiting' && !!s.wait && s.wait !== 'user';
+/** The hovered star's chain mates light up with it. */
+export const chainLit = (state: SkyState, s: Star) =>
+  !!s.chain && !!state.hover && state.hover !== s && state.hover.group === s.group && state.hover.chain === s.chain;
 
 export function drawStars(state: SkyState, t: number, list: Star[]) {
   const labels = [],
@@ -14,27 +20,37 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
   // Stars: halo, core, diffraction spikes on bright ones, a slow orbit ring on active work, a throb on overdue asks.
   for (const s of list) {
     const held = state.drag?.star === s,
-      old = s.group === 'done' && !s.recent;
+      old = s.group === 'done' && !s.recent,
+      quiet = quietWait(s),
+      mate = chainLit(state, s);
     const c = COL[s.group]! || COL.planned,
       [x, y] = state.at(s.x, s.y, 14),
-      r = (MAG[s.group]! || 1.7) * state.sz * (held ? 1.25 : 1) * (old ? OLD_DONE.size : 1),
+      r =
+        (MAG[s.group]! || 1.7) *
+        state.sz *
+        (held ? 1.25 : 1) *
+        (old ? OLD_DONE.size : 1) *
+        (quiet ? QUIET_WAIT.size : 1),
       q = state.sz;
-    const tw = 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
+    const tw = quiet ? 0.85 : 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
       throb = s.late ? 0.5 + 0.5 * Math.sin(t / 420 + s.ph) : 0,
-      a0 = (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * s.alpha;
+      a0 = (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * (quiet && !mate ? QUIET_WAIT.alpha : 1) * s.alpha;
     // In a dense cluster a halo stops at its nearest neighbour instead of piling onto it.
-    const hr = Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) * (old ? OLD_DONE.size : 1);
+    const hr =
+      Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) *
+      (old ? OLD_DONE.size : 1) *
+      (quiet ? QUIET_WAIT.halo : 1);
     state.ctx.globalAlpha = Math.min(
       1,
-      ((s.group === 'done' ? (old ? 0.12 : 0.45) : 0.5) +
+      ((s.group === 'done' ? (old ? 0.12 : 0.45) : quiet ? 0.3 : 0.5) +
         throb * 0.4 +
         s.flare * 0.9 +
-        (held ? 0.65 : state.hover === s ? 0.4 : 0)) *
+        (held ? 0.65 : state.hover === s ? 0.4 : mate ? 0.3 : 0)) *
         s.alpha,
     );
     state.ctx.drawImage(state.tint(c), x - hr, y - hr, hr * 2, hr * 2);
     state.ctx.globalAlpha = 1;
-    if (r >= 2.2 * q || state.hover === s) {
+    if ((r >= 2.2 * q && !quiet) || state.hover === s) {
       const L = r * (3.2 + s.flare * 4 + (state.hover === s ? 3 : 0)) * tw;
       state.ctx.strokeStyle = rgba(c, 0.55 * a0);
       state.ctx.lineWidth = 0.7;
@@ -71,7 +87,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         state.ctx.arc(x + rx, y + ry, 0.9 * q, 0, 6.2832);
         state.ctx.fill();
       }
-    } else if (s.group === 'waiting' && !state.reduce.matches) {
+    } else if (s.group === 'waiting' && !quiet && !state.reduce.matches) {
       // Sonar: rings go out on a beat; overdue asks beat faster.
       const per = s.late ? 1400 : 2600,
         k = ((t + s.ph * 500) % per) / per;
@@ -129,6 +145,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         (state.w > 560 && state.selected === s.id) ||
         (state.sky && roomy && named) ||
         (((state.hover && state.hover.group === s.group) || state.litGroup === s.group) && roomy) ||
+        chainLit(state, s) ||
         (state.sky && r >= 2.9 * q && roomy && named) ||
         (state.match && state.match.has(s.id)))
     )
@@ -146,7 +163,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         gap: r + 6 * q,
         y: y - r - 3 * q,
         c,
-        a: (state.hover === s ? 1 : state.sky ? 0.7 : 0.5) * s.alpha,
+        a: (state.hover === s || chainLit(state, s) ? 1 : state.sky ? 0.7 : 0.5) * (quiet ? 0.75 : 1) * s.alpha,
         pri:
           state.hover === s
             ? 99

@@ -53,11 +53,14 @@ it('runs the original script and the built React bundle against identical legacy
     expect(text(b, '.p-FigureCard-fig > b')).toEqual(text(a, '.fig > b'));
     expect(text(b, '.p-FigureCard-fig small')).toEqual(text(a, '.fig small'));
     expect(Array.from(b.querySelectorAll('.p-Matrix-cells i')).map((n) => n.getAttribute('aria-label'))).toEqual(
-      Array.from(a.querySelectorAll('.cells i')).map((n) => n.getAttribute('aria-label')),
+      // The waiting group was renamed from 等你或客户回复 to 等待中 after the original page.
+      Array.from(a.querySelectorAll('.cells i')).map((n) =>
+        n.getAttribute('aria-label')?.replace('等你或客户回复', '等待中'),
+      ),
     );
     // Wide screens lift the waiting group into its own row, so only the set of cards must match.
     expect(text(b, '#main [data-id]').sort()).toEqual(text(a, '#main [data-id]').sort());
-    expect(text(b, '.p-Digest-dg-row')).toEqual(text(a, '.dg-row'));
+    expect(text(b, '.p-Digest-dg-row')).toEqual(text(a, '.dg-row').map((t) => t.replace('等你或客户回复', '等待中')));
     expect(text(b, '.p-LogPanel-log .p-LogPanel-txt')).toEqual(text(a, '.log .txt'));
   });
 });

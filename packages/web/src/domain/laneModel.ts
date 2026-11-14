@@ -1,5 +1,6 @@
 import { LANES } from './lanes';
-import { laneTasks, archiveTasks, filtering, searchTasks, lateTasks } from './selectors';
+import type { WaitingOn } from '@polaris/core';
+import { laneTasks, archiveTasks, filtering, searchTasks, lateTasks, waitingParts } from './selectors';
 import type { Task, Filter, LaneInfo } from './types';
 export interface LaneModel {
   lane: LaneInfo;
@@ -9,6 +10,8 @@ export interface LaneModel {
   hint?: string;
   delay: number;
   expanded: boolean;
+  /** The waiting lane's 等你 / 等客户 / 等前置 sections, empty ones left out. */
+  parts?: { key: WaitingOn; list: Task[] }[];
 }
 /** `wide` lifts the waiting group into its own full-width row above the two balanced columns. */
 export function laneModel(tasks: Task[], filter: Filter, now = Date.now(), wide = false) {
@@ -28,7 +31,8 @@ export function laneModel(tasks: Task[], filter: Filter, now = Date.now(), wide 
       hint = n ? `${n} 项已等超过 3 天 · 最久的排最前` : '最久的排最前';
     }
     if (lane.key === 'done') hint = `最近 3 天 ${recent.length} 项`;
-    const model = { lane, list, recent, older, hint, delay: d++, expanded: filtering(filter) };
+    const model: LaneModel = { lane, list, recent, older, hint, delay: d++, expanded: filtering(filter) };
+    if (lane.key === 'waiting') model.parts = waitingParts(list).filter((p) => p.list.length);
     if (lane.key === 'doing') {
       active.push(model);
       continue;

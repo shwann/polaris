@@ -51,7 +51,7 @@ export function DispatchDialog({ system, onClose }: { system: SystemInfo; onClos
             await submitWrite(
               '/api/dispatch/set',
               body,
-              `派工 ${DISPATCH_ENGINE_LABELS[spec.engine]} ${model} / ${spec.effort}`,
+              `派工 ${DISPATCH_ENGINE_LABELS[spec.engine]} ${model} / ${(DISPATCH_EFFORT_LABELS as Record<string, string>)[spec.effort] ?? spec.effort}`,
             )
           )
             onClose();

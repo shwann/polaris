@@ -21,12 +21,15 @@ it('writes every Dipper caption as one Chinese line: Greek letter, star, group n
   for (let k = 1; k <= 6; k++) {
     const g = FIG_LANE[k]!,
       { l1 } = hubCaption(s, k);
+    if (g === 'waiting') continue;
     expect(l1).toBe(
       `${'αβγδεζη'[k]} ${['', '天璇', '天玑', '天权', '玉衡', '开阳', '摇光'][k]} · ${LANES.find((l) => l.key === g)!.name} ${s.counts.get(g)}`,
     );
     expect(l1).not.toMatch(/[A-Z]{3,}/);
   }
-  expect(hubCaption(s, 3).l1).toBe('δ 天权 · 等你或客户回复 2');
+  expect(hubCaption(s, 3)).toMatchObject({ l1: 'δ 天权 · 等你 2', l2: '' });
+  s.stars.get('waiting-1')!.wait = 'customer';
+  expect(hubCaption(s, 3)).toMatchObject({ l1: 'δ 天权 · 等你 1', l2: '等客户 1' });
   s.board = { app: null, appVersion: '.39', nextRelease: '.40：待实证' };
   s.unvN = 24;
   expect(hubCaption(s, 0)).toMatchObject({ l1: 'α 天枢 · 正式 App .39', l2: '下个 .40 · 待实证 24' });
@@ -90,9 +93,9 @@ it('paints Dipper captions after the task stars in the wide sky view', () => {
   s.counts.set('waiting', 1);
   hubAt(s, 3, 400, 300);
   drawHubLabels(s);
-  expect(order).not.toContain('δ 天权 · 等你或客户回复 1');
+  expect(order).not.toContain('δ 天权 · 等你 1');
   s.drawStars(0, [...s.stars.values()]);
   paintHubLabels(s);
-  expect(order.lastIndexOf('δ 天权 · 等你或客户回复 1')).toBeGreaterThan(order.lastIndexOf('halo'));
+  expect(order.lastIndexOf('δ 天权 · 等你 1')).toBeGreaterThan(order.lastIndexOf('halo'));
   registry.dispose();
 });

@@ -99,8 +99,18 @@
   line-height: 1.5;
   color: var(--ink-3);
 }
+/* Each segment stays on one line but never spills out of the card: long ones end in an ellipsis. */
+.fig small {
+  min-width: 0;
+  max-width: 100%;
+}
 .fig small .sg {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  vertical-align: bottom;
 }
 .fig small .dot {
   white-space: normal;

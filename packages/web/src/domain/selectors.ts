@@ -1,3 +1,4 @@
+import { WAITING_ON, waitingOnOf, type WaitingOn } from '@polaris/core';
 import type { BoardView, DisplaySnapshot, Filter, Task, Lane, SystemInfo } from './types';
 import { FLOW } from './lanes';
 import { ageText, since, isOld } from './time';
@@ -25,10 +26,24 @@ export function selectView(s: DisplaySnapshot | null, selection: string): BoardV
   };
 }
 export const byOrder = (a: Task, b: Task) => (a.sort ?? 999) - (b.sort ?? 999);
-export const needsMe = (t: Task) => t.lane === 'waiting' || !!t.needs?.trim();
+export { waitingOnOf };
+/** Only 等你 counts as needing the user; 等客户 and 等前置 wait on someone else. */
+export const needsMe = (t: Task) => waitingOnOf(t) === 'user';
 export const needsYouCount = (tasks: Task[]) => tasks.filter(needsMe).length;
+/** Waiting tasks counted per category (等你 includes NULL). */
+export function waitCounts(tasks: Task[]): Record<WaitingOn, number> {
+  const out = { user: 0, customer: 0, dependency: 0 };
+  for (const t of tasks) {
+    const w = waitingOnOf(t);
+    if (w) out[w]++;
+  }
+  return out;
+}
+/** A waiting task's split into its three sections, in display order. */
+export const waitingParts = (list: Task[]) =>
+  WAITING_ON.map((key) => ({ key, list: list.filter((t) => waitingOnOf(t) === key) }));
 export const lateTasks = (tasks: Task[], now = Date.now()) =>
-  tasks.filter((t) => t.lane === 'waiting' && ageText(t, now)[1]);
+  tasks.filter((t) => t.lane === 'waiting' && needsMe(t) && ageText(t, now)[1]);
 export const isPlan = (t: Task) => /^REL/.test(t.code);
 export const nextCandidates = (tasks: Task[], version?: string) =>
   version ? tasks.filter((t) => t.targetRelease === version && !isPlan(t)) : [];
