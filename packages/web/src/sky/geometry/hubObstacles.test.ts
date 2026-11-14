@@ -8,8 +8,9 @@ it('includes all eight hub disks and their measured labels, excluding only the c
   const { s, registry } = fixture();
   // Stale painted boxes must never replace fresh font measurements.
   s.hubLabelBoxes = Array.from({ length: 8 }, (_, i) => [[i * 100, 120, i * 100 + 90, 150]]);
-  expect(hubObstacles(s)).toHaveLength(24);
-  expect(hubObstacles(s, 3)).toHaveLength(21);
+  // Eight disks and eight one-line captions; no supplement applies to the empty fixture.
+  expect(hubObstacles(s)).toHaveLength(16);
+  expect(hubObstacles(s, 3)).toHaveLength(14);
   expect(hubObstacles(s, 3)).not.toContainEqual(s.hubLabelBoxes[3]![0]);
   Object.assign(s.cam, { s: 2, x: 20, y: 40 });
   const [b] = measureHubLabels(s)[0]!;

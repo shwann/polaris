@@ -2,6 +2,13 @@ import type { Point } from '../types';
 
 // The widest resting halo is doing: MAG 3.6 × 5.5 × two radii = 39.6px.
 export const STAR_SPACING = 40;
+/** Star label font size, shared by the renderer and the cluster layout. */
+export const labelSize = (unit: number) => Math.max(10, unit * 0.0098);
+/**
+ * Minimum gap between two stars of an active cluster: room for one short code label (about five monospace
+ * characters) beside a star, never less than the resting halo spacing.
+ */
+export const clusterSpacing = (unit: number) => Math.max(STAR_SPACING, labelSize(unit) * 3 + 10);
 /** Done stars are small, label-less at rest and many; a tighter floor keeps that cluster organic, not a lattice. */
 export const DONE_SPACING = 18;
 

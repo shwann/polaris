@@ -33,7 +33,13 @@ export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
     if (s === root) continue;
     if (reduced) s.ox = s.oy = s.vx = s.vy = 0;
     else {
-      if (state.px > -1e3 && !d && Math.hypot(s.ox, s.oy) < 0.5 && Math.hypot(s.vx, s.vy) < 4) {
+      if (
+        state.px > -1e3 &&
+        !d &&
+        !state.paused?.has(s.group) &&
+        Math.hypot(s.ox, s.oy) < 0.5 &&
+        Math.hypot(s.vx, s.vy) < 4
+      ) {
         const dx = state.wpx - state.mx * 14 - s.x,
           dy = state.wpy - state.my * 14 - s.y;
         const distance = Math.hypot(dx, dy);

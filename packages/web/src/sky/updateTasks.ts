@@ -1,13 +1,14 @@
-import { skyNames } from './taskNames';
+import { clusterTitles, skyNames } from './taskNames';
 import { COL } from '../domain/lanes';
-import { ageText } from '../domain/time';
+import { ageText, isOld } from '../domain/time';
 import type { Task } from '../domain/types';
 import { hash } from './palette';
 import type { SkyState, Star } from './types';
 export function updateTasks(s: SkyState, list: Task[]) {
   s.unvN = list.filter((t) => t.unverified).length;
   const seen = new Set<string>(),
-    names = skyNames(list);
+    names = skyNames(list),
+    titles = clusterTitles(list);
   let moved = false;
   for (const t of list) {
     seen.add(t.id);
@@ -47,6 +48,8 @@ export function updateTasks(s: SkyState, list: Task[]) {
     star.code = t.code;
     star.skyCode = names.get(t.id);
     star.title = t.title;
+    star.skyTitle = titles.get(t.id);
+    star.recent = t.lane === 'done' && !isOld(t);
     star.late = t.lane === 'waiting' && ageText(t)[1];
     star.dead = false;
   }

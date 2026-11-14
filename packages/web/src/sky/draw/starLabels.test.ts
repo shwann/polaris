@@ -12,11 +12,11 @@ describe('star label semantic zoom', () => {
   });
 
   it('adds a clipped title that grows with zoom', () => {
-    expect(shortLength(TITLE_FROM)).toBe(4);
-    expect(shortLength(FULL_FROM)).toBe(12);
+    expect(shortLength(TITLE_FROM)).toBe(8);
+    expect(shortLength(FULL_FROM)).toBe(16);
     const a = labelLines('UX8', title, TITLE_FROM, true);
     const b = labelLines('UX8', title, (TITLE_FROM + FULL_FROM) / 2, true);
-    expect(a).toEqual(['UX8', title.slice(0, 4) + '…']);
+    expect(a).toEqual(['UX8', title.slice(0, 8) + '…']);
     expect(b[1]!.length).toBeGreaterThan(a[1]!.length);
   });
 

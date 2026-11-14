@@ -23,7 +23,8 @@ export function drawHub(
   const me = k === lit || (k === 7 && small),
     tw = 0.82 + 0.18 * Math.sin(t / 900 + k * 1.7),
     pole = k === 7,
-    r = (pole ? 4.4 : 3.1) * S * (me ? 1.2 : 1);
+    lift = state.sky && !small ? 1.3 : 1, // the sky view's Dipper stars outshine every task star
+    r = (pole ? 4.4 : 3.1) * S * (me ? 1.2 : 1) * lift;
   const hr = (pole ? 40 : 24) * S * (me ? 1.3 + 0.08 * Math.sin(t / 220) : 1);
   const dim = small && !me ? 0.38 : 1;
   const emb = pole && small; // the header Polaris is a quiet emblem, not a metric
@@ -32,12 +33,12 @@ export function drawHub(
     return;
   }
   const hue = me && k !== 7 ? state.OWN(k) : GOLD;
-  state.ctx.globalAlpha = Math.min(1, (small ? (me ? 0.95 : 0.16) : (vis ? 0.6 : 0.3) * (me ? 1.5 : 1)) * tw);
+  state.ctx.globalAlpha = Math.min(1, (small ? (me ? 0.95 : 0.16) : (vis ? 0.6 : 0.3) * (me ? 1.5 : 1) * lift) * tw);
   state.ctx.drawImage(state.tint(hue), x - hr, y - hr, hr * 2, hr * 2);
   state.ctx.globalAlpha = dim;
   const L = r * (pole ? 5.5 : 3.6) * tw;
-  state.ctx.strokeStyle = rgba(hue, vis ? 0.75 : 0.4);
-  state.ctx.lineWidth = 0.8;
+  state.ctx.strokeStyle = rgba(hue, vis ? (lift > 1 ? 0.95 : 0.75) : 0.4);
+  state.ctx.lineWidth = 0.8 * lift;
   state.ctx.beginPath();
   state.ctx.moveTo(x - L, y);
   state.ctx.lineTo(x + L, y);

@@ -9,6 +9,7 @@ import { Lanes } from './components/Lanes/Lanes';
 import { LogPanel } from './components/LogPanel/LogPanel';
 import { SkyCanvas } from './components/SkyCanvas/SkyCanvas';
 import { SkyBar } from './components/SkyBar/SkyBar';
+import { SkyLegend } from './components/SkyLegend/SkyLegend';
 import { StarCard } from './components/StarCard/StarCard';
 import { DipCard } from './components/DipCard/DipCard';
 import { useDataSource } from './hooks/useDataSource';
@@ -33,6 +34,7 @@ export function Dashboard() {
     <>
       <SkyCanvas />
       <SkyBar />
+      <SkyLegend />
       <StarCard />
       <DipCard />
       <WriteNotice />

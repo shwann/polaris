@@ -3,8 +3,8 @@ import type { Color, Point, Zone } from './types';
 export const WIDE: Zone = {
   dip: true,
   side: [1, 1, 0, -1, -1, 2, 0, -1],
-  done: [0.11, 0.72],
-  risk: [0.25, 0.43],
+  done: [0.09, 0.6],
+  risk: [0.27, 0.42],
   release: [0.43, 0.12],
   waiting: [0.61, 0.6],
   doing: [0.37, 0.83],

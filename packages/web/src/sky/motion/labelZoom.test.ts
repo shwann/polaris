@@ -5,8 +5,8 @@ import { labelLines, shortLength } from '../draw/starLabels';
 import { CAMERA_SNAP } from './labelZoom';
 
 it('changes abbreviated titles only at four-character semantic zoom bands', () => {
-  expect([2.4, 2.7, 2.8, 3.1, 3.2, 3.59].map((zoom) => shortLength(zoom))).toEqual([4, 4, 8, 8, 12, 12]);
-  expect(shortLength(2.7, false)).toBe(6);
+  expect([2.4, 2.7, 2.8, 3.1, 3.2, 3.59].map((zoom) => shortLength(zoom))).toEqual([8, 8, 12, 12, 16, 16]);
+  expect(shortLength(2.7, false)).toBe(10);
   expect(labelLines('A', '字'.repeat(30), 3.6, true)).toHaveLength(3);
 });
 

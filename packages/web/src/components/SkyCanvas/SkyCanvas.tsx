@@ -35,7 +35,7 @@ export function SkyCanvas() {
       },
       isBlocked: (target, wheel) =>
         target instanceof Element &&
-        !!target.closest(wheel ? '#skybar,#starcard,#dipcard' : '[data-sky-block],button,input,a,summary'),
+        !!target.closest(wheel ? '#skybar,#skylegend,#starcard,#dipcard' : '[data-sky-block],button,input,a,summary'),
     });
     attachEngine(engine);
     return () => {

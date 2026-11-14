@@ -8,6 +8,7 @@ import { cameraBounds, cameraMoving, stopCamera } from './motion/cameraMotion';
 import { LAUNCH_SPEED, record, velocity } from './motion/inertia';
 import { draggedParticle } from './motion/constellation';
 import { prepareDrag, releaseHeld } from './motion/drag';
+import { stillPointer } from './motion/pause';
 import type { Point, SkyState } from './types';
 
 export function attachInput(s: SkyState) {
@@ -39,7 +40,7 @@ export function attachInput(s: SkyState) {
     (e) => {
       s.px = e.clientX;
       s.py = e.clientY;
-      if (!s.drag && !cameraMoving(s) && !s.reduce.matches) {
+      if (!s.drag && !cameraMoving(s) && !s.reduce.matches && !stillPointer(s)) {
         s.tx = (e.clientX / s.w - 0.5) * -1;
         s.ty = (e.clientY / s.h - 0.5) * -1;
       }

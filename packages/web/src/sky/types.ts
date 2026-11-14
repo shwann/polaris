@@ -3,6 +3,7 @@ import type { Sample } from './motion/inertia';
 import type { Color } from '../domain/lanes';
 import type { BoardView, Lane } from '../domain/types';
 import type { LayoutRegistry } from '../layout/LayoutRegistry';
+import type { HubLabel } from './draw/labels';
 export type { Color } from '../domain/lanes';
 export type Point = [number, number];
 export type Box = [number, number, number, number];
@@ -30,6 +31,10 @@ export interface Star {
   code: string;
   title: string;
   late: boolean;
+  /** Done within the last few days: drawn brighter than older shipped work. */
+  recent?: boolean;
+  /** Title with the prefix it shares with its cluster neighbours removed, for short labels. */
+  skyTitle?: string;
   dead: boolean;
 }
 export interface Camera {
@@ -150,6 +155,12 @@ export interface SkyState extends SkyMethods {
   tetherHub: Map<Lane, string>;
   hubParticles: Particle[];
   hubLabelBoxes?: Box[][];
+  /** Dipper captions laid out this frame, painted after the task stars in the wide sky view. */
+  hubLabelQueue?: HubLabel[];
+  /** Groups whose drift is paused because the pointer is over them or a card is open on them. */
+  paused?: Set<Lane>;
+  /** Spin time each paused group has skipped, so it resumes where it stopped. */
+  spinHeld?: Map<Lane, number>;
   soft: SoftBody;
   dipHover: number;
   dipSel: number;
