@@ -59,6 +59,10 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
     }
   }
   body.pin = undefined;
+  if (s.sky && !s.reduce.matches && d.star?.figureRole) {
+    s.figureReturns ??= new Map();
+    s.figureReturns.set(d.star.group, { root: d.star, elapsed: 0 });
+  }
   if (d.release) {
     if (!s.reduce.matches && e.type !== 'pointercancel') {
       const [x, y] = s.at(p.baseX! + p.ox, p.baseY! + p.oy, 14);

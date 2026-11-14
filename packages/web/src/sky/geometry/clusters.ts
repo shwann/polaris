@@ -124,7 +124,10 @@ export function home(state: SkyState, s: Star, t: number): Point {
 export function layoutHomes(state: SkyState) {
   state.layoutScale = Math.max(0.5, Math.floor(Math.min(1, state.camT.s) * 10) / 10);
   state.figureMotion ??= new Map();
-  if (!state.sky) state.figureMotion.clear();
+  if (!state.sky) {
+    state.figureMotion.clear();
+    state.figureReturns?.clear();
+  }
   state.figures.clear();
   for (const group of ['done', 'risk', 'release', 'waiting', 'doing', 'planned'] as const) {
     const list = [...state.stars.values()]

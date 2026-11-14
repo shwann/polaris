@@ -2,6 +2,7 @@ import type { Figure, FigureNode, FigureTask } from './geometry/figures';
 import type { AquariusBody, JarStar, ReleaseDrag, ReleaseStar } from './geometry/figures/aquarius';
 import type { Release, WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
+import type { FigureReturn } from './motion/figureReturn';
 import type { Sample } from './motion/inertia';
 import type { Color } from '../domain/lanes';
 import type { BoardView, Lane } from '../domain/types';
@@ -209,6 +210,7 @@ export interface SkyState extends SkyMethods {
   figures: Map<Lane, Figure>;
   /** Projection is reserved for layout migration; elastic motion runs until every member settles. */
   figureMotion?: Map<Lane, 'forming' | 'elastic'>;
+  figureReturns?: Map<Lane, FigureReturn>;
   dust: { x: number; y: number; m: number; ph: number }[];
   ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Particle> }[];
   comets: { x: number; y: number; vx: number; vy: number; delay: number }[];

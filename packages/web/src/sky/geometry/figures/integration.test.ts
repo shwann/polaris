@@ -1,6 +1,7 @@
 import '../../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { fixture } from '../../testFixture';
+import { fixture, pointer } from '../../testFixture';
+import { attachInput } from '../../input';
 import { home, rebuild } from '../clusters';
 import { updateTasks } from '../../updateTasks';
 import { constellation } from '../../motion/constellation';
@@ -148,6 +149,39 @@ it('ends formation projection once the migrating bases reach the slowly rotating
   runFrames(s, 4000);
   expect(s.figureMotion?.size).toBe(0);
   expectSettled(s);
+  registry.dispose();
+});
+
+it.each(lanes)('returns the %s stars to their own slots in sequence after a long pull', (lane) => {
+  const { s, registry } = setup(),
+    detach = attachInput(s);
+  updateTasks(
+    s,
+    figureTasks().filter((task) => task.lane === lane),
+  );
+  runFrames(s, 1800);
+  const nodes = s.figures.get(lane)!.nodes;
+  const root = s.stars.get(nodes.find((node) => node.main)?.id ?? nodes[0]!.id)!;
+  const [x, y] = s.toScreen(...s.at(root.x, root.y, 14)),
+    start = s.last;
+  pointer('pointerdown', x, y, start);
+  expect(s.drag?.star).toBe(root);
+  pointer('pointermove', x - 300, y + 210, start + 16);
+  runFrames(s, 480);
+  const list = nodes.map((node) => s.stars.get(node.id)!);
+  expect(Math.hypot(root.ox, root.oy)).toBeGreaterThan(300);
+  pointer('pointerup', x - 300, y + 210, s.last + 1);
+  pointer('pointerleave', x - 300, y + 210, s.last + 2);
+  runFrames(s, 300);
+  const displaced = list.filter((star) => Math.hypot(star.ox, star.oy) > 0.1);
+  expect(displaced.length).toBeGreaterThan(1);
+  runFrames(s, 460);
+  expect(Math.hypot(root.ox, root.oy)).toBeLessThan(0.001);
+  expect(displaced.some((star) => Math.hypot(star.ox, star.oy) > 0.1)).toBe(true);
+  runFrames(s, 900);
+  expect(list.every((star) => Math.hypot(star.ox, star.oy) < 0.001)).toBe(true);
+  expect(s.figureReturns?.size).toBe(0);
+  detach();
   registry.dispose();
 });
 it('rebuilds the arrow assignment when progress changes without a lane change', () => {

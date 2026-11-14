@@ -5,6 +5,7 @@ import type { Drag, Point, SkyState, Star } from '../types';
 import { advance, HOME, DAMPING, resetParticle, type Constraint, type Particle } from './softbody';
 import { MIN_SEPARATION } from './separation';
 import { moveAquarius } from './aquarius';
+import { moveReturningFigures } from './figureReturn';
 
 export const HUB_HOME = 100;
 export const HUB_DAMPING = 16;
@@ -44,11 +45,14 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
   if (d?.star?.figureRole) {
     s.figureMotion ??= new Map();
     s.figureMotion.set(d.star.group, 'elastic');
+    s.figureReturns?.delete(d.star.group);
   }
+  const returning = moveReturningFigures(s, list, dt);
   const hubs = s.hubParticles,
     edges: Constraint[] = [];
-  for (const tree of s.trees.values())
-    for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
+  for (const [lane, tree] of s.trees)
+    if (!returning.has(lane))
+      for (const [a, b] of tree) if (!a.dead && !b.dead && a.group === b.group) edges.push({ a, b });
   if (hubDraggable(s)) {
     for (const [a, b] of [...DIPPER_LINES, [0, 7]])
       edges.push({
@@ -60,7 +64,8 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
     for (let k = 1; k < 7; k++) {
       const p = hubs[k]!,
         b = clusterTether(s, k)?.star;
-      if (b && Math.hypot(p.ox, p.oy) > 0.015) edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
+      if (b && !returning.has(b.group) && Math.hypot(p.ox, p.oy) > 0.015)
+        edges.push({ a: p, b, oneWay: true, compliance: 0.05 });
     }
   }
   const particle = d && !d.release ? draggedParticle(s, d) : undefined,
@@ -72,8 +77,9 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
     s.soft.remainder = 0;
     s.soft.pin = undefined;
   } else {
-    const groups: Particle[][] = [...new Set(list.filter((p) => !p.dead).map((p) => p.group))].map((g) =>
-      list.filter((p) => !p.dead && p.group === g),
+    const live = returning.size ? list.filter((p) => !returning.has(p.group)) : list;
+    const groups: Particle[][] = [...new Set(live.filter((p) => !p.dead).map((p) => p.group))].map((g) =>
+      live.filter((p) => !p.dead && p.group === g),
     );
     if (hubDraggable(s)) groups.push(hubs);
     // Input can advance the held pose to its release timestamp between rendered frames.
@@ -81,7 +87,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
     if (time !== undefined) s.soft.time = Math.max(time, s.soft.time ?? time);
     advance(
       s.soft,
-      [...list, ...hubs],
+      [...live, ...hubs],
       edges,
       duration,
       particle && point ? { particle, point } : undefined,
@@ -94,6 +100,7 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
   for (const lane of s.figures.keys()) {
     const figure = list.filter((p) => !p.dead && p.group === lane && p.figureRole);
     if (!s.sky || !figure.length) continue;
+    if (s.figureReturns?.has(lane)) continue;
     if (s.figureMotion?.get(lane) === 'elastic') {
       if (!d && figure.every((p) => Math.hypot(p.ox, p.oy) < 0.015 && Math.hypot(p.vx, p.vy) < 0.1))
         s.figureMotion.delete(lane);
