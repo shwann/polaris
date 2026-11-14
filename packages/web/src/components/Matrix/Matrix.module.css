@@ -101,8 +101,11 @@
   opacity: 0.14 !important;
   filter: none !important;
 }
+/* Done more than 3 days ago: dim and desaturated so the large done block does not outshine live work. */
 .cells i.old {
-  opacity: 0.45;
+  opacity: 0.26;
+  filter: saturate(0.55);
+  box-shadow: none;
 }
 @media (prefers-reduced-motion: no-preference) {
   .cells.intro i {
