@@ -20,9 +20,9 @@
   --lane-planned: #8c7cff;
   --lane-doing: #2ee6ff;
   --lane-waiting: #ff4f6d;
-  --lane-release: #2cf5a0;
+  --lane-release: #a8f03c;
   --lane-risk: #ff8a2e;
-  --lane-done: #a8f03c;
+  --lane-done: #2cf5a0;
   --display: 'Chakra Petch', 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
   --sans: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;

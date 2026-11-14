@@ -33,10 +33,10 @@ export type Color = readonly number[];
 export const COL: Record<Lane, Color> = {
   doing: [46, 230, 255],
   waiting: [255, 79, 109],
-  release: [44, 245, 160],
+  release: [168, 240, 60],
   risk: [255, 138, 46],
   planned: [140, 124, 255],
-  done: [168, 240, 60],
+  done: [44, 245, 160],
 };
 /** The shipped app (Dubhe): pale star gold, kept apart from the in-progress cyan. */
 export const COL_APP: Color = [255, 241, 184];
