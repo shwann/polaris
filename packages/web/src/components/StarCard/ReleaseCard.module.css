@@ -1,0 +1,48 @@
+.time {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.items {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+.items button {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.3rem;
+  text-align: left;
+  font: 400 var(--fs-xs) var(--sans);
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  background: transparent;
+  cursor: pointer;
+}
+.items button:hover,
+.items button:focus-visible {
+  color: var(--ink);
+  border-color: var(--lane-app);
+  background: color-mix(in srgb, var(--lane-app) 8%, transparent);
+  outline: none;
+}
+.items code {
+  color: var(--lane-app);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.items span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.more {
+  font: 400 var(--fs-xs) var(--mono);
+  color: var(--ink-3);
+}

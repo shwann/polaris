@@ -88,7 +88,7 @@ export function placeLabel(
   };
 }
 
-interface Label {
+export interface Label {
   id?: string;
   lines: string[];
   x: number;
@@ -97,6 +97,10 @@ interface Label {
   c: Color;
   a: number;
   pri: number;
+  size?: number;
+  secondary?: Color;
+  flip?: boolean;
+  preferFull?: boolean;
 }
 export const overlaps = (a: Box, b: Box) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
 
@@ -152,12 +156,12 @@ const grow = (b: Box, m: number) => [b[0] - m, b[1] - m, b[2] + m, b[3] + m] as 
  * Placement and drawing share measured ink bounds; lower priority labels may fall back to code only.
  * In the sky view a label keeps its previous side and title state while it still fits.
  */
-export function drawStarLabels(state: SkyState, labels: Label[]) {
+export function drawStarLabels(state: SkyState, labels: Label[], avoid: Box[] = []) {
   const ctx = state.ctx,
-    size = labelSize(state.unit) * state.sz,
     view = [...state.toWorld(8, 8), ...state.toWorld(state.w - 8, state.h - 8)] as Box,
     placed: Box[] = [];
-  const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [] };
+  const obstacles = state.sky ? labelObstacles(state) : { boxes: [], halos: [], segments: [] };
+  obstacles.boxes.push(...avoid);
   let memo = memory.get(state);
   if (state.sky && !memo) memory.set(state, (memo = new Map()));
   if (state.labelLayout && revisions.get(state) !== state.labelLayout.revision) {
@@ -169,15 +173,21 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
   ctx.save();
   for (const L of labels.sort((a, b) => b.pri - a.pri)) {
     if (L.a <= 0) continue;
+    const size = L.size ?? labelSize(state.unit) * state.sz;
     const ownHalo = obstacles.halos.find((h) => h.id === L.id),
       gap = Math.max(L.gap, (ownHalo?.radius || 0) + 2 * state.sz);
     const hasTitle = L.lines.length > 1;
     const variants = hasTitle ? [L.lines, L.lines.slice(0, 1)] : [L.lines];
     const metrics = variants.map((lines) => measureLabel(ctx, lines, size));
     // Prefer the original code-only anchor before moving a label away from its star.
-    const tries = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
-      variants.flatMap((lines, v) => [false, true].map((flip) => ({ v, direction, flip, full: hasTitle && v === 0 }))),
+    const candidates = (state.sky ? [0, -1, 1] : [0]).flatMap((direction) =>
+      variants.flatMap((lines, v) =>
+        [!!L.flip, !L.flip].map((flip) => ({ v, direction, flip, full: hasTitle && v === 0 })),
+      ),
     );
+    const tries = L.preferFull
+      ? [...candidates.filter((t) => t.full), ...candidates.filter((t) => !t.full)]
+      : candidates;
     const prev = L.id ? memo?.get(L.id) : undefined;
     const same = (t: (typeof tries)[number]) =>
       !!prev && t.full === prev.full && t.direction === prev.direction && t.flip === prev.flip;
@@ -204,7 +214,7 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
       const margin = upgrading && t.full ? LABEL_UPGRADE_MARGIN * state.sz : 0;
       if (
         placement.width <= m.left ||
-        !labelFits(grow(placement.box, margin), obstacles.boxes, obstacles.halos) ||
+        !labelFits(grow(placement.box, margin), obstacles.boxes, obstacles.halos, obstacles.segments) ||
         placed.some((b) => overlaps(grow(placement.box, margin + LABEL_GAP * state.sz), b))
       )
         continue;
@@ -217,7 +227,7 @@ export function drawStarLabels(state: SkyState, labels: Label[]) {
       lines.forEach((line, i) => {
         ctx.font = m.fonts[i]!;
         const alpha = L.a * (i ? 0.85 : 1);
-        ctx.fillStyle = i ? rgba([214, 228, 245], state.sky ? 1 : alpha) : rgba(L.c, state.sky ? 1 : alpha);
+        ctx.fillStyle = rgba(i ? (L.secondary ?? [214, 228, 245]) : L.c, state.sky ? 1 : alpha);
         const scale = Math.min(1, (width - m.left) / (m.width - m.left));
         if (state.sky) outlinedText(ctx, line, textX, y + i * m.lineH, 1, alpha, m.advances[i]! * scale);
         else ctx.fillText(line, textX, y + i * m.lineH, m.advances[i]! * scale);

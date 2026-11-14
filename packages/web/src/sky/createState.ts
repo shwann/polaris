@@ -55,6 +55,8 @@ export function createState(
     returning: false,
     match: null,
     selected: null,
+    selectedRelease: null,
+    deliveryVersion: null,
     wpx: -1e4,
     wpy: -1e4,
     px: -1e4,

@@ -6,7 +6,7 @@ import { drawReleases, releaseCaption } from '../../draw/releases';
 import { attachInput } from '../../input';
 import { fixture, pointer } from '../../testFixture';
 import { drawPicking } from '../../draw/picking';
-import { goRelease } from '../../../hooks/skyBridge';
+import { selectRelease } from '../../../hooks/skyBridge';
 import { uiStore } from '../../../store/uiStore';
 import { emitTooltip } from '../../tooltip';
 import type { Release } from '@polaris/core';
@@ -62,7 +62,7 @@ it.each([0, 1, 2, 6, 11, 12, 20])(
 
 it('keeps sub-threshold release clicks, consumes drags and never selects a task or pans the canvas', () => {
   const picked = vi.fn(),
-    onPickRelease = vi.fn(goRelease);
+    onPickRelease = vi.fn(selectRelease);
   const { s, registry } = fixture(true, { onPickStar: picked, onPickRelease });
   s.releases = releases(11);
   const nodes = aquarius(s.releases, s.w, s.h),
@@ -76,7 +76,7 @@ it('keeps sub-threshold release clicks, consumes drags and never selects a task 
   pointer('pointermove', x + 4, y, 5);
   pointer('pointerup', x + 4, y, 10);
   expect(onPickRelease).toHaveBeenCalledWith('.5');
-  expect(uiStore.getState()).toMatchObject({ sky: false, releaseFocus: '.5' });
+  expect(uiStore.getState()).toMatchObject({ selectedRelease: '.5', releaseFocus: null });
   expect(picked).not.toHaveBeenCalled();
   expect(s.stars.size).toBe(0);
   s.w = 2000;

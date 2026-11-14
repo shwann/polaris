@@ -6,6 +6,7 @@
   width: min(330px, calc(100vw - 32px));
   padding: 0.85rem 0.95rem 0.8rem;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   --edge-c: var(--c);
   --hud-surface: rgba(6, 14, 26, 0.94);

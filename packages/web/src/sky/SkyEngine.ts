@@ -48,6 +48,8 @@ export class SkyEngine {
       s.dipSel = u.dip;
       if (s.selected !== u.selected) clearTooltip(s);
       s.selected = u.selected;
+      s.selectedRelease = u.selectedRelease;
+      s.deliveryVersion = u.deliveryVersion;
       // Closing a Dipper card keeps its links drawn; another star or leaving the star chart replaces/clears them.
       if (u.dip >= 1) {
         s.beamSel = u.dip;

@@ -76,8 +76,8 @@ export interface Zone extends Record<Lane | 'pole', Point> {
   app: Point;
 }
 export interface SkyEvents {
-  onPickStar?(id: string | null): void;
-  onPickRelease?(version: string): void;
+  onPickStar?(id: string | null, deliveryVersion?: string): void;
+  onPickRelease?(version: string | null): void;
   onPickDipper?(index: number): void;
   onSelectedMove?(x: number, y: number, cluster?: Box): Point | void;
   onTooltip?(text: string, detail: string, x: number, y: number): void;
@@ -151,6 +151,8 @@ export interface SkyState extends SkyMethods {
   returning: boolean;
   match: Set<string> | null;
   selected: string | null;
+  selectedRelease: string | null;
+  deliveryVersion: string | null;
   wpx: number;
   wpy: number;
   px: number;

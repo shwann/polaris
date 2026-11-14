@@ -1,4 +1,4 @@
-import { waitingOnOf } from '@polaris/core';
+import { RELEASE_TAG_LABELS, releaseDetails, waitingOnOf } from '@polaris/core';
 import { skyNames } from '../../sky/taskNames';
 import { getEngine } from '../../hooks/skyBridge';
 import { TaskEditor } from '../LocalEdit/TaskEditor';
@@ -18,6 +18,8 @@ import { TaskExecution } from '../TaskExecution/TaskExecution';
 import { placeCard, type CardSide } from '../../sky/geometry/cardPlacement';
 import type { Box } from '../../sky/types';
 import { vars } from '../../styles/style';
+import { ReleaseCard } from './ReleaseCard';
+import { TaskFacts } from './TaskFacts';
 export function moveStarCard(x: number, y: number, cluster: Box = [x, y, x, y]) {
   const card = document.getElementById('starcard');
   if (!card || card.hidden) return;
@@ -55,12 +57,20 @@ export function moveStarCard(x: number, y: number, cluster: Box = [x, y, x, y]) 
 export function StarCard() {
   const { view, ui } = useBoard(),
     t = selectedTask(view, ui.selected),
+    releases = releaseDetails(
+      view.releases,
+      view.tasks.filter((t) => t.systemKey === view.system.key),
+    ),
+    release = releases.find((r) => r.version === ui.selectedRelease),
     ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (ui.selected && !t) uiStore.setState({ selected: null });
-  }, [ui.selected, t]);
+    if ((ui.selected && !t) || (ui.selectedRelease && !release))
+      uiStore.setState({ selected: null, selectedRelease: null, deliveryVersion: null });
+  }, [ui.selected, ui.selectedRelease, t, release]);
+  if (release) return <ReleaseCard release={release} />;
   if (!t) return <div id="starcard" hidden />;
   const l = laneInfo(t.lane),
+    shipped = releases.find((r) => r.version === t.shippedIn),
     [age, late] = t.lane === 'waiting' ? ageText(t) : ['', false];
   return (
     <div
@@ -75,13 +85,15 @@ export function StarCard() {
       data-sky-block
     >
       <div className={styles['sc-top']}>
-        <span className={styles['sc-code']}>{ui.sky ? skyNames(view.tasks).get(t.id) : t.code}</span>
+        <span className={styles['sc-code']}>
+          {ui.deliveryVersion ? t.code : ui.sky ? skyNames(view.tasks).get(t.id) : t.code}
+        </span>
         <span className={styles['sc-lane']}>{l.name}</span>
         <button
           type="button"
           className={styles['sc-x']}
           aria-label="关闭"
-          onClick={() => uiStore.setState({ selected: null })}
+          onClick={() => uiStore.setState({ selected: null, deliveryVersion: null })}
         >
           ×
         </button>
@@ -94,12 +106,19 @@ export function StarCard() {
         ) : (
           t.updatedAt && <span>更新 {fmt(t.updatedAt, true)}</span>
         )}
-        {t.shippedIn && <span>随 {t.shippedIn} 上线</span>}
+        {t.shippedIn && (
+          <span>
+            上线于 {t.shippedIn}
+            {shipped &&
+              `（${shipped.tag ? RELEASE_TAG_LABELS[shipped.tag] + '，' : ''}${fmt(shipped.releasedAt, true)}）`}
+          </span>
+        )}
         {t.targetRelease && <span>候选 {t.targetRelease}</span>}
         {t.unverified && <span className={styles.late}>待实证：{t.unverified}</span>}
       </div>
       {t.detail && <p className={styles['sc-detail']}>{t.detail}</p>}
       <TaskExecution task={t} />
+      <TaskFacts task={t} />
       <TaskEditor task={t} />
       <Needs className={styles.needs} text={t.needs} wait={waitingOnOf(t)} />
       <button
