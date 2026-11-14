@@ -6,6 +6,7 @@ import type { SkyState } from '../types';
 export function drawTraces(state: SkyState, t: number) {
   if (state.reduce.matches) return;
   for (const [g, edges] of state.trees) {
+    if (state.figures.has(g)) continue;
     if (!edges.length || state.linkFade(g) < 0.5) continue;
     const cyc = 9000,
       local = (t + LANE_ORDER.indexOf(g) * 1500) % cyc,

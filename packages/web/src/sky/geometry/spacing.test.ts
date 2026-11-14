@@ -37,17 +37,21 @@ it('separates exact overlaps and dense neighbors deterministically without chang
     [100, 0],
   ]);
 });
-it('keeps minimum screen spacing at every zoom and during the slow cluster rotation', () => {
+it('keeps fixed fish proportions through zoom buckets and slow cluster rotation', () => {
   const { s, star, registry } = fixture();
   const stars = Array.from({ length: 20 }, (_, i) => star(String(i), 1, 1, 'done'));
   for (const scale of [0.5, 0.73, 1, 5]) {
     s.camT.s = scale;
     layoutHomes(s);
+    const rest = stars.map((st) => home(s, st, 0));
     for (const time of [0, 50000, 150000]) {
-      spaced(
-        stars.map((st) => home(s, st, time).map((v) => v * scale) as Point),
-        DONE_SPACING,
-      );
+      const rotated = stars.map((st) => home(s, st, time));
+      for (let i = 1; i < stars.length; i++) {
+        expect(Math.hypot(rotated[i]![0] - rotated[0]![0], rotated[i]![1] - rotated[0]![1])).toBeCloseTo(
+          Math.hypot(rest[i]![0] - rest[0]![0], rest[i]![1] - rest[0]![1]),
+          8,
+        );
+      }
     }
     const first = stars.map((st) => [st.layoutX, st.layoutY]);
     layoutHomes(s);
@@ -60,19 +64,24 @@ it('lays the many small done stars out with the tighter done floor, not as a lat
   expect(DONE_SPACING).toBeLessThan(STAR_SPACING);
 });
 
-it.each([8, 10, 12])('keeps a %s-star risk cluster spaced, centered and deterministic at default zoom', (count) => {
+it.each([8, 10, 12])('keeps a %s-star legacy risk layout spaced, centered and deterministic', (count) => {
   const { s, star, registry } = fixture();
+  s.sky = false;
   const stars = Array.from({ length: count }, (_, i) => {
     const node = star(`task-${i}`, 0, 0, 'risk');
     node.ang = i * 2.39996;
     node.rad = 0.25 + (i % 4) * 0.1;
     return node;
   });
+  const homes = () => {
+    const [cx, cy] = s.centre('risk');
+    return stars.map((st): Point => [cx + st.layoutX!, cy + st.layoutY!]);
+  };
   layoutHomes(s);
-  const first = stars.map((st) => home(s, st, 0));
+  const first = homes();
   spaced(first, STAR_SPACING);
   layoutHomes(s);
-  expect(stars.map((st) => home(s, st, 0))).toEqual(first);
+  expect(homes()).toEqual(first);
   const center = s.centre('risk'),
     R = center[2];
   const original = stars.map((st): Point => [

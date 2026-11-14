@@ -1,3 +1,4 @@
+import type { Figure, FigureNode, FigureTask } from './geometry/figures';
 import type { WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
 import type { Sample } from './motion/inertia';
@@ -14,6 +15,9 @@ export interface Star {
   group: Lane;
   ang: number;
   rad: number;
+  separation?: number;
+  figureTask?: FigureTask;
+  figureRole?: FigureNode;
   layoutX?: number;
   layoutY?: number;
   baseX?: number;
@@ -191,6 +195,7 @@ export interface SkyState extends SkyMethods {
   counts: Map<Lane, number>;
   stars: Map<string, Star>;
   trees: Map<Lane, [Star, Star][]>;
+  figures: Map<Lane, Figure>;
   dust: { x: number; y: number; m: number; ph: number }[];
   ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Star> }[];
   comets: { x: number; y: number; vx: number; vy: number; delay: number }[];

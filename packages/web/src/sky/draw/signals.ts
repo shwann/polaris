@@ -14,7 +14,9 @@ export function drawSignals(state: SkyState, t: number, live: [Star, Star][]) {
         : { a: b, b: a, t0: t, dur: 1100 + Math.random() * 700 },
     );
   }
-  state.pulses = state.pulses.filter((q) => t - q.t0 < q.dur && state.stars.has(q.a.id) && state.stars.has(q.b.id));
+  state.pulses = state.pulses.filter(
+    (q) => !state.figures.has(q.a.group) && t - q.t0 < q.dur && state.stars.has(q.a.id) && state.stars.has(q.b.id),
+  );
   for (const q of state.pulses) {
     const k = Math.max(0, t - q.t0) / q.dur,
       e = k * k * (3 - 2 * k),

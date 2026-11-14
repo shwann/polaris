@@ -1,3 +1,4 @@
+import { drawFigure } from './figures';
 import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
 import { sameChain } from '../geometry/chains';
@@ -16,7 +17,12 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       lit = (state.hover && state.hover.group === st.group) || state.litGroup === st.group,
       [x, y] = state.at(st.x, st.y, 14);
     const R = state.unit * (st.group === 'done' ? 0.035 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
-      a = (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) * (state.sky ? 1.5 : 1) * (lit ? 1.8 : 1) * st.alpha;
+      a =
+        (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) *
+        (state.sky ? 1.5 : 1) *
+        (lit ? 1.8 : 1) *
+        st.alpha *
+        (st.figureRole ? 0.35 : 1);
     state.ctx.globalAlpha = a;
     state.ctx.drawImage(state.tint(c), x - R, y - R, R * 2, R * 2);
   }
@@ -27,6 +33,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       Rc = R0 * (1.1 + 0.06 * Math.sin(t / 3000));
     state.ctx.globalAlpha =
       (state.sky ? 0.32 : 0.22) *
+      (state.figures.has('done') ? 0.5 : 1) *
       (state.litGroup === 'done' || (state.hover && state.hover.group === 'done') ? 1.6 : 1);
     state.ctx.drawImage(state.tint(COL.done), x - Rc, y - Rc, Rc * 2, Rc * 2);
   }
@@ -35,6 +42,10 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
   // Constellation figures as neon tubes: a wide soft glow under a bright core; lines stop short of each star.
   const live: [Star, Star][] = [];
   for (const [g, edges] of state.trees) {
+    if (state.figures.has(g)) {
+      drawFigure(state, g);
+      continue;
+    }
     const fade = state.linkFade(g);
     if (fade < 0.01) continue;
     const chain = state.hover?.group === g ? state.hover.chain : undefined,

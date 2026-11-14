@@ -112,8 +112,10 @@ it('marks only overdue 等你 stars late and keeps chain data on the stars after
     ['dependency', false],
   ]);
   expect(s.stars.get('P1')!.chainLabel).toBe('需求 R1 对账');
-  // The whole 等待中 cluster is one tree; the two stars of requirement R1 are linked directly.
+  // Figure slots preserve requirement membership while the connected skeleton replaces the old tree.
   const edges = s.trees.get('waiting')!.map(([a, b]) => [a.id, b.id].sort().join('-'));
   expect(edges).toHaveLength(3);
-  expect(edges).toContain('P1-P2');
+  expect(new Set(edges.flatMap((edge) => edge.split('-'))).size).toBe(4);
+  expect(s.stars.get('P1')!.chain).toBe(s.stars.get('P2')!.chain);
+  expect(s.figures.has('waiting')).toBe(true);
 });

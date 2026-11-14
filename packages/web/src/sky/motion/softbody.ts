@@ -12,6 +12,8 @@ import type { Point } from '../types';
 import { MIN_SEPARATION, separate } from './separation';
 
 export interface Particle {
+  /** A fixed figure may place stars closer than the default free-cloud collision floor. */
+  separation?: number;
   home?: number;
   damping?: number;
   baseX?: number;
@@ -86,7 +88,8 @@ function solve({ a, b, compliance = COMPLIANCE, oneWay, stiffening = 6 }: Constr
     wb = b === pin ? 0 : 1;
   const alpha = (compliance * give * (compressed ? 4 : 1)) / (1 + stiffening * stretch * stretch) / STEP ** 2;
   // A hard bead separation prevents a compressed segment from turning inside out at coincidence.
-  const correction = length < MIN_SEPARATION ? (length - MIN_SEPARATION) / (wa + wb || 1) : error / (wa + wb + alpha),
+  const floor = Math.min(MIN_SEPARATION, a.separation ?? Infinity, b.separation ?? Infinity);
+  const correction = length < floor ? (length - floor) / (wa + wb || 1) : error / (wa + wb + alpha),
     nx = length > 1e-6 ? dx / length : hx / rest,
     ny = length > 1e-6 ? dy / length : hy / rest;
   a.ox += nx * correction * wa;

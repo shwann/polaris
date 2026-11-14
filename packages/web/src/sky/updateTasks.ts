@@ -54,6 +54,27 @@ export function updateTasks(s: SkyState, list: Task[], reqTitles: ReadonlyMap<st
     star.skyTitle = titles.get(t.id);
     star.recent = t.lane === 'done' && !isOld(t);
     star.wait = t.lane === 'waiting' ? waitingOnOf(t) : undefined;
+    const figureTask = {
+      id: t.id,
+      waitingOn: star.wait,
+      waitingSince: t.waitingSince,
+      updatedAt: t.updatedAt,
+      createdAt: t.createdAt,
+      progress: t.progress,
+      recent: star.recent,
+    };
+    const previous = star.figureTask;
+    if (
+      !previous ||
+      previous.waitingOn !== figureTask.waitingOn ||
+      previous.waitingSince !== figureTask.waitingSince ||
+      previous.updatedAt !== figureTask.updatedAt ||
+      previous.createdAt !== figureTask.createdAt ||
+      previous.progress !== figureTask.progress ||
+      previous.recent !== figureTask.recent
+    )
+      moved = true;
+    star.figureTask = figureTask;
     // Only 等你 throbs when overdue; 等客户 and 等前置 wait on someone else.
     star.late = t.lane === 'waiting' && star.wait === 'user' && ageText(t)[1];
     const chain = chains.get(t.id);
