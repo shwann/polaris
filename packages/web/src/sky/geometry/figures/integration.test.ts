@@ -4,6 +4,7 @@ import { fixture } from '../../testFixture';
 import { home, rebuild } from '../clusters';
 import { updateTasks } from '../../updateTasks';
 import { constellation } from '../../motion/constellation';
+import { releaseHeld } from '../../motion/drag';
 import { drawFigure } from '../../draw/figures';
 import { drawClusters } from '../../draw/clusters';
 import { chainLit } from '../../draw/stars';
@@ -21,12 +22,126 @@ const make = (id: string, lane: Task['lane'], i = 0): Task => ({
   updatedAt: new Date(1700000000000 + i * 86400000).toISOString(),
   progress: i,
 });
-function setup() {
-  const f = fixture();
+function setup(reduced = false) {
+  const f = fixture(reduced);
   f.s.home = (star, t) => home(f.s, star, t);
   f.s.rebuild = () => rebuild(f.s);
   return f;
 }
+
+const lanes = ['done', 'waiting', 'doing', 'risk', 'release', 'planned'] as const;
+const figureTasks = () =>
+  lanes.flatMap((lane) =>
+    Array.from({ length: lane === 'done' ? 69 : lane === 'waiting' ? 19 : 12 }, (_, i) => make(`${lane}${i}`, lane, i)),
+  );
+function runFrames(s: ReturnType<typeof setup>['s'], duration: number, fps = 60) {
+  const start = s.last || 1000;
+  for (let i = 1; i <= Math.ceil((duration * fps) / 1000); i++) s.frame(start + (i * 1000) / fps);
+}
+function expectSettled(s: ReturnType<typeof setup>['s']) {
+  expect(s.figures.size).toBe(6);
+  const skyK = s.skyK;
+  s.skyK = 1; // Compare against the fully open chart, not a still-moving transition target.
+  for (const [lane, figure] of s.figures) {
+    const xs = figure.nodes.map((node) => node.point[0]),
+      ys = figure.nodes.map((node) => node.point[1]),
+      size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    const error = Math.max(
+      ...figure.nodes.map((node) => {
+        const star = s.stars.get(node.id)!,
+          [x, y] = s.home(star, s.last);
+        return Math.hypot(star.x - x, star.y - y) / size;
+      }),
+    );
+    expect.soft(error, `${lane} maximum distance / template size`).toBeLessThanOrEqual(0.04);
+  }
+  s.skyK = skyK;
+}
+function loadBoard(reduced = false) {
+  const f = setup(reduced),
+    { s } = f;
+  vi.stubGlobal('innerWidth', 2000);
+  vi.stubGlobal('innerHeight', 1250);
+  s.sky = false;
+  s.skyK = 0;
+  s.size();
+  updateTasks(s, figureTasks());
+  runFrames(s, 3000);
+  return f;
+}
+function openSky(s: ReturnType<typeof setup>['s']) {
+  s.sky = true;
+  s.rebuild();
+  s.ripples.push({ x: s.w / 2, y: s.h / 2, c: [255, 255, 255], t0: s.last, power: 0.5, hit: new Set() });
+}
+it.each([30, 60, 144])(
+  'forms every figure within 1.5 seconds of first opening the sky at %sHz without dragging',
+  (fps) => {
+    const { s, registry } = loadBoard();
+    openSky(s);
+    runFrames(s, 1500, fps);
+    expectSettled(s);
+    registry.dispose();
+  },
+);
+it('forms the figures again after returning to the board and reopening the sky', () => {
+  const { s, registry } = loadBoard();
+  openSky(s);
+  runFrames(s, 1500);
+  s.sky = false;
+  s.rebuild();
+  runFrames(s, 3000);
+  openSky(s);
+  runFrames(s, 1500);
+  expectSettled(s);
+  registry.dispose();
+});
+it('keeps figures formed through desktop/mobile resizes and a viewport that initially has no size', () => {
+  const { s, registry } = loadBoard();
+  vi.stubGlobal('innerWidth', 0);
+  vi.stubGlobal('innerHeight', 0);
+  s.size();
+  openSky(s);
+  for (const [width, height] of [
+    [2000, 1250],
+    [1400, 900],
+    [375, 812],
+    [2000, 1250],
+  ]) {
+    vi.stubGlobal('innerWidth', width);
+    vi.stubGlobal('innerHeight', height);
+    s.size();
+    runFrames(s, 1500);
+    expectSettled(s);
+  }
+  registry.dispose();
+});
+it('forms new assignments after tasks are added, removed, or moved to another lane', () => {
+  const { s, registry } = loadBoard();
+  openSky(s);
+  runFrames(s, 1500);
+  const added = [
+    ...figureTasks(),
+    ...lanes.flatMap((lane) => Array.from({ length: 4 }, (_, i) => make(`${lane}-new${i}`, lane, i))),
+  ];
+  updateTasks(s, added);
+  runFrames(s, 1500);
+  expectSettled(s);
+  const removed = added
+    .filter((_, i) => i % 3 !== 0)
+    .map((task, i) => (i % 7 === 0 ? { ...task, lane: 'doing' as const } : task));
+  updateTasks(s, removed);
+  runFrames(s, 1500);
+  expectSettled(s);
+  registry.dispose();
+});
+it('forms every figure on the first sky frame with reduced motion', () => {
+  const { s, registry } = loadBoard(true);
+  openSky(s);
+  runFrames(s, 1000 / 60);
+  expectSettled(s);
+  registry.dispose();
+});
 it('rebuilds the arrow assignment when progress changes without a lane change', () => {
   const { s, registry } = setup(),
     input = Array.from({ length: 5 }, (_, i) => make(`t${i}`, 'doing', i));
@@ -116,6 +231,19 @@ it.each(['waiting', 'doing', 'done', 'risk', 'release', 'planned'] as const)(
     for (let i = 0; i < 120; i++) constellation(s, stars, 1000 / 120);
     expect(Math.min(...stars.map((star) => Math.hypot(star.ox, star.oy)))).toBeGreaterThan(0.1);
     expect(stars.every((star) => Number.isFinite(star.x) && Number.isFinite(star.y))).toBe(true);
+    const expectShape = () => {
+      for (const star of stars) {
+        expect(star.x - root.x).toBeCloseTo(star.baseX! - root.baseX!, 8);
+        expect(star.y - root.y).toBeCloseTo(star.baseY! - root.baseY!, 8);
+      }
+    };
+    expectShape();
+    releaseHeld(s, s.drag, new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent);
+    s.drag = null;
+    for (let i = 0; i < 120; i++) {
+      constellation(s, stars, 1000 / 120);
+      expectShape();
+    }
     registry.dispose();
   },
 );

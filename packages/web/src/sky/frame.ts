@@ -40,7 +40,7 @@ export function frame(state: SkyState, t: number) {
   }
   settleLabelZoom(state);
   [state.wpx, state.wpy] = state.px > -1e3 ? state.toWorld(state.px, state.py) : [-1e4, -1e4];
-  state.skyK += ((state.sky ? 1 : 0) - state.skyK) * (state.reduce.matches ? 1 : 0.07);
+  state.skyK += ((state.sky ? 1 : 0) - state.skyK) * (state.reduce.matches ? 1 : 1 - Math.pow(0.93, dt / (1000 / 60)));
   if (Math.abs(state.skyK - (state.sky ? 1 : 0)) < 0.002) state.skyK = state.sky ? 1 : 0;
   state.litGroup =
     state.cardGroup ??
