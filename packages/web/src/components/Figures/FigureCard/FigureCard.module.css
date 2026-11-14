@@ -10,16 +10,42 @@
 .fig .lab em b [data-greek] {
   font-style: normal;
 }
-/* Narrow cards keep the mini dipper and Greek letter: the star tag drops to its own line on the right. */
+/* Match the dipper popup: a larger, brighter mini dipper next to the star tag. */
+.fig .lab em [data-dipper] {
+  width: 2.6rem;
+  height: 1.15rem;
+  opacity: 1;
+}
+.fig .lab em [data-dipper] path {
+  opacity: 0.7;
+}
+/* Narrow cards keep the label and star tag on one line: the label truncates, the Greek letter goes first, then the dipper shrinks. */
+.fig .lab .name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fig .lab em {
+  margin-left: auto;
+  flex: none;
+}
 @container (max-width: 230px) {
   .fig .lab {
-    flex-wrap: wrap;
-    row-gap: 0.2rem;
     gap: 0.35rem;
   }
   .fig .lab em {
-    flex-basis: 100%;
-    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+  .fig .lab em [data-dipper] {
+    width: 1.9rem;
+  }
+}
+@container (max-width: 170px) {
+  .fig .lab em b [data-greek] {
+    display: none;
+  }
+  .fig .lab em [data-dipper] {
+    width: 1.5rem;
   }
 }
 @container (max-width: 132px) {
@@ -158,13 +184,4 @@
 }
 .fig.pinned .lab em {
   color: rgb(255, 214, 140);
-}
-/* Match the dipper popup: a larger, brighter mini dipper next to the star tag. */
-.fig .lab em [data-dipper] {
-  width: 2.6rem;
-  height: 1.15rem;
-  opacity: 1;
-}
-.fig .lab em [data-dipper] path {
-  opacity: 0.7;
 }

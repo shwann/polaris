@@ -22,7 +22,7 @@ it.each(modules)('includes a generated selector from %s in the built inline CSS'
 
 it('ships container sizing, narrow cards keeping both marks, hidden subtitle and global styles', () => {
   expect(builtRules.some((rule) => hasDeclaration(rule, 'container-type', 'inline-size'))).toBe(true);
-  // Narrow cards keep the mini dipper and Greek letter (user asked for them back); the star tag wraps instead.
+  // Narrow cards keep the mini dipper and Greek letter (user asked for them back); label and star tag stay on one line.
   for (const mark of ['[data-dipper]', '[data-greek]']) {
     expect(
       builtRules.some(
@@ -35,13 +35,7 @@ it('ships container sizing, narrow cards keeping both marks, hidden subtitle and
     ).toBe(false);
   }
   expect(
-    builtRules.some(
-      (rule) =>
-        rule.parent?.name === 'container' &&
-        rule.parent.params?.includes('230px') &&
-        rule.selector.includes('lab') &&
-        hasDeclaration(rule, 'flex-wrap', 'wrap'),
-    ),
+    builtRules.some((rule) => rule.selector.includes('lab') && hasDeclaration(rule, 'text-overflow', 'ellipsis')),
   ).toBe(true);
   expect(builtRules.some((rule) => rule.selector === '.p-Header-sub' && hasDeclaration(rule, 'display', 'none'))).toBe(
     true,

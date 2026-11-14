@@ -44,7 +44,7 @@ export function FigureCard({
       }}
     >
       <div className={styles.lab}>
-        {f.label}
+        <span className={styles.name}>{f.label}</span>
         <DipperMark index={index} />
       </div>
       <b>{typeof f.value === 'number' ? <Count id={f.label} value={f.value} /> : f.value}</b>
