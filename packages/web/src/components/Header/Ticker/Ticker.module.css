@@ -3,10 +3,10 @@
   align-items: baseline;
   gap: 0.6rem;
   max-width: min(21rem, 100%);
-  margin-top: 0.5rem;
+  margin-top: 0.7rem;
   padding: 0.3rem 0.7rem 0.3rem 0.55rem;
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   text-align: left;
   color: var(--ink-2);
   background: rgba(46, 230, 255, 0.05);
@@ -25,7 +25,9 @@
 }
 .ticker .tk-k {
   white-space: nowrap;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
   color: var(--cyan);
 }
 .ticker time {

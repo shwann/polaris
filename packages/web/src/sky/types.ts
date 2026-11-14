@@ -162,6 +162,10 @@ export interface SkyState extends SkyMethods {
   tetherHub: Map<Lane, string>;
   hubParticles: Particle[];
   hubLabelBoxes?: Box[][];
+  /** Side each Dipper caption took last frame (see chooseHubSide), so it only moves when it has to. */
+  hubSides?: (number | undefined)[];
+  /** Screen-space box of the "已完成 N 项" summary drawn last frame, in world coordinates; task labels keep off it. */
+  doneLabelBox?: Box | null;
   /** Dipper captions laid out this frame, painted after the task stars in the wide sky view. */
   hubLabelQueue?: HubLabel[];
   /** Groups whose drift is paused because the pointer is over them or a card is open on them. */

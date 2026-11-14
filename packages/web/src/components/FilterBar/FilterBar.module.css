@@ -1,4 +1,5 @@
 .tools {
+  --edge-c: var(--cyan);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -8,7 +9,7 @@
 .tools .tag {
   font-family: var(--mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
   color: var(--cyan);
 }
 .tools input {
@@ -39,6 +40,7 @@
   box-shadow: 0 0 14px rgba(255, 79, 109, 0.45);
 }
 .hits {
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--ink-3);
   margin-left: auto;

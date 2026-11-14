@@ -62,13 +62,17 @@ export function starHalos(s: SkyState): Halo[] {
 export const HUB_MARGIN = 6;
 /** Radius, in sz, around a Dipper star that task labels keep clear of. */
 export const HUB_STAR_KEEP = 11;
-/** Dipper captions come first: their boxes, then the DOM panels, then every star's bright halo core. */
-export function labelObstacles(s: SkyState) {
+/**
+ * Dipper captions come first: their boxes, then the DOM panels and the shipped cloud's "已完成 N 项" title (left out
+ * when placing that title itself), then every star's bright halo core.
+ */
+export function labelObstacles(s: SkyState, withDone = true) {
   const m = HUB_MARGIN * s.sz;
   return {
     boxes: [
       ...(s.hubLabelBoxes || []).flatMap((b) => b || []).map((b): Box => [b[0] - m, b[1] - m, b[2] + m, b[3] + m]),
       ...domBoxes(s),
+      ...(withDone && s.sky && s.doneLabelBox ? [s.doneLabelBox] : []),
     ],
     halos: [
       ...starHalos(s),

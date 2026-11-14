@@ -15,7 +15,7 @@ it('explains every group colour, mark, the late glow and the Dipper, open by def
   for (const lane of LANES) expect(screen.getByText(legendName(lane.key, lane.name))).toBeTruthy();
   expect(screen.getByText('等你 / 等客户、等前置（较暗）')).toBeTruthy();
   expect(screen.getByText('等你超过 3 天')).toBeTruthy();
-  expect(screen.getByText('同一条需求（或同一模块）')).toBeTruthy();
+  expect(screen.getByText('每组连成星座，同一需求（或模块）更亮')).toBeTruthy();
   expect(screen.getByText('金色七星')).toBeTruthy();
   expect(screen.getByRole('button', { name: /图例/ }).getAttribute('aria-expanded')).toBe('true');
   expect(layoutRegistry.get('legend')).toBeTruthy();

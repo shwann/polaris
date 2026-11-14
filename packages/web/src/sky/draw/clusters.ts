@@ -1,9 +1,12 @@
 import { COL } from '../../domain/lanes';
 import { rgba } from '../palette';
+import { sameChain } from '../geometry/chains';
 import type { Color, SkyState, Star } from '../types';
 
-/** Task constellation lines in the sky view sit a step below the Dipper's own lines. */
-export const TASK_LINK_SKY = 0.85;
+/** Task constellation lines in the sky view: the 1.5.1 brightness. */
+export const TASK_LINK_SKY = 1.4;
+/** Links inside one chain (same requirement or module) are a step brighter and thicker than the rest of the tree. */
+export const CHAIN_LINK = { alpha: 1.45, core: 1.7, glow: 8.5 };
 
 export function drawClusters(state: SkyState, t: number, list: Star[]) {
   // Constellation bodies: a soft cloud in the lane's colour follows each figure, breathing slowly.
@@ -38,9 +41,11 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       lit = (state.hover && state.hover.group === g && !chain) || state.litGroup === g,
       c = COL[g]! || COL.planned;
     for (const [a, b] of edges) {
-      // Hovering a star lights its own string (same requirement or module); the cluster's other strings stay put.
-      const on = lit || (!!chain && a.chain === chain),
-        base = 0.5 * (state.sky ? TASK_LINK_SKY : 1) * (on ? (chain ? 2 : 1.6) : 1) * fade;
+      // Hovering a star lights its own string (same requirement or module); the cluster's other links stay put.
+      const strong = sameChain(a, b),
+        on = lit || (!!chain && strong && a.chain === chain),
+        base =
+          0.5 * (state.sky ? TASK_LINK_SKY : 1) * (on ? (chain ? 2 : 1.6) : 1) * (strong ? CHAIN_LINK.alpha : 1) * fade;
       const [ax, ay] = state.at(a.x, a.y, 14),
         [bx, by] = state.at(b.x, b.y, 14),
         L = Math.hypot(bx - ax, by - ay);
@@ -64,9 +69,9 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
         y1 = by - uy * gap;
       state.ctx.lineCap = 'round';
       for (const [opacity, width] of [
-        [0.1, on ? 9 : 7],
-        [0.22, 3],
-        [0.75, on ? 1.6 : 1.2],
+        [0.1, on ? 9 : strong ? CHAIN_LINK.glow : 7],
+        [0.22, strong ? 3.6 : 3],
+        [0.75, on ? (strong ? 2 : 1.6) : strong ? CHAIN_LINK.core : 1.2],
       ]) {
         state.ctx.strokeStyle = rgba(color, opacity! * base * al * brightness);
         state.ctx.lineWidth = width! * thin;

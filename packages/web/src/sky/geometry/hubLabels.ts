@@ -1,7 +1,7 @@
 import { WAITING_ON_LABELS } from '@polaris/core';
 import { FIG_LANE, COL, DIPPER, GOLD, LANES } from '../../domain/lanes';
 import type { Box, Point, SkyState } from '../types';
-import { chooseHubSide, sideAnchor } from './hubSide';
+import { chooseHubSide, sideAnchor, type CaptionCrowd } from './hubSide';
 /** Record the actual rendered text ink bounds rather than guessing label widths from character counts. */
 export function textBox(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): Box {
   const m = ctx.measureText(text),
@@ -81,14 +81,14 @@ export function hubLabelAnchor(
   k: number,
   [x, y]: Point,
   sz: number,
-  fit?: { points: Point[]; width: number; ascent: number; height: number },
-): { x: number; y: number; align: CanvasTextAlign; backdrop?: boolean } {
+  fit?: { points: Point[]; width: number; ascent: number; height: number } & CaptionCrowd,
+): { x: number; y: number; align: CanvasTextAlign; backdrop?: boolean; side?: number } {
   if (s.ZONE.dip) {
     const preferred = s.ZONE.side[k]!;
     const { side, backdrop } = fit
       ? chooseHubSide(fit.points, k, preferred, sz, fit)
       : { side: preferred, backdrop: false };
-    return { ...sideAnchor([x, y], side, k, sz), backdrop };
+    return { ...sideAnchor([x, y], side, k, sz), backdrop, side };
   }
   const g = FIG_LANE[k],
     n = s.laneCount(g),

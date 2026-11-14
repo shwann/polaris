@@ -47,22 +47,44 @@ export function adjacentSegments(points: Point[], k: number): [Point, Point][] {
     .filter(([a, b]) => a === k || b === k)
     .flatMap(([a, b]) => (points[a] && points[b] ? [[points[a], points[b]] as [Point, Point]] : []));
 }
+/** Optional task stars a caption keeps clear of: their points, the clearance (about one label height), the last side. */
+export interface CaptionCrowd {
+  stars?: Point[];
+  keep?: number;
+  last?: number;
+}
 /**
- * Keep the preferred side unless the caption would sit on one of the star's own Dipper lines; then take the first
- * side that clears them. When none does, keep the preferred side and ask for a backdrop under the text.
+ * Keep the preferred side unless the caption would sit on one of the star's own Dipper lines or on task stars (within
+ * `keep` of its box); then take the side that clears the lines with the fewest stars, staying on the last side while it
+ * is clear so a slowly turning cluster does not make the caption hop. When no side clears the lines, keep the
+ * preferred side and ask for a backdrop under the text.
  */
 export function chooseHubSide(
   points: Point[],
   k: number,
   preferred: number,
   sz: number,
-  size: { width: number; ascent: number; height: number },
+  size: { width: number; ascent: number; height: number } & CaptionCrowd,
 ): { side: number; backdrop: boolean } {
   const lines = adjacentSegments(points, k),
-    clear = (side: number) => {
-      const box = sideBox(sideAnchor(points[k]!, side, k, sz), size.width, size.ascent, size.height);
-      return !lines.some(([a, b]) => segmentHitsBox(a, b, box));
+    keep = size.keep ?? 0,
+    box = (side: number) => sideBox(sideAnchor(points[k]!, side, k, sz), size.width, size.ascent, size.height),
+    clear = (side: number) => !lines.some(([a, b]) => segmentHitsBox(a, b, box(side))),
+    crowd = (side: number) => {
+      const [x0, y0, x1, y1] = box(side);
+      return (size.stars ?? []).filter(([x, y]) => x > x0 - keep && x < x1 + keep && y > y0 - keep && y < y1 + keep)
+        .length;
     };
-  for (const side of [preferred, 0, 2, 1, -1]) if (clear(side)) return { side, backdrop: false };
-  return { side: preferred, backdrop: true };
+  const sides = [preferred, 0, 2, 1, -1].filter(clear);
+  if (!sides.length) return { side: preferred, backdrop: true };
+  if (size.last !== undefined && sides.includes(size.last) && !crowd(size.last))
+    return { side: size.last, backdrop: false };
+  let best = sides[0]!,
+    fewest = crowd(best);
+  for (const side of sides.slice(1)) {
+    if (!fewest) break;
+    const n = crowd(side);
+    if (n < fewest) [best, fewest] = [side, n];
+  }
+  return { side: best, backdrop: false };
 }

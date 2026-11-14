@@ -19,8 +19,10 @@ aside.panel h2 {
 }
 aside.panel h2 .today {
   margin-left: auto;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   font-weight: 400;
+  letter-spacing: 0.08em;
   color: var(--ink-3);
 }
 aside.panel h2 .today b {
@@ -28,6 +30,7 @@ aside.panel h2 .today b {
   font-size: var(--fs-md);
   font-weight: 700;
   color: var(--cyan);
+  text-shadow: 0 0 12px rgba(46, 230, 255, 0.5);
   margin: 0 0.2rem;
 }
 .pulse {
@@ -59,6 +62,7 @@ aside.panel h2 .today b {
   font-size: var(--fs-xs);
   color: var(--ink-3);
   margin: 0 0 0.9rem;
+  letter-spacing: 0.05em;
 }
 .log {
   list-style: none;
@@ -98,7 +102,9 @@ aside.panel h2 .today b {
 }
 .log li.day {
   padding: 0.1rem 0 0.55rem;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
   color: var(--ink-3);
 }
 .log li.day::before {
@@ -132,6 +138,7 @@ aside.panel h2 .today b {
   font-variant-numeric: tabular-nums;
 }
 .log .ago {
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--ink-3);
 }
@@ -162,7 +169,7 @@ aside.panel h2 .today b {
   margin-left: auto;
   font-family: var(--mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
   color: var(--k);
 }
 :global(.proj) .log li.latest .txt {
@@ -172,6 +179,6 @@ aside.panel h2 .today b {
 aside.panel .tag {
   font-family: var(--mono);
   font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
   color: var(--cyan);
 }

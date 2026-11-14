@@ -42,7 +42,11 @@ export function LaneSection({
     </h2>
   );
   const rows = (list: typeof m.list, c = m.lane.c) => (
-    <div className={cn(styles.rows, two && styles.two, 'hud')} style={vars({ '--c': `var(${c})` })} data-sky-block>
+    <div
+      className={cn(styles.rows, two && styles.two, 'hud')}
+      style={vars({ '--c': `var(${c})`, '--edge-c': `var(${c})` })}
+      data-sky-block
+    >
       {list.map((t) => (
         <TaskRow key={t.id} task={t} changed={changed.has(t.id)} />
       ))}
@@ -69,7 +73,7 @@ export function LaneSection({
   ) : (
     <div
       className={cn(styles.rows, two && styles.two, 'hud')}
-      style={vars({ '--c': `var(${m.lane.c})` })}
+      style={vars({ '--c': `var(${m.lane.c})`, '--edge-c': `var(${m.lane.c})` })}
       data-sky-block
     >
       {m.recent.map((t) => (

@@ -30,7 +30,9 @@
   align-items: center;
   gap: 0.35rem;
   font-style: normal;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
   color: rgb(255, 214, 140);
 }
 .dipcard .dc-head [data-dipper] {
@@ -69,6 +71,7 @@
 }
 .dipcard .dc-foot .btn {
   padding: 0.3rem 0.6rem;
+  letter-spacing: 0.04em;
 }
 @media (max-width: 560px) {
   .dipcard {

@@ -9,12 +9,30 @@ const files = readdirSync('packages/web/src', { recursive: true, encoding: 'utf8
 );
 const css = Object.fromEntries(files.map((p) => [p, read('packages/web/src/' + p)]));
 const tokens = read('packages/web/src/styles/tokens.css');
-const SCALE = ['--fs-xs', '--fs-sm', '--fs-md', '--fs-lg', '--fs-xl', '--fs-hero'];
+// Five body sizes plus display sizes for stat numbers, the clock and the title; each has a 12px floor.
+const SCALE = [
+  '--fs-xs',
+  '--fs-sm',
+  '--fs-md',
+  '--fs-lg',
+  '--fs-xl',
+  '--fs-hero',
+  '--fs-stat',
+  '--fs-display',
+  '--fs-title',
+  '--fs-title-en',
+  '--fs-title-zh',
+  '--fs-motto',
+];
 
-it('defines five text sizes plus one hero size, none below 12px', () => {
+it('defines the type scale, none below 12px', () => {
   const defined = [...tokens.matchAll(/(--fs-[\w-]+):\s*([^;]+);/g)];
   expect(defined.map((m) => m[1])).toEqual(SCALE);
-  for (const [, name, value] of defined) expect(value, name).toMatch(/^max\((1[2-9]|[2-9]\d)px, [\d.]+rem\)$/);
+  for (const [, name, value] of defined) {
+    const floor = /^max\((\d+)px, .+\)$/.exec(value!);
+    expect(floor, name).not.toBeNull();
+    expect(Number(floor![1]), name).toBeGreaterThanOrEqual(12);
+  }
 });
 
 it('sizes every board text with a scale token', () => {
@@ -30,27 +48,8 @@ it('sizes every board text with a scale token', () => {
   }
 });
 
-it('keeps panels flat: thin border, rounded corners, no cut corners or corner ornaments', () => {
-  const base = read('packages/web/src/styles/base.css');
-  const hud = rules(base).filter((rule) => rule.selector.startsWith('.hud'));
-  const surface = hud.find((rule) => rule.selector === '.hud')!;
-  expect(surface.nodes.map((n) => n.prop)).toEqual(expect.arrayContaining(['background', 'border', 'border-radius']));
-  expect(hud.some((rule) => rule.nodes.some((n) => n.prop === 'clip-path'))).toBe(false);
-  expect(hud.some((rule) => rule.selector.includes('::before'))).toBe(false);
-  expect(tokens).toMatch(/--glass:\s*rgba\([^)]*0\.93\)/);
-});
-
-it('limits text glow to the two attention cards and the header "needs you" number', () => {
-  const glowing = Object.entries(css).flatMap(([file, text]) =>
-    rules(text)
-      .filter((rule) => rule.nodes.some((n) => n.prop === 'text-shadow' && n.value !== 'none'))
-      .map((rule) => `${file} ${rule.selector}`),
-  );
-  expect(glowing.sort()).toEqual([
-    "components/Figures/FigureCard/FigureCard.module.css .fig[data-tone='vivid'] > b",
-    'components/Header/WatchRows/WatchRows.module.css .w-row.me b',
-  ]);
-});
+// Cut-corner HUD panels and the text glow are the board's look (restored after 1.6.0 flattened them),
+// so there is no longer a test that forbids clip-path, corner ornaments or text-shadow outside a whitelist.
 
 it('turns off looping and entry animations for reduced motion', () => {
   const base = read('packages/web/src/styles/base.css');

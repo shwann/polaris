@@ -1,17 +1,32 @@
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.22em;
+  color: var(--cyan);
+}
+.kicker::before {
+  content: '';
+  width: 2.2rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan));
+}
 .title {
-  margin: 0 0 0.2rem;
+  margin: 0.35rem 0 0.3rem;
   font-weight: 900;
-  font-size: var(--fs-xl);
-  line-height: 1.1;
+  font-size: var(--fs-title);
+  line-height: 1.08;
+  letter-spacing: 0.02em;
   text-wrap: balance;
 }
 .title .en {
   display: block;
   font-family: var(--display);
   font-weight: 700;
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-title-en);
+  letter-spacing: 0.32em;
   color: transparent;
   background: linear-gradient(90deg, var(--cyan), var(--blue) 60%, var(--violet));
   -webkit-background-clip: text;
@@ -19,7 +34,16 @@
 }
 .title .zh {
   display: block;
-  font-size: var(--fs-xl);
-  line-height: 1.1;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-title-zh);
+  line-height: 1.05;
+  text-shadow: 0 0 28px rgba(46, 230, 255, 0.35);
+  letter-spacing: 0.1em;
+}
+.title .motto {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: var(--fs-motto);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--ink-2);
 }

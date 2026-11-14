@@ -73,11 +73,25 @@ function drawHeaderName(state: SkyState, k: number, x: number, y: number) {
 export function drawHubLabels(state: SkyState) {
   const f = hubFonts(state, state.sz),
     deferred = state.sky && state.w > 560,
-    queue: HubLabel[] = [];
+    queue: HubLabel[] = [],
+    // In the wide sky view a caption also moves off task stars, keeping about one label height clear of them.
+    crowd = deferred
+      ? {
+          stars: [...state.stars.values()]
+            .filter((s) => !s.dead && s.group !== 'done' && s.alpha > 0.02)
+            .map((s) => state.at(s.x, s.y, 14)),
+          keep: f.big * 1.2,
+        }
+      : {};
+  state.hubSides ??= [];
   state.ctx.textAlign = 'center';
   state.dipPos.forEach(([x, y], k) => {
     const { l1, l2, c } = hubCaption(state, k),
-      anchor = hubLabelAnchor(state, k, [x, y], state.sz, captionFit(state.ctx, f, state.dipPos, l1, l2)),
+      anchor = hubLabelAnchor(state, k, [x, y], state.sz, {
+        ...captionFit(state.ctx, f, state.dipPos, l1, l2),
+        ...crowd,
+        last: deferred ? state.hubSides![k] : undefined,
+      }),
       g = CARD_LANE[k];
     const on =
       state.sky ||
@@ -85,6 +99,7 @@ export function drawHubLabels(state: SkyState) {
       k === state.dipSel ||
       k === state.dipHover ||
       (!!g && (state.litGroup === g || state.hover?.group === g));
+    state.hubSides![k] = anchor.side;
     let alpha = 1;
     if (state.ZONE.dip) {
       drawHeaderName(state, k, x, y);

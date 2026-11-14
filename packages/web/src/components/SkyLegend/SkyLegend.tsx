@@ -116,7 +116,7 @@ export function SkyLegend() {
               <circle cx="15" cy="10" r="1.8" fill="currentColor" />
             </Icon>
             <span className={styles.name}>连线</span>
-            <span className={styles.note}>同一条需求（或同一模块）</span>
+            <span className={styles.note}>每组连成星座，同一需求（或模块）更亮</span>
           </li>
           <li className={styles.row} style={{ color: rgb('done') }}>
             <Icon>

@@ -6,6 +6,7 @@
 .requirements h2 {
   margin: 0;
   font-size: var(--fs-md);
+  letter-spacing: 0.06em;
 }
 .pool {
   display: grid;

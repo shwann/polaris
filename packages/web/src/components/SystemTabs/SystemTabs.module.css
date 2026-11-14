@@ -32,7 +32,9 @@
   cursor: pointer;
 }
 .systems button .c {
-  font-size: var(--fs-sm);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
   color: rgb(255, 214, 140);
 }
 .systems button .n {

@@ -26,7 +26,7 @@ export function doneLabel(s: SkyState) {
   const summary = doneSummary(s.laneCount('done'), s.cam.s);
   s.ctx.font = `600 ${size}px "JetBrains Mono", "Noto Sans SC", monospace`;
   const width = s.ctx.measureText(summary.text).width;
-  const obstacles = labelObstacles(s);
+  const obstacles = labelObstacles(s, false);
   const placement = placeSummary(
     screen,
     width,
@@ -44,9 +44,16 @@ export function doneLabel(s: SkyState) {
 
 /** Drawn in screen space, with the same font and colour as the other cluster labels. */
 export function drawDoneOverview(s: SkyState) {
+  s.doneLabelBox = null;
   if (!s.sky || s.w <= 560 || !s.laneCount('done')) return;
   const label = doneLabel(s);
   if (label.alpha <= 0) return;
+  // Task labels keep off the title next frame (they are laid out before it is drawn).
+  const pad = 4 * s.sz;
+  s.doneLabelBox = [
+    ...s.toWorld(label.left - pad, label.top - label.size - pad),
+    ...s.toWorld(label.left + label.width + pad, label.top + pad * 1.5),
+  ] as Box;
   s.ctx.save();
   s.ctx.textAlign = 'left';
   s.ctx.fillStyle = rgba(COL.done, 1);

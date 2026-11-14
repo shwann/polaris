@@ -2,7 +2,8 @@ import '../../../tests/support';
 import { expect, it } from 'vitest';
 import { fixture, pointer } from '../testFixture';
 import { attachInput } from '../input';
-import { doneBounds, doneLabel, doneSummary, hitDone, zoomDone } from './doneOverview';
+import { doneBounds, doneLabel, doneSummary, drawDoneOverview, hitDone, zoomDone } from './doneOverview';
+import { intersects, labelObstacles } from './labelObstacles';
 
 it('shows the actual filtered count and fades away as links become readable', () => {
   expect(doneSummary(44, 1)).toEqual({ text: '已完成 44 项', alpha: 1 });
@@ -46,5 +47,21 @@ it('clicks the collision-free label and zooms cluster blank space to a readable 
   expect(s.selected).toBeNull();
   expect(zoomDone(s, 990, 790)).toBe(false);
   detach();
+  registry.dispose();
+});
+it('makes the "已完成 N 项" title an obstacle for task labels but not for itself', () => {
+  const { s, star, registry } = fixture();
+  star('a', 180, 500, 'done');
+  star('b', 340, 660, 'done');
+  s.counts.set('done', 2);
+  drawDoneOverview(s);
+  const box = s.doneLabelBox!;
+  expect(box).toBeTruthy();
+  expect(labelObstacles(s).boxes.some((b) => intersects(b, box))).toBe(true);
+  expect(labelObstacles(s, false).boxes).not.toContainEqual(box);
+  // Zoomed in past the fade, the title is gone and so is its obstacle.
+  s.cam.s = 3;
+  drawDoneOverview(s);
+  expect(s.doneLabelBox).toBeNull();
   registry.dispose();
 });

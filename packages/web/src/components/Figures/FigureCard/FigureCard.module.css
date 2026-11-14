@@ -2,6 +2,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  letter-spacing: 0.08em;
 }
 .fig {
   container-type: inline-size;
@@ -43,8 +44,11 @@
   line-height: inherit;
   font-weight: 600;
   color: color-mix(in srgb, var(--c) 70%, var(--ink-2));
+  letter-spacing: 0.12em;
+  text-shadow: none;
 }
 .fig {
+  --edge-c: var(--c);
   padding: 1rem 1.15rem 1.05rem;
   display: flex;
   flex-direction: column;
@@ -82,7 +86,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-style: normal;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.16em;
   color: var(--ink-3);
 }
 .fig b {
@@ -91,6 +97,7 @@
   font-size: var(--fs-hero);
   line-height: 1;
   color: var(--c);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--c) 60%, transparent);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
@@ -132,27 +139,6 @@
 .seg i.on {
   background: var(--c);
   box-shadow: 0 0 8px var(--c);
-}
-/* Quiet cards: neutral number, muted mark, no glow. */
-.fig[data-tone='vivid'] > b {
-  text-shadow: 0 0 22px color-mix(in srgb, var(--c) 60%, transparent);
-}
-.fig[data-tone='quiet'] {
-  --c-mute: color-mix(in srgb, var(--c) 35%, var(--ink-3));
-}
-.fig[data-tone='quiet'] > b {
-  color: var(--ink-2);
-}
-.fig[data-tone='quiet'] .lab::before {
-  background: var(--c-mute);
-  box-shadow: none;
-}
-.fig[data-tone='quiet'] .lab em b {
-  color: var(--ink-2);
-}
-.fig[data-tone='quiet'] .seg i.on {
-  background: var(--c-mute);
-  box-shadow: none;
 }
 .fig small[data-clamp] {
   cursor: help;
