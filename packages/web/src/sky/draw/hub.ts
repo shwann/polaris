@@ -32,12 +32,15 @@ export function drawHub(
     state.drawPolaris(x, y, S, t);
     return;
   }
-  const hue = me && k !== 7 ? state.OWN(k) : GOLD;
+  // Each Dipper star carries its group's colour in the core and rays; the halo and a thin ring stay gold
+  // so the seven still read as one golden Dipper.
+  const own = pole ? GOLD : state.OWN(k),
+    hue = me && !pole ? own : GOLD;
   state.ctx.globalAlpha = Math.min(1, (small ? (me ? 0.95 : 0.16) : (vis ? 0.6 : 0.3) * (me ? 1.5 : 1) * lift) * tw);
   state.ctx.drawImage(state.tint(hue), x - hr, y - hr, hr * 2, hr * 2);
   state.ctx.globalAlpha = dim;
   const L = r * (pole ? 5.5 : 3.6) * tw;
-  state.ctx.strokeStyle = rgba(hue, vis ? (lift > 1 ? 0.95 : 0.75) : 0.4);
+  state.ctx.strokeStyle = rgba(own, vis ? (lift > 1 ? 0.95 : 0.75) : 0.4);
   state.ctx.lineWidth = 0.8 * lift;
   state.ctx.beginPath();
   state.ctx.moveTo(x - L, y);
@@ -54,10 +57,23 @@ export function drawHub(
     state.ctx.lineTo(x + L2, y - L2);
     state.ctx.stroke();
   }
-  state.ctx.fillStyle = rgba([255, 246, 225], (small ? (me ? 1 : 0.5) : vis ? 0.95 : 0.6) * tw);
+  const coreA = (small ? (me ? 1 : 0.5) : vis ? 0.95 : 0.6) * tw;
+  state.ctx.fillStyle = rgba(pole ? [255, 246, 225] : own, coreA);
   state.ctx.beginPath();
   state.ctx.arc(x, y, r, 0, 6.2832);
   state.ctx.fill();
+  if (!pole) {
+    // A small white-hot centre keeps it a star rather than a flat dot.
+    state.ctx.fillStyle = rgba([255, 250, 236], coreA * 0.9);
+    state.ctx.beginPath();
+    state.ctx.arc(x, y, r * 0.42, 0, 6.2832);
+    state.ctx.fill();
+    state.ctx.strokeStyle = rgba(GOLD, (small ? (me ? 0.7 : 0.3) : vis ? 0.55 : 0.3) * tw);
+    state.ctx.lineWidth = 0.8;
+    state.ctx.beginPath();
+    state.ctx.arc(x, y, r * 2.1, 0, 6.2832);
+    state.ctx.stroke();
+  }
   if (me) {
     state.ctx.strokeStyle = rgba(hue, 0.85 * state.dipGlow);
     state.ctx.lineWidth = 1.1;
