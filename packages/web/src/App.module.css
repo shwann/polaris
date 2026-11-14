@@ -1,5 +1,6 @@
 .wrap {
   position: relative;
+  counter-reset: section;
   z-index: 1;
   max-width: 2200px;
   margin: 0 auto;

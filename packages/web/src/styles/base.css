@@ -35,6 +35,21 @@ body::before {
     radial-gradient(1100px 800px at 100% 0%, rgba(61, 123, 255, 0.17), transparent 60%),
     radial-gradient(1000px 680px at 50% 110%, rgba(176, 124, 255, 0.11), transparent 70%);
 }
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.22) 100%);
+  mix-blend-mode: screen;
+}
+html.proj body::after,
+html:fullscreen body::after {
+  display: none;
+}
 #w-me b {
   color: var(--coral);
 }
@@ -117,7 +132,14 @@ html.sky body {
 
 .hud {
   position: relative;
-  background: var(--glass);
+  /* Keep both existing pseudo-elements; inset the brackets past the clipped corners. */
+  --hud-bracket: rgba(46, 230, 255, 0.45);
+  background:
+    linear-gradient(var(--hud-bracket), var(--hud-bracket)) left var(--cut) top / 9px 1px no-repeat,
+    linear-gradient(var(--hud-bracket), var(--hud-bracket)) left var(--cut) top / 1px 9px no-repeat,
+    linear-gradient(var(--hud-bracket), var(--hud-bracket)) right var(--cut) bottom / 9px 1px no-repeat,
+    linear-gradient(var(--hud-bracket), var(--hud-bracket)) right var(--cut) bottom / 1px 9px no-repeat,
+    var(--hud-surface, var(--glass));
   clip-path: polygon(
     var(--cut) 0,
     100% 0,

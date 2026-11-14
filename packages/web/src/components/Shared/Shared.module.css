@@ -203,3 +203,16 @@
     opacity: 1;
   }
 }
+.section-heading {
+  counter-increment: section;
+}
+.section-heading::before {
+  content: '// ' counter(section, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: rgba(46, 230, 255, 0.4);
+  margin-right: 0.6em;
+  flex: none;
+}

@@ -131,6 +131,12 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+.fig > b {
+  text-shadow:
+    -1px 0 rgba(255, 46, 136, 0.32),
+    1px 0 rgba(0, 240, 255, 0.32),
+    0 0 24px color-mix(in srgb, var(--c) 60%, transparent);
+}
 .fig small {
   font-size: var(--fs-sm);
   line-height: 1.5;

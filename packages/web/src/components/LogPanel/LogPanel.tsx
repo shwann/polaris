@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 import { useData } from '../../hooks/useBoard';
 import { useClock } from '../../hooks/useClock';
 import { logModel } from '../../domain/log';
-import { Clamp } from '../Shared/Shared';
+import { Clamp, SectionHeading } from '../Shared/Shared';
 
 import { vars } from '../../styles/style';
 export function LogPanel() {
@@ -18,12 +18,12 @@ export function LogPanel() {
       aria-label="最近动态"
       data-sky-block
     >
-      <h2>
+      <SectionHeading>
         <span className={styles.tag}>SYS LOG</span>最近动态
         <span className={styles.today}>
           今日<b>{m.todayN}</b>条
         </span>
-      </h2>
+      </SectionHeading>
       <div className={styles.pulse} aria-hidden="true">
         {m.pulse.map((p, h) => (
           <i

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readFileSync, readdirSync } from 'node:fs';
 import { it, expect } from 'vitest';
-import { rules } from './cssHarness';
+import { rules, hasDeclaration } from './cssHarness';
 const read = (p: string) => readFileSync(p, 'utf8');
 // The sky engine and its bar are styled separately; every other board stylesheet follows the type scale below.
 const files = readdirSync('packages/web/src', { recursive: true, encoding: 'utf8' }).filter(
@@ -58,16 +58,73 @@ it('turns off looping and entry animations for reduced motion', () => {
   // Entry and matrix flow animations only run when motion is allowed.
   const motion = (file: string, selector: string) =>
     rules(css[file]!).filter(
-      (rule) => rule.selector.includes(selector) && rule.nodes.some((n) => n.prop === 'animation'),
+      (rule) =>
+        rule.selector.includes(selector) && rule.nodes.some((n) => n.prop === 'animation' && n.value !== 'none'),
     );
   for (const [file, selector] of [
     ['styles/base.css', '.boot'],
     ['components/Matrix/Matrix.module.css', '.hatch'],
+    ['components/Header/Title/Title.module.css', '.motto::after'],
   ] as const) {
     const found = motion(file, selector);
     expect(found.length, selector).toBeGreaterThan(0);
     for (const rule of found) expect(rule.parent?.params, selector).toContain('prefers-reduced-motion: no-preference');
   }
+});
+
+it('keeps the motto cursor lit without animation for reduced motion', () => {
+  const title = rules(css['components/Header/Title/Title.module.css']!);
+  const reduced = title.find(
+    (rule) => rule.selector === '.motto::after' && rule.parent?.params === '(prefers-reduced-motion: reduce)',
+  );
+  expect(reduced).toBeDefined();
+  expect(hasDeclaration(reduced!, 'animation', 'none')).toBe(true);
+  expect(hasDeclaration(reduced!, 'opacity', '1')).toBe(true);
+  expect(title.some((rule) => hasDeclaration(rule, 'animation', 'blink 1.1s step-end infinite'))).toBe(true);
+});
+
+it('disables the fixed scan overlay in big-text and fullscreen projection modes', () => {
+  const base = rules(css['styles/base.css']!);
+  for (const selector of ['html.proj body::after', 'html:fullscreen body::after']) {
+    expect(base.some((rule) => rule.selectors.includes(selector) && hasDeclaration(rule, 'display', 'none'))).toBe(
+      true,
+    );
+  }
+  const overlay = base.find((rule) => rule.selector === 'body::after')!;
+  expect(hasDeclaration(overlay, 'pointer-events', 'none')).toBe(true);
+  expect(hasDeclaration(overlay, 'position', 'fixed')).toBe(true);
+});
+
+it('increments section numbers in document order from one shared counter', () => {
+  const app = rules(css['App.module.css']!);
+  expect(app.filter((rule) => rule.nodes.some((n) => n.prop === 'counter-reset'))).toHaveLength(1);
+  expect(app.some((rule) => rule.selector === '.wrap' && hasDeclaration(rule, 'counter-reset', 'section'))).toBe(true);
+  const shared = rules(css['components/Shared/Shared.module.css']!);
+  const increments = shared.filter((rule) => rule.nodes.some((n) => n.prop === 'counter-increment'));
+  expect(increments).toHaveLength(1);
+  expect(increments[0]!.selector).toBe('.section-heading');
+  expect(hasDeclaration(increments[0]!, 'counter-increment', 'section')).toBe(true);
+  expect(
+    shared.some(
+      (rule) =>
+        rule.selector === '.section-heading::before' &&
+        hasDeclaration(rule, 'content', "'// ' counter(section, decimal-leading-zero)"),
+    ),
+  ).toBe(true);
+});
+
+it('clips telemetry from the right on one line and hides the header grid in sky mode', () => {
+  const telemetry = rules(css['components/Header/Telemetry/Telemetry.module.css']!).find(
+    (rule) => rule.selector === '.telemetry',
+  )!;
+  expect(hasDeclaration(telemetry, 'white-space', 'nowrap')).toBe(true);
+  expect(hasDeclaration(telemetry, 'overflow', 'hidden')).toBe(true);
+  expect(hasDeclaration(telemetry, 'text-overflow', 'ellipsis')).toBe(true);
+  expect(
+    rules(css['components/Header/Header.module.css']!).some(
+      (rule) => rule.selector === ':global(.sky) .cover::after' && hasDeclaration(rule, 'display', 'none'),
+    ),
+  ).toBe(true);
 });
 
 it('isolates every additive requirement rule behind its own module classes', () => {
