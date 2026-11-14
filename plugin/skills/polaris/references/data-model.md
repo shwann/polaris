@@ -39,10 +39,12 @@
 
 ## 3. 命令速查
 
+本文的 `polaris` 使用主技能“插件根目录回退”规则定位后的实际命令；示例中的 `<actor>` 按所在平台填 `claude` 或 `codex`。
+
 全局选项：
 - `--home DIR`：数据目录；
 - `--system KEY`：系统；
-- `--actor NAME`：谁改的，默认取环境变量 `POLARIS_ACTOR`，再没有就是 `user`；
+- `--actor NAME`：谁改的，默认取环境变量 `POLARIS_ACTOR`，再没有就是 `user`；技能写入时按所在平台填 `claude`（Claude Code）或 `codex`（Codex）；
 - `--json`：机器可读输出；
 - `--note TEXT`：本次动态写什么。
 
@@ -111,7 +113,7 @@ POST JSON 接口：`/api/task/move`（id、lane、可选 status、可选 waiting
 engine 只接受 `codex` 或 `claude`，model 必须非空。codex effort：`minimal|low|medium|high|xhigh`；claude effort：`low|medium|high|xhigh|max`。校验集中在 core/enums.ts，错误为中文。`by` 默认“用户”，独立于写入者 `actor`。`note` 原文完整保留。
 
 ```bash
-polaris dispatch set --system beidou --engine codex --model gpt-6.1-sol --effort xhigh --note "用户原话" --by 用户 --actor claude
+polaris dispatch set --system beidou --engine codex --model gpt-6.1-sol --effort xhigh --note "用户原话" --by 用户 --actor <actor>
 polaris dispatch show --system beidou --json
 polaris task update T1 --dispatch claude/opus/medium --executor "Claude opus medium｜wt x｜会话 y"
 polaris dispatch show --task T1 --json

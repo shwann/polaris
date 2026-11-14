@@ -2,6 +2,8 @@
 
 改页面前读这一篇。页面源码是插件仓库的 `packages/web`，用 React + TypeScript + Vite 写，分层见 `docs/架构设计.md` 第 4、5 节。构建出来是一个单文件 HTML（`plugin/assets/index.html`），由命令行的 `serve` 提供本机看板，或经 `mirror` 生成线上镜像。外部只从 Google Fonts 加载字体。
 
+镜像生成与发布按主技能第 5 节执行：Claude Code 可用 Artifact 发布，Codex 只生成 HTML 文件并报告路径。下文的 Artifact 数据源是看板的兼容能力，不表示当前平台提供发布工具；在 Codex 中记录需求可用技能名 `polaris:req` 或自然语言触发。
+
 | 层 | 目录 | 职责 |
 |---|---|---|
 | 数据来源 | `src/data/` | 依次尝试：镜像数据槽 → 旧镜像的 `window.POLARIS_DATA` → 本机 `/data.json`（每 3 秒检查一次）→ Artifact 数据库；统一转成 core 的 Snapshot |

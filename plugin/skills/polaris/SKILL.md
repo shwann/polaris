@@ -1,6 +1,6 @@
 ---
 name: polaris
-description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的需求、任务、决定与发版，在本机星图看板（北极星 + 北斗七星）实时查看，需要时把只读镜像发布到 claude.ai。所有读写都通过 polaris 命令行。用户说“建一个北辰看板”“用北辰跟踪进度/需求”“记一条需求”“把任务/发版/决定同步到北辰”“北辰加一个系统”“更新北辰镜像”“看看北辰上还有什么等我”时使用；已经在用北辰的项目里，每次派出、完成、合入、发版、需要用户决定或用户做了决定，都按本 skill 同步。
+description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的需求、任务、决定与发版，在本机星图看板（北极星 + 北斗七星）实时查看，需要时生成只读镜像（Claude Code 可发布到 claude.ai，Codex 只生成文件）。所有读写都通过 polaris 命令行。用户说“建一个北辰看板”“用北辰跟踪进度/需求”“记一条需求”“把任务/发版/决定同步到北辰”“北辰加一个系统”“更新北辰镜像”“看看北辰上还有什么等我”时使用；已经在用北辰的项目里，每次派出、完成、合入、发版、需要用户决定或用户做了决定，都按本 skill 同步。
 ---
 
 # 北辰 · 研发总览
@@ -12,22 +12,25 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 
 | 部分 | 位置 |
 |---|---|
-| 命令行（唯一读写入口） | `node "${CLAUDE_PLUGIN_ROOT}/bin/polaris.mjs" <命令>`（插件目录由 Claude Code 自动填入） |
+| 命令行（唯一读写入口） | `node "${CLAUDE_PLUGIN_ROOT}/bin/polaris.mjs" <命令>`（插件根目录的定位与回退见下文） |
+| 插件根目录 | Claude Code 自动替换 `${CLAUDE_PLUGIN_ROOT}`；Codex 等平台若原样保留它，用本 `skills/polaris/SKILL.md` 往上两级的目录作为插件根，执行 `node "<插件根>/bin/polaris.mjs" <命令>` |
 | 数据 | `~/Documents/polaris-data/polaris.db`，可用 `--home` 或环境变量 `POLARIS_HOME` 换位置。每次写入后，自动把整库导出成 `backup/polaris.sql` ；git 可用时自动提交 |
 | 本机看板 | `polaris serve --port 8790`，只监听 127.0.0.1，页面每 3 秒检查一次数据 |
-| 线上镜像 | `polaris mirror --out <文件>` 生成单文件，用 Artifact 发布。只读，不会自动更新 |
+| 线上镜像 | `polaris mirror --out <文件>` 生成单文件；Claude Code 用 Artifact 发布，Codex 只生成文件。只读，不会自动更新 |
 
-下文的 `polaris` 都指 `node "${CLAUDE_PLUGIN_ROOT}/bin/polaris.mjs"`，运行要求 Node 22.13 以上。用户可以用斜杠命令 `/polaris:status`、`/polaris:req`、`/polaris:sync`、`/polaris:mirror`，它们也按本 skill 的规则执行。按需读：
+**插件根目录回退**：Claude Code 会自动替换 `${CLAUDE_PLUGIN_ROOT}`。在 Codex 等平台上，如果它原样出现，不要把它当作 shell 环境变量；用当前 `skills/polaris/SKILL.md` 往上两级的目录作为插件根目录，命令写成 `node "<插件根>/bin/polaris.mjs" <命令>`。其他技能的 `skills/<名>/SKILL.md` 也用同样的定位方式。
+
+下文的 `polaris` 都指用上述实际插件根目录调用 `bin/polaris.mjs`，运行要求 Node 22.13 以上。写命令里的 `<actor>` 按所在平台填 `claude`（Claude Code）或 `codex`（Codex）。Claude Code 可以用斜杠命令 `/polaris:status`、`/polaris:req`、`/polaris:sync`、`/polaris:mirror`；Codex 中技能名为 `polaris:status` 等，可直接用自然语言触发，它们也按本 skill 的规则执行。按需读：
 - `references/data-model.md`：表结构、枚举、命令速查、写入规则；
 - `references/design.md`：看板设计要点，改页面时读。
 
 **绝不直接改数据库或备份文件**，一律通过命令。命令出错时整条回滚，不会留下半截数据。
 
-会话开始时已注入只读摘要，不必每次再跑 status；需要最新详情时再查询。可用 `POLARIS_HOOK=off` 关闭注入。
+Claude Code 会话开始时会注入只读摘要，不必每次再跑 status；需要最新详情时再查询。Codex 首次启动需信任插件钩子后才会运行，摘要能否进入会话上下文以平台支持为准。可用 `POLARIS_HOOK=off` 关闭钩子。
 
 ## 0. 先找到看板
 
-1. 在记忆或项目 CLAUDE.md 里找三样东西：数据目录、系统 key、线上镜像链接。
+1. 在记忆、项目 CLAUDE.md 或 AGENTS.md 里找三样东西：数据目录、系统 key、线上镜像链接。
 2. 运行 `polaris system list`：
    - 有系统，就接着用；
    - 没有，就按第 1 节新建。
@@ -36,7 +39,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 ## 1. 新建
 
 1. 问用户：系统名称、一句话说明、星座名（默认“北斗”）、key（小写英文）。
-2. 运行 `polaris system add <key> --name <名称> --constellation <星座> --note <说明> --actor claude`。
+2. 运行 `polaris system add <key> --name <名称> --constellation <星座> --note <说明> --actor <actor>`。
 3. 录入用户手头的真实需求和任务，用 `req add`、`task add`，不要写示例数据。
 4. 本机看板：后台运行 `polaris serve --port 8790`，告诉用户打开 http://127.0.0.1:8790/ 。要开机自动启动（LaunchAgent），先问用户。
 5. 用户要在手机上看时，做第 5 节的镜像。
@@ -45,7 +48,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 
 - **新需求**：
   ```bash
-  polaris req add <ID> --system <key> --title "…" --source 用户 --priority P1 --accept "验收标准1" --accept "验收标准2" --actor claude
+  polaris req add <ID> --system <key> --title "…" --source 用户 --priority P1 --accept "验收标准1" --accept "验收标准2" --actor <actor>
   ```
   `--source` 可选客户、用户、评审、缺陷；`--priority` 可选 P0、P1、P2。
 - **逐条验收**：`polaris req check <ID> --item 1` 勾选第 1 条；加 `--off` 取消（编号从 1 开始）。
@@ -60,7 +63,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 - 发版；
 - 需要用户决定，或用户做了决定。
 
-每条命令都带 `--actor claude`（或当前会话名）。动态会自动生成；想写得更清楚，就加 `--note "一句话"`。
+每条命令都带 `--actor <actor>`，按所在平台填 `claude` 或 `codex`。动态会自动生成；想写得更清楚，就加 `--note "一句话"`。
 
 | 发生了什么 | 命令 |
 |---|---|
@@ -81,7 +84,7 @@ description: 北辰 · 研发总览：用 SQLite 记录一个或多个系统的�
 ## 4. 发版登记
 
 ```bash
-polaris release record --system <key> --version <版本> --build <构建号> --tasks A,B,C --ref <发版计划> --actor claude
+polaris release record --system <key> --version <版本> --build <构建号> --tasks A,B,C --ref <发版计划> --actor <actor>
 ```
 
 - 这条命令会更新正式版本，旧版本自动记为可回滚的版本；
@@ -92,8 +95,8 @@ polaris release record --system <key> --version <版本> --build <构建号> --t
 
 ## 5. 线上镜像
 
-1. `polaris mirror --out <可发布的目录>/mirror.html`。输出目录必须在 Artifact 工具允许发布的位置，比如工作目录或草稿目录。
-2. 用 Artifact 发布这个文件：
+1. `polaris mirror --out <工作区目录>/mirror.html`。Codex 只生成 HTML 文件，告诉用户文件绝对路径和生成时间，并说明“要发布到 claude.ai 请在 Claude Code 里运行 /polaris:mirror”，到此结束。
+2. Claude Code 中，输出目录必须在 Artifact 工具允许发布的位置，比如工作目录或草稿目录，再用 Artifact 发布这个文件：
    - 首次发布时带 `icon: "chart"` 和一句 `description`；
    - 以后发布到同一个链接。
 3. 也可把该单文件发布到任何静态托管。告诉用户镜像的生成时间。镜像在 claude.ai 上，提醒用户：能打开链接的人都能看到需求和任务的内容。

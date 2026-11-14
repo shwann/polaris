@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { beforeAll, expect, test } from 'vitest';
@@ -16,6 +16,47 @@ beforeAll(() => {
 function cli(home: string, ...args: string[]) {
   return execFileSync(process.execPath, [binary, ...args, '--home', home, '--json'], { encoding: 'utf8' });
 }
+
+test.each([
+  { sandbox: '', json: false },
+  { sandbox: '', json: true },
+  { sandbox: 'seatbelt', json: false },
+  { sandbox: 'seatbelt', json: true },
+])('database open failures report Codex advice only inside its sandbox: %j', ({ sandbox, json }) => {
+  const home = temp();
+  mkdirSync(join(home, 'polaris.db'));
+  const env = { ...process.env, CODEX_SANDBOX: sandbox };
+  const args = [binary, '--home', home, 'system', 'list', ...(json ? ['--json'] : [])];
+  const result = spawnSync(process.execPath, args, { env, encoding: 'utf8' });
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe('');
+  const error = json ? JSON.parse(result.stderr).error : result.stderr;
+  expect(error).toContain('无法打开数据库');
+  expect(error).toContain('unable to open database file');
+  expect(error.includes('当前在 Codex 沙箱中')).toBe(Boolean(sandbox));
+  if (sandbox) {
+    expect(error).toContain('[sandbox_workspace_write]');
+    expect(error).toContain(`writable_roots 加上 ${JSON.stringify(home)}`);
+    expect(error).toContain('POLARIS_HOME 指到工作区内');
+  }
+  const invalid = spawnSync(process.execPath, [binary, '--home', home, 'invalid', '--json'], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(JSON.parse(invalid.stderr).error).toContain('未知命令');
+  expect(invalid.stderr).not.toContain('当前在 Codex 沙箱中');
+});
+
+test('Codex advice also covers failure to create the database directory', () => {
+  const home = join(temp(), 'blocked');
+  writeFileSync(home, 'not a directory');
+  const result = spawnSync(process.execPath, [binary, '--home', home, 'system', 'list', '--json'], {
+    env: { ...process.env, CODEX_SANDBOX: 'seatbelt' },
+    encoding: 'utf8',
+  });
+  expect(result.status).toBe(1);
+  expect(JSON.parse(result.stderr).error).toContain(`writable_roots 加上 ${JSON.stringify(home)}`);
+});
 
 test('bundle runs help and status on a temporary home, bundles SQL/core and suppresses only SQLite warnings', () => {
   const home = temp();
