@@ -97,7 +97,10 @@ export function advanceSpin(state: SkyState, dt: number) {
 export function home(state: SkyState, s: Star, t: number): Point {
   const clock = t === 0 ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
     [cx, cy, R] = state.centre(s.group),
-    spin = s.group === 'waiting' && s.figureRole ? 0 : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
+    spin =
+      s.figureRole && ['waiting', 'risk', 'release', 'planned'].includes(s.group)
+        ? 0
+        : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
   if (state.sky && (state.w > 560 || s.figureRole) && s.layoutX !== undefined && s.layoutY !== undefined) {
     return [
       cx + s.layoutX * Math.cos(spin) - s.layoutY * Math.sin(spin),

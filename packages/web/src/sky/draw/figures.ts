@@ -43,6 +43,21 @@ export function drawFigure(s: SkyState, lane: Lane) {
     else c.lineTo(...q);
     c.stroke();
   }
+  for (const arc of figure.arcs ?? []) {
+    const a = stars[arc.from]!,
+      b = stars[arc.at]!;
+    if (a.dead || b.dead) continue;
+    const p = points[arc.from]!,
+      q = points[arc.at]!,
+      on = lit || (!!chain && a.chain === chain && b.chain === chain);
+    c.setLineDash([2 * s.sz, 3 * s.sz]);
+    c.lineWidth = 0.8;
+    c.strokeStyle = rgba(COL[lane], 0.32 * (on ? 1.45 : 1) * Math.min(a.alpha, b.alpha));
+    c.beginPath();
+    c.moveTo(...localPoint(p, q, arc.start));
+    c.quadraticCurveTo(...localPoint(p, q, arc.control), ...localPoint(p, q, arc.end));
+    c.stroke();
+  }
   if (figure.spur) {
     const { at, from, offset } = figure.spur,
       p = points[from]!,

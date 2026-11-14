@@ -59,6 +59,7 @@ export function updateTasks(s: SkyState, list: Task[], reqTitles: ReadonlyMap<st
       waitingOn: star.wait,
       waitingSince: t.waitingSince,
       updatedAt: t.updatedAt,
+      createdAt: t.createdAt,
       progress: t.progress,
       recent: star.recent,
     };
@@ -68,6 +69,7 @@ export function updateTasks(s: SkyState, list: Task[], reqTitles: ReadonlyMap<st
       previous.waitingOn !== figureTask.waitingOn ||
       previous.waitingSince !== figureTask.waitingSince ||
       previous.updatedAt !== figureTask.updatedAt ||
+      previous.createdAt !== figureTask.createdAt ||
       previous.progress !== figureTask.progress ||
       previous.recent !== figureTask.recent
     )

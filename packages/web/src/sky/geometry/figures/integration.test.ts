@@ -40,7 +40,7 @@ it('rebuilds the arrow assignment when progress changes without a lane change', 
   expect(s.stars.get('t4')!.figureRole?.main).toBe(false);
   registry.dispose();
 });
-it('keeps the board layout and the three other lanes on their old path', () => {
+it('keeps the board layout and assigns all six figures only in the sky', () => {
   const { s, registry } = setup();
   s.sky = false;
   updateTasks(
@@ -52,10 +52,10 @@ it('keeps the board layout and the three other lanes on their old path', () => {
   expect(s.figures.size).toBe(0);
   s.sky = true;
   rebuild(s);
-  expect([...s.figures.keys()].sort()).toEqual(['doing', 'done', 'waiting']);
+  expect([...s.figures.keys()].sort()).toEqual(['doing', 'done', 'planned', 'release', 'risk', 'waiting']);
   for (const lane of ['planned', 'release', 'risk'] as const) {
-    expect(s.trees.get(lane)).toHaveLength(4);
-    expect([...s.stars.values()].filter((t) => t.group === lane).every((t) => !t.figureRole)).toBe(true);
+    expect(s.trees.get(lane)?.length).toBeGreaterThanOrEqual(4);
+    expect([...s.stars.values()].filter((t) => t.group === lane).every((t) => t.figureRole)).toBe(true);
   }
   registry.dispose();
 });
@@ -95,7 +95,7 @@ it('retains requirement hover highlighting after figure assignment', () => {
   expect(style.mock.calls.some(([value]) => typeof value === 'string' && value.endsWith(',1.000)'))).toBe(true);
   registry.dispose();
 });
-it.each(['waiting', 'doing', 'done'] as const)(
+it.each(['waiting', 'doing', 'done', 'risk', 'release', 'planned'] as const)(
   'transmits a held %s star through the existing soft body to every star',
   (lane) => {
     const { s, registry } = setup(),
@@ -133,5 +133,32 @@ it('keeps dense fish at their exact homes without collision pressure distorting 
   }
   for (let i = 0; i < 120; i++) constellation(s, stars, 1000 / 120);
   expect(stars.every((star) => Math.hypot(star.ox, star.oy) < 1e-8)).toBe(true);
+  registry.dispose();
+});
+
+it.each(['risk', 'release', 'planned'] as const)('reassigns the %s main star when its date changes', (lane) => {
+  const { s, registry } = setup(),
+    input = Array.from({ length: 4 }, (_, i) => ({
+      ...make(`t${i}`, lane, i),
+      createdAt: make('', lane, i).updatedAt,
+    }));
+  updateTasks(s, input);
+  expect(s.stars.get('t0')!.figureRole?.main).toBe(true);
+  updateTasks(
+    s,
+    input.map((task) =>
+      task.id === 't3'
+        ? {
+            ...task,
+            ...(lane === 'risk'
+              ? { waitingSince: '2000-01-01' }
+              : lane === 'planned'
+                ? { createdAt: '2000-01-01' }
+                : { updatedAt: '2000-01-01' }),
+          }
+        : task,
+    ),
+  );
+  expect(s.stars.get('t3')!.figureRole?.main).toBe(true);
   registry.dispose();
 });

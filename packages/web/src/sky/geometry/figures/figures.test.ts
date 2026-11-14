@@ -34,6 +34,9 @@ for (const [lane, counts] of [
   ['waiting', [0, 1, 2, 10, 18, 19, 27]],
   ['doing', [0, 1, 2, 4, 5, 14, 28]],
   ['done', [0, 1, 2, 12, 37, 69, 110]],
+  ['risk', [0, 1, 2, 3, 4, 8, 17]],
+  ['release', [0, 1, 2, 5, 8, 9, 15]],
+  ['planned', [0, 1, 2, 3, 4, 6, 12]],
 ] as [Lane, number[]][]) {
   describe(lane, () => {
     it.each(counts)('connects every star for count %i', (n) => {
@@ -119,10 +122,6 @@ it('reduces fish interiors before their rims and makes all overflow stars dim', 
     expect(f.nodes.filter((p) => p.bright)).toHaveLength(Math.min(n, 37));
     expect(f.nodes.filter((p) => !p.bright)).toHaveLength(Math.max(0, n - 37));
   }
-});
-it('leaves the other three lanes on their existing layout', () => {
-  for (const lane of ['release', 'risk', 'planned'] as const)
-    expect(figureFor(lane, tasks(10), [0, 0, 100])).toBeNull();
 });
 it('resamples a closed polygon and triangulates without supertriangle vertices', () => {
   const square: Point[] = [

@@ -64,19 +64,24 @@ it('lays the many small done stars out with the tighter done floor, not as a lat
   expect(DONE_SPACING).toBeLessThan(STAR_SPACING);
 });
 
-it.each([8, 10, 12])('keeps a %s-star risk cluster spaced, centered and deterministic at default zoom', (count) => {
+it.each([8, 10, 12])('keeps a %s-star legacy risk layout spaced, centered and deterministic', (count) => {
   const { s, star, registry } = fixture();
+  s.sky = false;
   const stars = Array.from({ length: count }, (_, i) => {
     const node = star(`task-${i}`, 0, 0, 'risk');
     node.ang = i * 2.39996;
     node.rad = 0.25 + (i % 4) * 0.1;
     return node;
   });
+  const homes = () => {
+    const [cx, cy] = s.centre('risk');
+    return stars.map((st): Point => [cx + st.layoutX!, cy + st.layoutY!]);
+  };
   layoutHomes(s);
-  const first = stars.map((st) => home(s, st, 0));
+  const first = homes();
   spaced(first, STAR_SPACING);
   layoutHomes(s);
-  expect(stars.map((st) => home(s, st, 0))).toEqual(first);
+  expect(homes()).toEqual(first);
   const center = s.centre('risk'),
     R = center[2];
   const original = stars.map((st): Point => [

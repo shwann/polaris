@@ -84,15 +84,16 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       MIN_SEPARATION / s.cam.s,
     );
   }
-  // Project only Scorpius onto one translation after the existing solver. A held star leads the whole figure;
+  // Project these fixed silhouettes onto one translation after the existing solver. A held star leads the figure;
   // otherwise the mean preserves its spring return and pointer response without bending the claws or tail.
-  const scorpion = list.filter((p) => !p.dead && p.group === 'waiting' && p.figureRole);
-  if (s.sky && scorpion.length) {
-    const held = scorpion.find((p) => p === particle),
+  for (const lane of ['waiting', 'risk', 'release', 'planned'] as const) {
+    const figure = list.filter((p) => !p.dead && p.group === lane && p.figureRole);
+    if (!s.sky || !figure.length) continue;
+    const held = figure.find((p) => p === particle),
       mean = (key: 'ox' | 'oy' | 'vx' | 'vy') =>
-        held ? held[key] : scorpion.reduce((sum, p) => sum + p[key], 0) / scorpion.length;
+        held ? held[key] : figure.reduce((sum, p) => sum + p[key], 0) / figure.length;
     const [ox, oy, vx, vy] = [mean('ox'), mean('oy'), mean('vx'), mean('vy')];
-    for (const p of scorpion) Object.assign(p, { ox, oy, vx, vy });
+    for (const p of figure) Object.assign(p, { ox, oy, vx, vy });
   }
   for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
 }

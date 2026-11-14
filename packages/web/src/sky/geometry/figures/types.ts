@@ -6,6 +6,7 @@ export interface FigureTask {
   waitingOn?: WaitingOn;
   waitingSince?: string;
   updatedAt?: string;
+  createdAt?: string;
   progress?: number;
   recent?: boolean;
 }
@@ -32,5 +33,7 @@ export interface Figure {
   nodes: FigureNode[];
   edges: FigureEdge[];
   spur?: { at: number; from: number; offset: Point };
+  /** Decorative quadratic curves expressed in the basis of two live stars. */
+  arcs?: { at: number; from: number; start: Point; control: Point; end: Point }[];
 }
 export type Region = Triple;
