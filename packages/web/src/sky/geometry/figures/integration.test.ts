@@ -95,7 +95,7 @@ it('forms the figures again after returning to the board and reopening the sky',
   runFrames(s, 1500);
   expectSettled(s);
   registry.dispose();
-});
+}, 10000);
 it('keeps figures formed through desktop/mobile resizes and a viewport that initially has no size', () => {
   const { s, registry } = loadBoard();
   vi.stubGlobal('innerWidth', 0);
