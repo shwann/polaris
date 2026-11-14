@@ -1,4 +1,4 @@
-import { COL, FIG_LANE } from '../../domain/lanes';
+import { COL, COL_APP, FIG_LANE } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { Color, SkyState } from '../types';
 export function drawBeams(s: SkyState, t: number) {
@@ -6,7 +6,7 @@ export function drawBeams(s: SkyState, t: number) {
   type End = [number, number, Color, number, boolean?];
   const ends: End[] =
     s.dipSel === 7
-      ? s.dipPos.slice(0, 7).map(([x, y], k) => [x, y, k ? COL[FIG_LANE[k]!] : COL.doing, 1])
+      ? s.dipPos.slice(0, 7).map(([x, y], k) => [x, y, k ? COL[FIG_LANE[k]!] : COL_APP, 1])
       : s.dipIds.flatMap((item) => {
           const o = typeof item === 'string' ? { id: item, dash: true } : item,
             star = s.stars.get(o.id);

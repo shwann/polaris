@@ -1,4 +1,4 @@
-import { COL, FIG_LANE, GOLD } from '../domain/lanes';
+import { COL, COL_APP, FIG_LANE, GOLD } from '../domain/lanes';
 import type { LayoutRegistry } from '../layout/LayoutRegistry';
 import * as camera from './camera';
 import { WIDE } from './constants';
@@ -121,7 +121,7 @@ export function createState(
     tint: tint.bind(null, s),
     laneCount: (g: import('../domain/types').Lane | null) => (g ? s.counts.get(g) || 0 : 0),
     linkFade: (g: string) => (g === 'done' ? Math.min(1, Math.max(0, (s.cam.s - 1.4) / 1)) : 1),
-    OWN: (k: number) => (k === 7 ? GOLD : k === 0 ? COL.doing : COL[FIG_LANE[k]!] || GOLD),
+    OWN: (k: number) => (k === 7 ? GOLD : k === 0 ? COL_APP : COL[FIG_LANE[k]!] || GOLD),
     hubs: layout.hubs.bind(null, s),
     size: layout.size.bind(null, s),
     measureHeader: layout.measureHeader.bind(null, s),

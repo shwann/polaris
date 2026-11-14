@@ -27,7 +27,11 @@ function useCut(text?: string) {
   return [ref, cut] as const;
 }
 /** Waiting cards take their section's colour: 等你 coral, 等客户 amber, 等前置 slate. */
-export const WAIT_COLORS: Record<WaitingOn, string> = { user: '--coral', customer: '--amber', dependency: '--slate' };
+export const WAIT_COLORS: Record<WaitingOn, string> = {
+  user: '--lane-waiting',
+  customer: '--amber',
+  dependency: '--slate',
+};
 export function TaskRow({ task: t, changed }: { task: Task; changed: boolean }) {
   const wait = waitingOnOf(t),
     tone = t.lane === 'waiting' && wait ? WAIT_COLORS[wait] : laneInfo(t.lane).c,

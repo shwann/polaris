@@ -1,10 +1,10 @@
-import { COL } from '../../domain/lanes';
+import { COL, COL_APP } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState } from '../types';
 
 export function drawApp(state: SkyState, x: number, y: number, S: number, t: number, vis: boolean) {
   // Dubhe represents the shipped app: a beacon with two counter-turning orbits.
-  const c = COL.doing,
+  const c = COL_APP,
     a = state.reduce.matches ? 0 : t / 1600;
   state.ctx.strokeStyle = rgba(c, vis ? 0.55 : 0.25);
   state.ctx.lineWidth = 0.9;
@@ -37,7 +37,7 @@ export function drawApp(state: SkyState, x: number, y: number, S: number, t: num
     const br = 0.5 + 0.5 * Math.sin(t / 700);
     state.ctx.setLineDash([5, 4]);
     state.ctx.lineDashOffset = state.reduce.matches ? 0 : -t / 60;
-    state.ctx.strokeStyle = rgba(COL.release, (vis ? 0.55 : 0.3) + br * 0.3);
+    state.ctx.strokeStyle = rgba(COL.risk, (vis ? 0.55 : 0.3) + br * 0.3);
     state.ctx.lineWidth = 1.2;
     state.ctx.beginPath();
     state.ctx.arc(x, y, 32 * S, 0, 6.2832);

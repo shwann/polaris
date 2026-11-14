@@ -29,8 +29,8 @@
   font-family: var(--display);
   font-size: var(--fs-stat);
   font-weight: 700;
-  color: var(--green);
-  text-shadow: 0 0 16px rgba(44, 245, 160, 0.5);
+  color: var(--lane-done);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--lane-done) 50%, transparent);
   font-variant-numeric: tabular-nums;
 }
 .ribbon-h .ratio small {

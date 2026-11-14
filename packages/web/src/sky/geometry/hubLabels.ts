@@ -1,5 +1,5 @@
 import { WAITING_ON_LABELS } from '@polaris/core';
-import { FIG_LANE, COL, DIPPER, GOLD, LANES } from '../../domain/lanes';
+import { FIG_LANE, COL, COL_APP, DIPPER, GOLD, LANES } from '../../domain/lanes';
 import type { Box, Point, SkyState } from '../types';
 import { chooseHubSide, sideAnchor, type CaptionCrowd } from './hubSide';
 /** Record the actual rendered text ink bounds rather than guessing label widths from character counts. */
@@ -29,7 +29,7 @@ export function hubCaption(s: SkyState, k: number) {
     return {
       l1: `${DIPPER[0]!.gr} ${DIPPER[0]!.zh} · 正式 App ${s.board?.app?.version || s.board?.appVersion || '—'}`,
       l2: [nx ? `下个 ${nx}` : '', s.unvN ? `待实证 ${s.unvN}` : ''].filter(Boolean).join(' · '),
-      c: COL.doing,
+      c: COL_APP,
     };
   }
   const g = FIG_LANE[k]!,

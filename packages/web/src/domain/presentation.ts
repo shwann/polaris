@@ -49,7 +49,7 @@ export function figures(v: BoardView, now = Date.now()): Figure[] {
   const labels = ['待开工', '开发中', '等你', '等发版', '已知未验证', '已完成'];
   const tags = ['QUEUED', 'ACTIVE', 'NEEDS YOU', 'RELEASE', 'RISK', 'SHIPPED'];
   return [
-    { label: '正式 App', tag: 'BUILD', value: v.appVersion, notes: appLine(v), color: '--cyan', fraction: 1 },
+    { label: '正式 App', tag: 'BUILD', value: v.appVersion, notes: appLine(v), color: '--lane-app', fraction: 1 },
     ...FLOW.map((lane, i) => ({
       label: labels[i]!,
       tag: tags[i]!,

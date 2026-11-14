@@ -34,7 +34,7 @@ export function PolePanel() {
             <li key={d.en}>
               <button
                 type="button"
-                style={vars({ '--c': `var(${lane?.c || '--cyan'})` })}
+                style={vars({ '--c': `var(${lane?.c || '--lane-app'})` })}
                 onClick={(e) => openDip(k, false, e.detail === 0)}
               >
                 <span data-code>

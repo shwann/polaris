@@ -37,7 +37,7 @@ export function DipCard() {
       aria-label="北斗分组"
       tabIndex={-1}
       hidden={u.dip < 0}
-      style={vars({ '--c': `var(${u.dip === 7 ? '--amber' : lane?.c || '--cyan'})` })}
+      style={vars({ '--c': `var(${u.dip === 7 ? '--amber' : lane?.c || '--lane-app'})` })}
       ref={(node) => {
         ref.current = node;
         return register(node);

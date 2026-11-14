@@ -15,6 +15,14 @@
   --violet: #b07cff;
   --slate: #6f85a6;
   --green: #2cf5a0;
+  /* Seven dipper groups: cool hues advance the work, warm hues need attention, star gold is what shipped. */
+  --lane-app: #fff1b8;
+  --lane-planned: #8c7cff;
+  --lane-doing: #2ee6ff;
+  --lane-waiting: #ff4f6d;
+  --lane-release: #2cf5a0;
+  --lane-risk: #ff8a2e;
+  --lane-done: #a8f03c;
   --display: 'Chakra Petch', 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
   --sans: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
