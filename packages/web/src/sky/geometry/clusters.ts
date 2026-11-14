@@ -1,6 +1,8 @@
 import { FIG_LANE } from '../../domain/lanes';
 import type { Lane } from '../../domain/types';
 import { fit } from './dipper';
+import { MIN_SEPARATION } from '../motion/separation';
+import { figureFor } from './figures';
 import { clusterSpacing, DONE_SPACING, separatePoints } from './spacing';
 import { assignSlots, clusterTree } from './chains';
 import type { Point, SkyState, Star } from '../types';
@@ -94,7 +96,7 @@ export function home(state: SkyState, s: Star, t: number): Point {
   const clock = t === 0 ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
     [cx, cy, R] = state.centre(s.group),
     spin = (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
-  if (state.sky && state.w > 560 && s.layoutX !== undefined && s.layoutY !== undefined) {
+  if (state.sky && (state.w > 560 || s.figureRole) && s.layoutX !== undefined && s.layoutY !== undefined) {
     return [
       cx + s.layoutX * Math.cos(spin) - s.layoutY * Math.sin(spin),
       cy + s.layoutX * Math.sin(spin) + s.layoutY * Math.cos(spin),
@@ -108,11 +110,42 @@ export function home(state: SkyState, s: Star, t: number): Point {
 /** Recompute only when data, viewport or a zoom-out spacing bucket changes. */
 export function layoutHomes(state: SkyState) {
   state.layoutScale = Math.max(0.5, Math.floor(Math.min(1, state.camT.s) * 10) / 10);
+  state.figures.clear();
   for (const group of ['done', 'risk', 'release', 'waiting', 'doing', 'planned'] as const) {
     const list = [...state.stars.values()]
       .filter((s) => !s.dead && s.group === group)
       .sort((a, b) => a.id.localeCompare(b.id));
+    for (const s of list) {
+      s.figureRole = undefined;
+      s.separation = undefined;
+    }
     const R = state.centre(group)[2];
+    const figure = state.sky
+      ? figureFor(
+          group,
+          list.map((s) => s.figureTask ?? { id: s.id, waitingOn: s.wait, recent: s.recent }),
+          [0, 0, R],
+        )
+      : null;
+    if (figure) {
+      state.figures.set(group, figure);
+      for (const role of figure.nodes) {
+        const star = state.stars.get(role.id)!;
+        [star.layoutX, star.layoutY] = role.point;
+        star.figureRole = role;
+        star.separation = Math.min(
+          MIN_SEPARATION,
+          ...figure.nodes
+            .filter((n) => n !== role)
+            .map((n) => Math.hypot(n.point[0] - role.point[0], n.point[1] - role.point[1]) * 0.98),
+        );
+      }
+      state.trees.set(
+        group,
+        figure.edges.map((e) => [state.stars.get(figure.nodes[e.a]!.id)!, state.stars.get(figure.nodes[e.b]!.id)!]),
+      );
+      continue;
+    }
     const points = list.map((s): Point => {
       const r = (group === 'done' ? s.rad ** 1.9 : s.rad) * R;
       return [Math.cos(s.ang) * r * 1.25, Math.sin(s.ang) * r * 0.85];
@@ -136,14 +169,15 @@ export function rebuild(state: SkyState) {
       [...state.stars.values()].filter((s) => !s.dead && s.group === g),
       g === 'done',
     );
-  layoutHomes(state);
   state.trees = new Map();
+  layoutHomes(state);
   const byLane = new Map<Lane, Star[]>();
   for (const s of state.stars.values())
     if (!s.dead) (byLane.get(s.group) || byLane.set(s.group, []).get(s.group))!.push(s);
   for (const [g, list] of byLane)
-    state.trees.set(
-      g,
-      clusterTree(list, (s) => state.home(s, 0)),
-    );
+    if (!state.figures.has(g))
+      state.trees.set(
+        g,
+        clusterTree(list, (s) => state.home(s, 0)),
+      );
 }

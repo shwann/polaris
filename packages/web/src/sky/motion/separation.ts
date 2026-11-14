@@ -18,14 +18,15 @@ export function separate(groups: Particle[][], minimum: number, pin?: Particle) 
             dx = hx + b.ox - a.ox,
             dy = hy + b.oy - a.oy,
             d = Math.hypot(dx, dy);
-          if (d >= minimum) continue;
+          const floor = Math.min(minimum, a.separation ?? Infinity, b.separation ?? Infinity);
+          if (d >= floor) continue;
           overlap = true;
           const rest = Math.hypot(hx, hy),
             nx = d > 1e-8 ? dx / d : rest > 1e-8 ? hx / rest : 1,
             ny = d > 1e-8 ? dy / d : rest > 1e-8 ? hy / rest : 0,
             wa = a === pin ? 0 : 1,
             wb = b === pin ? 0 : 1,
-            push = Math.min(MAX_PUSH, (minimum + 1e-5 - d) / (wa + wb || 1));
+            push = Math.min(MAX_PUSH, (floor + 1e-5 - d) / (wa + wb || 1));
           a.ox -= nx * push * wa;
           a.oy -= ny * push * wa;
           b.ox += nx * push * wb;

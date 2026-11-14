@@ -37,19 +37,25 @@ function overview(n: number, group: Lane = 'waiting') {
 }
 const gap = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
-it.each([19, 30])('spaces a %s-star waiting cluster so a code label fits between any two stars', (n) => {
-  const { s, stars, registry } = overview(n);
-  const min = clusterSpacing(s.unit);
-  expect(min).toBeGreaterThanOrEqual(45);
-  const points = stars.map((st): Point => [st.x, st.y]);
-  points.forEach((a, i) => points.slice(i + 1).forEach((b) => expect(gap(a, b)).toBeGreaterThanOrEqual(min - 1e-6)));
-  // Layout halos never reach past half the gap to the nearest neighbour.
-  for (const [i, halo] of starHalos(s).entries()) {
-    const nearest = Math.min(...points.filter((_, j) => j !== i).map((p) => gap(p, halo.point)));
-    expect(halo.radius).toBeLessThanOrEqual(nearest / 2 + 1e-9);
-  }
-  registry.dispose();
-});
+it.each([19, 30])(
+  'fits a %s-star scorpion inside its existing region and bounds label halos by the actual gaps',
+  (n) => {
+    const { s, stars, registry } = overview(n);
+    const [cx, cy, radius] = centre(s, 'waiting');
+    const points = stars.map((st): Point => [st.x, st.y]);
+    for (const p of points) {
+      expect(Math.abs(p[0] - cx)).toBeLessThanOrEqual(radius * 1.25);
+      expect(Math.abs(p[1] - cy)).toBeLessThanOrEqual(radius * 0.85);
+    }
+    points.forEach((a, i) => points.slice(i + 1).forEach((b) => expect(gap(a, b)).toBeGreaterThan(0)));
+    // Layout halos never reach past half the gap to the nearest neighbour.
+    for (const [i, halo] of starHalos(s).entries()) {
+      const nearest = Math.min(...points.filter((_, j) => j !== i).map((p) => gap(p, halo.point)));
+      expect(halo.radius).toBeLessThanOrEqual(nearest / 2 + 1e-9);
+    }
+    registry.dispose();
+  },
+);
 
 it('grows the cluster with its count instead of squeezing more stars into the same patch', () => {
   const a = overview(8),

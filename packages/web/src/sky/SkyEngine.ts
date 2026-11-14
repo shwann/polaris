@@ -62,6 +62,7 @@ export class SkyEngine {
             : [];
       s.sky = u.sky;
       if (skyChanged) {
+        s.rebuild();
         if (!u.sky) this.resetView();
         else s.ripple(s.w / 2, s.h / 2, COL.doing, 0.5);
       }

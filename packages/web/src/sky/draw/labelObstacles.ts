@@ -15,9 +15,12 @@ export function hitsHalo(box: Box, { point: [x, y], radius }: Halo) {
 export function labelFits(box: Box, boxes: Box[], halos: Halo[]) {
   return !boxes.some((b) => intersects(box, b)) && !halos.some((h) => hitsHalo(box, h));
 }
+export const figureSize = (star: Star) =>
+  (star.figureRole?.size ?? 1) *
+  (star.figureRole && !star.figureRole.bright && (star.figureRole.size ?? 1) <= 1 ? 0.65 : 1);
 export function haloRadius(s: SkyState, star: Star, t: number) {
   const held = s.drag?.star === star,
-    r = (MAG[star.group] || 1.7) * s.sz * (held ? 1.25 : 1),
+    r = (MAG[star.group] || 1.7) * s.sz * figureSize(star) * (held ? 1.25 : 1),
     throb = star.late ? 0.5 + 0.5 * Math.sin(t / 420 + star.ph) : 0;
   return r * (5.5 + throb * 5 + star.flare * 10 + (held ? 7 : s.hover === star ? 4 : 0));
 }
@@ -29,7 +32,7 @@ export const HALO_KEEP = 0.5;
  */
 export function steadyHaloRadius(s: SkyState, star: Star) {
   const held = s.drag?.star === star,
-    r = (MAG[star.group] || 1.7) * s.sz * (held ? 1.25 : 1);
+    r = (MAG[star.group] || 1.7) * s.sz * figureSize(star) * (held ? 1.25 : 1);
   return r * (5.5 + (held ? 7 : s.hover === star ? 4 : 0)) * HALO_KEEP;
 }
 /** DOM panels over the chart (tool bar, legend) in world coordinates; labels never sit under them. */

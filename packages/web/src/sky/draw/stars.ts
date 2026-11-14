@@ -1,4 +1,4 @@
-import { haloRadius, nearestGaps } from './labelObstacles';
+import { figureSize, haloRadius, nearestGaps } from './labelObstacles';
 import { COL, MAG } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
@@ -28,13 +28,16 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       r =
         (MAG[s.group]! || 1.7) *
         state.sz *
+        figureSize(s) *
         (held ? 1.25 : 1) *
         (old ? OLD_DONE.size : 1) *
         (quiet ? QUIET_WAIT.size : 1),
       q = state.sz;
     const tw = quiet ? 0.85 : 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
       throb = s.late ? 0.5 + 0.5 * Math.sin(t / 420 + s.ph) : 0,
-      a0 = (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * (quiet && !mate ? QUIET_WAIT.alpha : 1) * s.alpha;
+      dim = s.figureRole && !s.figureRole.bright && !mate && state.hover !== s ? 0.5 : 1,
+      a0 =
+        dim * (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * (quiet && !mate ? QUIET_WAIT.alpha : 1) * s.alpha;
     // In a dense cluster a halo stops at its nearest neighbour instead of piling onto it.
     const hr =
       Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) *
@@ -46,7 +49,8 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         throb * 0.4 +
         s.flare * 0.9 +
         (held ? 0.65 : state.hover === s ? 0.4 : mate ? 0.3 : 0)) *
-        s.alpha,
+        s.alpha *
+        dim,
     );
     state.ctx.drawImage(state.tint(c), x - hr, y - hr, hr * 2, hr * 2);
     state.ctx.globalAlpha = 1;

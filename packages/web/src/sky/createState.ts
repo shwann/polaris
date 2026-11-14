@@ -89,6 +89,7 @@ export function createState(
     counts: new Map(),
     stars: new Map(),
     trees: new Map(),
+    figures: new Map(),
     dust: [],
     ripples: [],
     comets: [],

@@ -37,17 +37,21 @@ it('separates exact overlaps and dense neighbors deterministically without chang
     [100, 0],
   ]);
 });
-it('keeps minimum screen spacing at every zoom and during the slow cluster rotation', () => {
+it('keeps fixed fish proportions through zoom buckets and slow cluster rotation', () => {
   const { s, star, registry } = fixture();
   const stars = Array.from({ length: 20 }, (_, i) => star(String(i), 1, 1, 'done'));
   for (const scale of [0.5, 0.73, 1, 5]) {
     s.camT.s = scale;
     layoutHomes(s);
+    const rest = stars.map((st) => home(s, st, 0));
     for (const time of [0, 50000, 150000]) {
-      spaced(
-        stars.map((st) => home(s, st, time).map((v) => v * scale) as Point),
-        DONE_SPACING,
-      );
+      const rotated = stars.map((st) => home(s, st, time));
+      for (let i = 1; i < stars.length; i++) {
+        expect(Math.hypot(rotated[i]![0] - rotated[0]![0], rotated[i]![1] - rotated[0]![1])).toBeCloseTo(
+          Math.hypot(rest[i]![0] - rest[0]![0], rest[i]![1] - rest[0]![1]),
+          8,
+        );
+      }
     }
     const first = stars.map((st) => [st.layoutX, st.layoutY]);
     layoutHomes(s);
