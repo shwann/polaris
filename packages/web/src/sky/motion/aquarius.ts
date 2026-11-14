@@ -1,4 +1,4 @@
-import { releaseStars } from '../geometry/figures/aquarius';
+import { aquariusParticles, releaseStars } from '../geometry/figures/aquarius';
 import type { SkyState } from '../types';
 import { moveHeld } from './constellation';
 import { advance, resetParticle, type Constraint } from './softbody';
@@ -9,7 +9,7 @@ export function moveAquarius(s: SkyState, dt: number, time?: number) {
   const stars = releaseStars(s),
     body = s.aquarius?.soft;
   if (!body || !stars.length) return;
-  const particles = stars.flatMap((star) => [star.particle, ...star.satelliteParticles]),
+  const particles = aquariusParticles(s.aquarius!),
     d = s.drag?.moved && s.drag.release ? s.drag : undefined,
     particle = d?.release?.particle,
     point = d && moveHeld(s, d),
@@ -18,10 +18,10 @@ export function moveAquarius(s: SkyState, dt: number, time?: number) {
     if (i) edges.push({ a: stars[i - 1]!.particle, b: star.particle });
     // A bending chord carries tension through a water bend without changing its resting shape.
     if (i > 1) edges.push({ a: stars[i - 2]!.particle, b: star.particle });
-    for (const satellite of star.satelliteParticles)
-      // Hanging satellites follow their version; pulling one also tensions its parent.
-      edges.push({ a: star.particle, b: satellite, oneWay: satellite !== particle });
   });
+  const jar = s.aquarius!.jar;
+  for (const edge of jar.edges) edges.push({ a: jar.nodes[edge.a]!.particle, b: jar.nodes[edge.b]!.particle });
+  if (jar.nodes.length && stars.length) edges.push({ a: jar.nodes[jar.mouth]!.particle, b: stars[0]!.particle });
   if (s.reduce.matches) {
     particles.forEach(resetParticle);
     if (particle && point) [particle.ox, particle.oy] = point;
@@ -36,7 +36,7 @@ export function moveAquarius(s: SkyState, dt: number, time?: number) {
       edges,
       duration,
       particle && point ? { particle, point } : undefined,
-      [stars.map((star) => star.particle)],
+      [stars.map((star) => star.particle), jar.nodes.map((node) => node.particle)],
       MIN_SEPARATION / s.cam.s,
     );
   }

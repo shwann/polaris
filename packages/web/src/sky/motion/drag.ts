@@ -42,27 +42,20 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
     const v = velocity(record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp);
     // Slow star releases return immediately; a sub-frame launch must not creep past the pointer.
     const slow = (d.star || d.release) && Math.hypot(...v) / s.cam.s < THROW_FROM;
-    // Only the water chain shares a fitted outline; satellites return to their own orbit homes.
-    launch(
-      p,
-      slow ? [0, 0] : v,
-      s.cam.s,
-      body,
-      d.release
-        ? d.release.particle === d.release.star.particle
-          ? s.aquarius!.stars.map((star) => star.particle)
-          : [p]
-        : d.star
-          ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group)
-          : s.hubParticles,
-    );
+    // Recover the water and the triangulated jar as independent fitted shapes in the same body.
+    const water = s.aquarius?.stars.map((star) => star.particle) ?? [];
+    const jar = s.aquarius?.jar.nodes.map((node) => node.particle) ?? [];
+    const group = d.release
+      ? water.includes(p)
+        ? water
+        : jar
+      : d.star
+        ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group)
+        : s.hubParticles;
+    launch(p, slow ? [0, 0] : v, s.cam.s, body, group);
     if (d.release) {
-      const versions = s.aquarius!.stars.map((star) => star.particle);
-      body.recovery ??= [];
-      if (p !== d.release.star.particle) body.recovery.push({ group: versions, root: d.release.star.particle, age: 0 });
-      for (const star of s.aquarius!.stars)
-        for (const satellite of star.satelliteParticles)
-          if (satellite !== p) body.recovery.push({ group: [satellite], root: satellite, age: 0 });
+      const other = water.includes(p) ? jar : water;
+      if (other.length) (body.recovery ??= []).push({ group: other, root: other[0]!, age: 0 });
     }
   }
   body.pin = undefined;

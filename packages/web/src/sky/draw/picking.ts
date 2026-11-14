@@ -33,9 +33,11 @@ export function pickAt(state: SkyState, X: number, Y: number) {
 
 export function drawPicking(state: SkyState, _t: number, list: Star[]) {
   const hit = state.onSky && !state.drag?.moved ? pickAt(state, state.px, state.py) : { star: null, dip: -1 };
-  state.hoverRelease = state.onSky && !state.drag ? (pickAquarius(state, state.px, state.py)?.star ?? null) : null;
-  state.hover = state.hoverRelease ? null : state.drag?.star || hit.star;
-  state.dipHover = state.hoverRelease ? -1 : hit.dip;
+  const aquarius = state.onSky && !state.drag ? pickAquarius(state, state.px, state.py)?.star : undefined;
+  state.hoverItem = aquarius && 'item' in aquarius ? aquarius : null;
+  state.hoverRelease = aquarius && !('item' in aquarius) ? aquarius : null;
+  state.hover = aquarius ? null : state.drag?.star || hit.star;
+  state.dipHover = aquarius ? -1 : hit.dip;
   if (state.px < -1e3 || state.drag?.moved) return;
   for (const s of list) {
     const [x, y] = state.at(s.x, s.y, 14),

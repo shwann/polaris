@@ -1,5 +1,5 @@
 import type { Figure, FigureNode, FigureTask } from './geometry/figures';
-import type { AquariusBody, ReleaseDrag, ReleaseStar } from './geometry/figures/aquarius';
+import type { AquariusBody, JarStar, ReleaseDrag, ReleaseStar } from './geometry/figures/aquarius';
 import type { Release, WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
 import type { Sample } from './motion/inertia';
@@ -162,6 +162,7 @@ export interface SkyState extends SkyMethods {
   focus: { id: string; x: number; y: number } | null;
   hover: Star | null;
   hoverRelease: ReleaseStar | null;
+  hoverItem?: JarStar | null;
   releases: Release[];
   aquarius?: AquariusBody;
   dipLit: number;

@@ -1,7 +1,8 @@
 import '../../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { aquarius, pickRelease, releaseStars, pickAquarius } from './aquarius';
-import { drawReleases } from '../../draw/releases';
+import { aquarius, pickRelease, releaseStars, pickAquarius, aquariusParticles, jarOutline } from './aquarius';
+import { aquariusJar } from './aquariusJar';
+import { drawReleases, releaseCaption } from '../../draw/releases';
 import { attachInput } from '../../input';
 import { fixture, pointer } from '../../testFixture';
 import { drawPicking } from '../../draw/picking';
@@ -19,7 +20,7 @@ const releases = (n: number): Release[] =>
     releasedAt: new Date(Date.UTC(2026, 10, i + 1)).toISOString(),
     title: '发布简介',
     tag: 'fix',
-    items: Array.from({ length: 10 }, (_, j) => ({ id: `t${j}`, code: `FIX-${j}`, title: '修复', kind: 'fix' })),
+    items: Array.from({ length: 10 }, (_, j) => ({ id: `t${i}-${j}`, code: `FIX-${j}`, title: '修复', kind: 'fix' })),
   }));
 
 const waterReleases = () =>
@@ -28,12 +29,12 @@ const waterReleases = () =>
     items: release.items!.slice(0, [1, 1, 5, 4, 5, 3, 7, 4, 7, 3, 6][i]),
   }));
 
-it('opens at the exact existing layout and keeps the resting water and satellites still', () => {
+it('opens in the finished jar and water layout and keeps every particle still', () => {
   const { s, registry } = fixture();
   Object.assign(s, { w: 2000, h: 1250, releases: releases(12) });
   const rest = aquarius(s.releases, s.w, s.h);
   for (let i = 0; i < 120; i++) constellation(s, [], 1000 / 60);
-  expect(releaseStars(s).map(({ particle: _p, satelliteParticles: _s, ...star }) => star)).toEqual(rest);
+  expect(releaseStars(s).map(({ particle: _p, ...star }) => star)).toEqual(rest);
   registry.dispose();
 });
 
@@ -43,14 +44,10 @@ it.each([0, 1, 2, 6, 11, 12, 20])(
     const input = releases(n).reverse();
     const stars = aquarius(input, 2000, 1250);
     expect(stars).toEqual(aquarius(input, 2000, 1250));
-    expect(stars).toHaveLength(Math.min(n, 12));
-    expect(stars.map((s) => s.release.version)).toEqual(
-      releases(n)
-        .slice(-12)
-        .map((r) => r.version),
-    );
+    expect(stars).toHaveLength(n);
+    expect(stars.map((s) => s.release.version)).toEqual(releases(n).map((r) => r.version));
     if (!n) return;
-    expect(stars.every((s) => s.satellites.length === 8)).toBe(true);
+
     expect(stars.slice(0, -1).every((s) => s.radius < stars.at(-1)!.radius && s.alpha < stars.at(-1)!.alpha)).toBe(
       true,
     );
@@ -58,10 +55,8 @@ it.each([0, 1, 2, 6, 11, 12, 20])(
       .slice(1)
       .map((s, i) => Math.hypot(s.point[0] - stars[i]!.point[0], s.point[1] - stars[i]!.point[1]));
     if (gaps.length) expect(Math.max(...gaps) / Math.min(...gaps)).toBeLessThan(2.1);
-    // Each chronological neighbour is an edge; every satellite connects only to its own version.
+    // Every chronological neighbour is an edge in the water chain.
     expect(stars.every((s, i) => i === 0 || s.point[1] > stars[i - 1]!.point[1])).toBe(true);
-    const bends = stars.slice(1).map((s, i) => Math.sign(s.point[0] - stars[i]!.point[0]));
-    if (n >= 11) expect(bends.filter((s, i) => i && s !== bends[i - 1]).length).toBeGreaterThanOrEqual(3);
   },
 );
 
@@ -84,11 +79,11 @@ it('keeps sub-threshold release clicks, consumes drags and never selects a task 
   expect(uiStore.getState()).toMatchObject({ sky: false, releaseFocus: '.5' });
   expect(picked).not.toHaveBeenCalled();
   expect(s.stars.size).toBe(0);
-  const satellite = aquarius(releases(1), 2000, 1250)[0]!.satellites[0]!;
   s.w = 2000;
   s.h = 1250;
   s.releases = releases(1);
-  expect(pickRelease(s, ...satellite)).toBeNull();
+  const item = aquariusJar(s.releases, s.w, s.h).nodes[0]!;
+  expect(pickRelease(s, ...item.point)).toBeNull();
   const [dx, dy] = aquarius(s.releases, s.w, s.h)[0]!.point;
   pointer('pointerdown', dx, dy, 100);
   pointer('pointermove', dx + 80, dy, 140);
@@ -134,48 +129,45 @@ it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))
     expect(Math.min(...adjacent)).toBeGreaterThanOrEqual(150 * 0.35);
     expect(Math.max(...distant)).toBeGreaterThanOrEqual(150 * 0.1);
     expect(Math.max(...distant)).toBeLessThanOrEqual(150 * 0.6);
-    expect(Math.min(...root.satelliteParticles.map(displacement))).toBeGreaterThan(150 * 0.5);
+
     expect(cameraBounds(s)).toEqual(bounds);
     pointer('pointerup', x + dx, y + dy, 1001);
     for (let i = 1; i <= fps * 1.5; i++) constellation(s, [], 1000 / fps, 1001 + (i * 1000) / fps);
-    expect(
-      Math.max(...stars.flatMap((star) => [star.particle, ...star.satelliteParticles]).map(displacement)),
-    ).toBeLessThanOrEqual(150 * 0.04);
+    expect(Math.max(...aquariusParticles(s.aquarius!).map(displacement))).toBeLessThanOrEqual(150 * 0.04);
     detach();
     registry.dispose();
   },
 );
 
-it('lets a satellite tension its version, keeps tasks and hubs still, and suppresses hover until settled', () => {
+it('lets a jar point tension its neighbours, keeps tasks and hubs still, and suppresses hover until settled', () => {
   const onPickRelease = vi.fn(),
     { s, star, registry } = fixture(false, { onPickRelease }),
     task = star('task', 500, 500),
     detach = attachInput(s);
   Object.assign(task, { baseX: 500, baseY: 500 });
   Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
-  const root = releaseStars(s)[6]!,
-    satellite = root.satelliteParticles[0]!,
-    [x, y] = root.satellites[0]!;
-  expect(pickAquarius(s, x, y)?.particle).toBe(satellite);
+  releaseStars(s);
+  const jar = s.aquarius!.jar,
+    root = jar.nodes[8]!,
+    [x, y] = root.point;
+  expect(pickAquarius(s, x, y)?.particle).toBe(root.particle);
   pointer('pointerdown', x, y, 0);
   for (let i = 1; i <= 60; i++) {
     pointer('pointermove', x, y - 150 * Math.min(1, i / 18), (i * 1000) / 60);
     constellation(s, [task], 1000 / 60, (i * 1000) / 60);
   }
-  expect(Math.hypot(root.particle.ox, root.particle.oy)).toBeGreaterThan(15);
+  expect(Math.hypot(root.particle.ox, root.particle.oy)).toBeCloseTo(150);
+  const neighbours = jar.edges
+    .filter((e) => e.a === 8 || e.b === 8)
+    .map((e) => jar.nodes[e.a === 8 ? e.b : e.a]!.particle);
+  expect(Math.max(...neighbours.map((p) => Math.hypot(p.ox, p.oy)))).toBeGreaterThan(40);
   expect(Math.hypot(task.ox, task.oy)).toBe(0);
   expect(s.hubParticles.every((p) => Math.hypot(p.ox, p.oy) === 0)).toBe(true);
   pointer('pointerup', x, y - 150, 1001);
   expect(onPickRelease).not.toHaveBeenCalled();
   expect(tooltipAllowed(s)).toBe(false);
   for (let i = 1; i <= 90; i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
-  expect(
-    Math.max(
-      ...releaseStars(s)
-        .flatMap((star) => [star.particle, ...star.satelliteParticles])
-        .map((p) => Math.hypot(p.ox, p.oy)),
-    ),
-  ).toBeLessThan(6);
+  expect(Math.max(...aquariusParticles(s.aquarius!).map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(6);
   detach();
   registry.dispose();
 });
@@ -190,9 +182,7 @@ it('does not disturb Aquarius when a task is dragged, and preserves release part
   pointer('pointerdown', 500, 500, 0);
   pointer('pointermove', 650, 500, 300);
   for (let i = 1; i <= 60; i++) constellation(s, [task], 1000 / 60, (i * 1000) / 60);
-  expect(
-    before.every((star) => [star.particle, ...star.satelliteParticles].every((p) => Math.hypot(p.ox, p.oy) < 1e-6)),
-  ).toBe(true);
+  expect(aquariusParticles(s.aquarius!).every((p) => Math.hypot(p.ox, p.oy) < 1e-6)).toBe(true);
   s.releases = releases(12);
   expect(releaseStars(s)[4]!.particle).toBe(before[4]!.particle);
   s.sysSel = 'other';
@@ -224,28 +214,28 @@ it.each([1, 2])('picks and holds the same release in scaled coordinates at zoom 
   registry.dispose();
 });
 
-it('uses live endpoints for water, satellites, tether and captions while a version is held', () => {
+it('uses live endpoints for the jar, both banks, tether, ripple and captions while held', () => {
   const { s, registry } = fixture();
-  Object.assign(s, { w: 2000, h: 1250, releases: releases(12) });
+  Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
   const stars = releaseStars(s),
-    first = stars[0]!;
+    first = stars[0]!,
+    jar = s.aquarius!.jar;
   first.particle.ox = -150;
-  first.satelliteParticles[0]!.ox = -120;
+  jar.nodes[jar.mouth]!.particle.ox = -120;
   drawReleases(s);
-  expect(vi.mocked(s.ctx.lineTo).mock.calls[0]).toEqual([first.particle.baseX! - 150, first.particle.baseY]);
-  expect(vi.mocked(s.ctx.moveTo).mock.calls).toContainEqual(first.point);
-  expect(vi.mocked(s.ctx.lineTo).mock.calls).toContainEqual(first.satellites[0]);
+  expect(vi.mocked(s.ctx.lineTo).mock.calls[0]).toEqual(jar.nodes[jar.mouth]!.point);
+  expect(vi.mocked(s.ctx.lineTo).mock.calls).toContainEqual(first.point);
   expect(vi.mocked(s.ctx.fillText).mock.calls).toContainEqual([
     first.release.version,
-    first.point[0] - 10,
-    first.point[1] - 12,
+    ...releaseCaption(
+      stars.map((star) => star.point),
+      0,
+      s.sz,
+    ).point,
   ]);
-  expect(vi.mocked(s.ctx.fillText).mock.calls).toContainEqual([
-    '水瓶 · 发布记录',
-    first.point[0] - 10,
-    first.point[1] + 20,
-  ]);
+  expect(vi.mocked(s.ctx.ellipse).mock.calls).toHaveLength(3);
   expect(pickRelease(s, ...first.point)).toBe(first);
+  expect(jarOutline(s.aquarius!)).toContainEqual(jar.nodes[jar.mouth]!.point);
   registry.dispose();
 });
 
@@ -259,18 +249,5 @@ it('shows version, tag, release date, summary and delivered count on a version h
   emitTooltip(s);
   expect(onTooltip.mock.calls.at(-1)?.[0]).toContain('.0 · 修复 · 2026-');
   expect(onTooltip.mock.calls.at(-1)?.[1]).toContain('发布简介\n交付 10 项');
-  registry.dispose();
-});
-
-it('draws one connected chronological chain, a tether to Dubhe and a spoke for each capped satellite', () => {
-  const { s, registry } = fixture(true);
-  s.releases = releases(20);
-  const nodes = aquarius(s.releases, s.w, s.h);
-  drawReleases(s);
-  const ends = vi.mocked(s.ctx.lineTo).mock.calls;
-  expect(ends).toHaveLength(1 + nodes.length - 1 + nodes.reduce((n, node) => n + node.satellites.length, 0));
-  expect(vi.mocked(s.ctx.moveTo).mock.calls[0]).toEqual(s.hubs()[0]);
-  expect(ends[0]).toEqual(nodes[0]!.point);
-  for (const node of nodes.slice(1)) expect(ends).toContainEqual(node.point);
   registry.dispose();
 });

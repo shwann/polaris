@@ -15,6 +15,7 @@ import { boundsOf } from '../cardPlacement';
 import { centre, home, rebuild } from '../clusters';
 import { fit } from '../dipper';
 import { aquarius } from './aquarius';
+import { aquariusJar } from './aquariusJar';
 import type { Box } from '../../types';
 
 const viewports = [
@@ -113,7 +114,7 @@ it.each(viewports.flatMap(([w, h]) => [0, 8].map((quiet) => [w, h, quiet] as con
       const others = [...s.stars.values()].filter((star) => star.group === lane);
       expect(intersects(envelope, padded(boundsOf(others.map((star) => [star.x, star.y])))), lane).toBe(false);
     }
-    // Include the release stars, their satellites and the actual Aquarius title drawing position.
+    // Include the release stars, the jar and the actual Aquarius title drawing position.
     const releases = Array.from({ length: 12 }, (_, i) => ({
       version: `.${25 + i}`,
       releasedAt: new Date(1700000000000 + i * 86400000).toISOString(),
@@ -121,9 +122,9 @@ it.each(viewports.flatMap(([w, h]) => [0, 8].map((quiet) => [w, h, quiet] as con
     })) as unknown as Release[];
     s.releases = releases;
     const water = aquarius(releases, w, h);
-    expect(intersects(envelope, padded(boundsOf(water.flatMap((star) => [star.point, ...star.satellites]))))).toBe(
-      false,
-    );
+    expect(
+      intersects(envelope, padded(boundsOf([...water.map((star) => star.point), ...aquariusJar(releases, w, h).poly]))),
+    ).toBe(false);
     const releaseLabels: Box[] = [];
     s.ctx.fillText = (text, x, y) => releaseLabels.push(textBox(s.ctx, text, x, y));
     drawReleases(s);
