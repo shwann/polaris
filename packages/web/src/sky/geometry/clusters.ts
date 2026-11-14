@@ -93,27 +93,49 @@ export function spinRate(zoom: number) {
 }
 /** Advance the cluster spin clock; zooming in slows it down instead of jumping the angle. */
 export function advanceSpin(state: SkyState, dt: number) {
+  if (state.reduce?.matches) return;
   const step = dt * spinRate(state.cam.s);
   state.spinT = (state.spinT ?? 0) + step;
   // A paused group banks the time it skips, so it resumes from where it stopped instead of jumping.
-  if (state.paused?.size) {
+  const held = new Set(state.paused);
+  if (state.drag?.star) held.add(state.drag.star.group);
+  for (const lane of state.figureReturns?.keys() ?? []) held.add(lane);
+  if (held.size) {
     state.spinHeld ??= new Map();
-    for (const g of state.paused) state.spinHeld.set(g, (state.spinHeld.get(g) ?? 0) + step);
+    for (const g of held) state.spinHeld.set(g, (state.spinHeld.get(g) ?? 0) + step);
+  }
+  if (
+    state.sky &&
+    !state.drag?.release &&
+    !state.aquarius?.returning &&
+    !state.hoverRelease &&
+    !state.hoverItem &&
+    !state.selectedRelease &&
+    !state.deliveryVersion
+  ) {
+    state.aquariusFlowT = (state.aquariusFlowT ?? 0) + step;
   }
 }
 
 export function home(state: SkyState, s: Star, t: number): Point {
-  const clock = t === 0 ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
+  const clock = t === 0 || state.reduce?.matches ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
     [cx, cy, R] = state.centre(s.group),
-    spin =
-      s.figureRole && ['waiting', 'risk', 'release', 'planned'].includes(s.group)
+    swing = s.figureRole && (s.group === 'risk' || s.group === 'release'),
+    spin = swing
+      ? (((s.group === 'risk' ? 3 : 5) * Math.PI) / 180) *
+        Math.sin((clock * 2 * Math.PI) / (s.group === 'risk' ? 18000 : 24000))
+      : s.figureRole && (s.group === 'waiting' || s.group === 'planned')
         ? 0
         : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
   if (state.sky && (state.w > 560 || s.figureRole) && s.layoutX !== undefined && s.layoutY !== undefined) {
-    return [
-      cx + s.layoutX * Math.cos(spin) - s.layoutY * Math.sin(spin),
-      cy + s.layoutX * Math.sin(spin) + s.layoutY * Math.cos(spin),
-    ];
+    const pivot =
+        s.group === 'risk' && swing
+          ? state.figures.get('risk')?.nodes.find((n) => n.slot === 'pivot')?.point
+          : undefined,
+      [px, py] = pivot ?? [0, 0],
+      x = s.layoutX - px,
+      y = s.layoutY - py;
+    return [cx + px + x * Math.cos(spin) - y * Math.sin(spin), cy + py + x * Math.sin(spin) + y * Math.cos(spin)];
   }
   const a = s.ang + spin,
     r = (s.group === 'done' ? s.rad ** 1.9 : s.rad) * R;

@@ -2,6 +2,8 @@ import { COL } from '../../domain/lanes';
 import type { Lane } from '../../domain/types';
 import type { Point, SkyState } from '../types';
 import { rgba } from '../palette';
+import { SPIN_STOP } from '../geometry/clusters';
+import { travelingGlow } from './travelingGlow';
 
 /** All endpoints are resolved from the simulated stars, never from cached template coordinates. */
 export function drawFigure(s: SkyState, lane: Lane) {
@@ -65,10 +67,30 @@ export function drawFigure(s: SkyState, lane: Lane) {
     c.setLineDash([4 * s.sz, 3 * s.sz]);
     c.lineWidth = 1.4;
     c.strokeStyle = rgba(COL[lane], 0.9 * stars[at]!.alpha);
+    const tip = localPoint(p, q, offset);
     c.beginPath();
     c.moveTo(...q);
-    c.lineTo(...localPoint(p, q, offset));
+    c.lineTo(...tip);
     c.stroke();
+    if (
+      lane === 'waiting' &&
+      !s.reduce.matches &&
+      !s.paused?.has(lane) &&
+      !s.drag &&
+      !s.figureReturns?.has(lane) &&
+      s.cam.s < SPIN_STOP &&
+      !stars[at]!.dead
+    ) {
+      const tail = figure.nodes.flatMap((node, i) => (/^(T[1-4]|S)$/.test(node.slot) ? [points[i]!] : []));
+      travelingGlow(
+        s,
+        tail.length > 1 ? [...tail, tip] : [p, q, tip],
+        COL[lane],
+        (s.spinT ?? 0) - (s.spinHeld?.get(lane) ?? 0) + 3200,
+        8400,
+        1700,
+      );
+    }
   }
   c.restore();
 }

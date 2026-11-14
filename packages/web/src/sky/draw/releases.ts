@@ -6,6 +6,8 @@ import type { Point, SkyState } from '../types';
 import { aquariusLabelZoom } from './aquariusLabels';
 import { RETURN_GLIDE, RETURN_SPLASH } from '../motion/aquarius';
 import type { Particle } from '../motion/softbody';
+import { travelingGlow } from './travelingGlow';
+import { SPIN_STOP } from '../geometry/clusters';
 
 import { releaseCaption, waterBanks } from './releasePaths';
 export { releaseCaption, waterBanks } from './releasePaths';
@@ -44,8 +46,21 @@ export function drawReleases(s: SkyState) {
   path(jarOutline(body).map(at), hovering ? 0.45 : 0.9, true, true);
   path([at(mouth), at(stars[0]!.point)], 0.5);
   const points = stars.map((star) => at(star.point));
-  for (const bank of waterBanks([at(mouth), ...points], Math.max(5, aquariusFrame(s.w, s.h).w * 0.018)))
-    path(bank, 0.78, true);
+  const [leftBank, rightBank] = waterBanks([at(mouth), ...points], Math.max(5, aquariusFrame(s.w, s.h).w * 0.018));
+  path(leftBank, 0.78, true);
+  path(rightBank, 0.78, true);
+  if (
+    !s.reduce.matches &&
+    !s.drag &&
+    !body.returning &&
+    !hovering &&
+    !s.hoverItem &&
+    !s.deliveryVersion &&
+    s.cam.s < SPIN_STOP
+  ) {
+    const flow = leftBank.map(([x, y], i): Point => [(x + rightBank[i]![0]) / 2, (y + rightBank[i]![1]) / 2]);
+    travelingGlow(s, flow, COL_APP, s.aquariusFlowT ?? 0, 5400, 2200);
+  }
   const last = points.at(-1)!;
   c.setLineDash([3 * s.sz, 4 * s.sz]);
   for (const fraction of [0.06, 0.1, 0.14]) {

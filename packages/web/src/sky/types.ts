@@ -123,6 +123,7 @@ export interface SkyMethods {
 export interface SkyState extends SkyMethods {
   /** Cluster spin clock in ms; advances slower when zoomed in. */
   spinT?: number;
+  aquariusFlowT?: number;
   cvs: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   registry: LayoutRegistry;

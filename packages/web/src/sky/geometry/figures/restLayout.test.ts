@@ -32,7 +32,10 @@ for (const lane of ['risk', 'release', 'planned'] as const) {
     for (const star of stars) {
       [star.baseX, star.baseY] = s.home(star, 60000);
       [star.x, star.y] = [star.baseX, star.baseY];
-      expect(s.home(star, 150000)).toEqual(s.home(star, 0));
+      expect(s.home(star, 150000)).toEqual(s.home(star, 60000));
+      if (lane === 'planned' || star.figureRole?.slot === 'pivot') {
+        expect(s.home(star, 150000)).toEqual(s.home(star, 0));
+      }
     }
     const check = (dx: number, dy: number) => {
       for (const star of stars) {

@@ -11,10 +11,12 @@ export const PAUSE_PAD = 24;
  */
 export function pausedGroups(s: SkyState): Set<Lane> {
   const out = new Set<Lane>();
-  if (!s.sky || s.w <= 560) return out;
-  if (s.hover && !s.hover.dead) out.add(s.hover.group);
+  if (!s.sky) return out;
   const picked = s.selected ? s.stars.get(s.selected) : undefined;
-  if (picked && !picked.dead) out.add(picked.group);
+  if (picked && !picked.dead && (s.w > 560 || picked.group === 'risk' || picked.group === 'release'))
+    out.add(picked.group);
+  if (s.w <= 560) return out;
+  if (s.hover && !s.hover.dead) out.add(s.hover.group);
   if (s.px > -1e3 && s.onSky && !s.drag?.moved) {
     const pad = PAUSE_PAD / s.cam.s,
       boxes = new Map<Lane, [number, number, number, number]>();
