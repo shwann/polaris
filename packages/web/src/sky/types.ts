@@ -64,6 +64,7 @@ export interface Drag {
   samples: Sample[];
   grab: Point;
   dip: number;
+  aquarius?: Point;
   mobileWeights?: Map<Star, number>;
   pinch?: number;
   anchor?: Point;
@@ -162,6 +163,8 @@ export interface SkyState extends SkyMethods {
   hover: Star | null;
   hoverRelease: ReleaseStar | null;
   releases: Release[];
+  deliveries?: import('./geometry/figures/aquariusLayout').Delivery[];
+  aquariusOffset?: Point;
   dipLit: number;
   dipGlow: number;
   dipPin: number;

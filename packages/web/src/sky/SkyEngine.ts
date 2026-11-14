@@ -36,6 +36,10 @@ export class SkyEngine {
         v.releases,
         v.tasks.filter((t) => t.systemKey === v.system.key),
       );
+      s.deliveries = v.tasks
+        .filter((t) => t.systemKey === v.system.key && !!t.shippedIn)
+        .map((t) => ({ id: t.id, version: t.shippedIn! }));
+      if (s.sysSel !== v.systemKey) s.aquariusOffset = [0, 0];
       s.systems = () => v.systems;
       s.sysSel = v.systemKey;
       s.booted = d.booted;

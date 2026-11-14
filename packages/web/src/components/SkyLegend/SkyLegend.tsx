@@ -97,7 +97,7 @@ export function SkyLegend() {
             <Icon>
               <path d="M2 3 L12 7 L5 11 L16 15" fill="none" stroke="currentColor" strokeDasharray="3 2" />
             </Icon>
-            <span className={styles.name}>水瓶 · 发布记录：一颗星一个版本</span>
+            <span className={styles.name}>水瓶 ♒︎ · 发布记录：罐里是交付，水流里一颗星一个版本</span>
           </li>
           {LANES.map((lane) => (
             <li key={lane.key} className={styles.row} style={{ color: rgb(lane.key) }}>
