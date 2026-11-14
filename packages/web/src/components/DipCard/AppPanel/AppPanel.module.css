@@ -16,8 +16,7 @@
 }
 [data-dipcard] .dc-sec h4 {
   margin: 0;
-  font: 600 0.66rem var(--mono);
-  letter-spacing: 0.14em;
+  font: 600 var(--fs-xs) var(--sans);
   color: var(--ink-3);
 }
 [data-dipcard] .dc-kv {
@@ -25,7 +24,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.25rem 0.7rem;
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
 }
 [data-dipcard] .dc-kv dt {
   color: var(--ink-3);
@@ -34,8 +33,7 @@
   margin: 0;
   color: var(--ink);
   overflow-wrap: anywhere;
-  font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: var(--fs-xs);
 }
 [data-dipcard] .dc-kv dd.warn {
   color: var(--amber);
@@ -57,11 +55,11 @@
   line-height: 1.2;
 }
 [data-dipcard] .dc-tl li b {
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   color: var(--ink-2);
 }
 [data-dipcard] .dc-tl li span {
-  font-size: 0.6rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 [data-dipcard] .dc-tl li.cur {
@@ -74,18 +72,18 @@
 [data-dipcard] .dc-app {
   display: grid;
   gap: 0.4rem;
-  font-size: 0.82rem;
+  font-size: var(--fs-xs);
   color: var(--ink-2);
 }
 [data-dipcard] .dc-app b {
   font-family: var(--display);
-  font-size: 2rem;
+  font-size: var(--fs-xl);
   color: var(--c);
   line-height: 1;
 }
 
 [data-dipcard] .dc-sub {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }

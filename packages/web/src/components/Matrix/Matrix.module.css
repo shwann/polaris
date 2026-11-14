@@ -11,13 +11,11 @@
 }
 .ribbon-h .t {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--fs-md);
 }
 .ribbon-h .tag,
 [data-lane-heading] .tag {
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.2em;
+  font-size: var(--fs-xs);
   color: var(--cyan);
 }
 .ribbon-h .ratio {
@@ -27,14 +25,13 @@
   padding: 0;
   cursor: pointer;
   font-family: var(--display);
-  font-size: 1.6rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   color: var(--green);
-  text-shadow: 0 0 16px rgba(44, 245, 160, 0.5);
   font-variant-numeric: tabular-nums;
 }
 .ribbon-h .ratio small {
-  font-size: 0.55em;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
   margin-left: 0.2rem;
 }
@@ -77,7 +74,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem 1.3rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--ink-2);
 }
 .legend span::before {
@@ -101,11 +98,17 @@
   opacity: 0.14 !important;
   filter: none !important;
 }
+/* Finished cells sit back: no glow, older ones dimmer still. */
+.cells i.done {
+  opacity: 0.55;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 10%, transparent);
+  filter: saturate(0.6);
+}
 .cells i.old {
-  opacity: 0.45;
+  opacity: 0.25;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .cells.intro i {
+  .cells.intro i.live {
     animation: lit 0.45s ease-out both;
     animation-delay: calc(var(--k, 0) * 30ms + 300ms);
   }

@@ -14,7 +14,7 @@
   overflow-y: auto;
   padding: 20px;
   color: var(--ink);
-  font: 14px/1.6 var(--sans);
+  font: var(--fs-md) / 1.6 var(--sans);
   --edge-c: var(--cyan);
 }
 .dialog h2 {
@@ -22,7 +22,7 @@
   padding-bottom: 12px;
   border-bottom: 1px solid var(--edge);
   color: var(--cyan);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   overflow-wrap: anywhere;
 }
 .fields,

@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   --bg: #03060c;
-  --glass: rgba(9, 18, 33, 0.84);
+  --glass: rgba(9, 16, 30, 0.93);
   --glass-2: rgba(16, 30, 52, 0.78);
   --edge: rgba(70, 180, 255, 0.22);
   --edge-hi: rgba(80, 220, 255, 0.7);
@@ -19,4 +19,13 @@
   --sans: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
   --cut: 14px;
+  /* Five text sizes plus one hero size; every visible text uses one of these. */
+  --fs-xs: max(12px, 0.8rem);
+  --fs-sm: max(13px, 0.88rem);
+  --fs-md: max(15px, 1rem);
+  --fs-lg: max(20px, 1.33rem);
+  --fs-xl: max(34px, 2.3rem);
+  --fs-hero: max(42px, 3rem);
+  --line: rgba(120, 170, 230, 0.16);
+  --radius: 8px;
 }

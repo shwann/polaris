@@ -13,7 +13,7 @@ export function LogPanel() {
   return (
     <aside
       id="activity"
-      className={cn(styles.panel, 'hud', 'boot')}
+      className={cn(styles.panel, 'hud', !d.booted && 'boot')}
       style={vars({ '--d': 8 })}
       aria-label="最近动态"
       data-sky-block

@@ -15,7 +15,7 @@ export function Matrix() {
     [intro] = useState(!data.booted);
   return (
     <section
-      className={cn(styles.ribbon, 'hud', 'boot')}
+      className={cn(styles.ribbon, 'hud', !data.booted && 'boot')}
       style={vars({ '--d': 7 })}
       aria-label="全部任务状态"
       data-sky-block
@@ -34,11 +34,17 @@ export function Matrix() {
         </button>
       </div>
       <div className={cn(styles.cells, intro && styles.intro)} style={vars({ '--n': model.count })}>
-        {model.cells.map(({ task: t, index: k, lane, sub, hatch, old, dim }) => {
+        {model.cells.map(({ task: t, index: k, lane, sub, hatch, live, done, old, dim }) => {
           return (
             <i
               key={t.id}
-              className={cn(hatch && styles.hatch, old && styles.old, dim && styles.dim)}
+              className={cn(
+                hatch && styles.hatch,
+                live && styles.live,
+                done && styles.done,
+                old && styles.old,
+                dim && styles.dim,
+              )}
               style={vars({ '--c': `var(${lane.c})`, '--k': k })}
               aria-label={`${t.code} ${t.title}，${sub}`}
               onPointerMove={(e) => {

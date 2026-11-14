@@ -1,8 +1,9 @@
 .row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas: 'code right' 'body body';
+  align-content: start;
   gap: 0.35rem 1rem;
   padding: 0.95rem 1.2rem;
   border-top: 1px solid rgba(120, 170, 230, 0.1);
@@ -40,14 +41,14 @@
 }
 .code {
   font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: var(--fs-xs);
   color: var(--c);
   padding-top: 0.15rem;
   overflow-wrap: anywhere;
-  letter-spacing: 0.03em;
 }
 .body {
   display: grid;
+  align-content: start;
   gap: 0.25rem;
   min-width: 0;
 }
@@ -58,38 +59,46 @@
 .detail {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.86rem;
+  font-size: var(--fs-sm);
   overflow-wrap: anywhere;
 }
 .right {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.3rem 0.6rem;
   min-width: 0;
-  max-width: min(26rem, 70vw);
 }
 .chip {
-  font-size: 0.74rem;
+  min-width: 0;
+  max-width: 11em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--c);
   border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  border-radius: 4px;
   background: color-mix(in srgb, var(--c) 10%, transparent);
   padding: 0 0.55rem;
-  text-align: right;
-  overflow-wrap: anywhere;
+}
+.ship {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 .when {
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .age {
-  font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -112,4 +121,10 @@
 .row.late::before {
   opacity: 1;
   width: 3px;
+}
+.right > * {
+  flex: none;
+}
+.right > .chip {
+  flex: 0 1 auto;
 }

@@ -12,25 +12,35 @@
   transform: skewX(-16deg);
 }
 .lane-h .name {
-  font-size: 1.12rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
 }
 .lane-h .n {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--fs-sm);
   color: var(--c);
   border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  border-radius: 4px;
   padding: 0 0.55rem;
   font-variant-numeric: tabular-nums;
 }
 .lane-h .hint {
   margin-left: auto;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
 }
 .rows {
   display: grid;
+}
+.rows.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.rows.two > :nth-child(2) {
+  border-top: 0;
+}
+.rows.two > :nth-child(even) {
+  border-left: 1px solid var(--line);
 }
 details.done > summary {
   list-style: none;
@@ -54,7 +64,7 @@ details.older {
 details.older > summary {
   cursor: pointer;
   padding: 0.7rem 1.2rem;
-  font-size: 0.82rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   list-style: none;
 }

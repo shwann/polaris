@@ -5,6 +5,13 @@
   height: 100%;
   z-index: 0;
   pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.field.dim {
+  opacity: 0.3;
+}
+html:global(.sky) .field.dim {
+  opacity: 1;
 }
 
 .tip {
@@ -12,7 +19,7 @@
   z-index: 30;
   pointer-events: none;
   max-width: 300px;
-  font-size: 0.8rem;
+  font-size: var(--fs-xs);
   line-height: 1.45;
   color: var(--ink);
   background: rgba(6, 14, 26, 0.95);
@@ -32,7 +39,6 @@
 .tip small {
   display: block;
   color: var(--cyan);
-  font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   margin-top: 0.1rem;
 }

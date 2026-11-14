@@ -13,13 +13,13 @@
   border: 1px solid var(--edge);
   background: var(--glass);
   color: var(--ink-2);
-  font: 0.76rem var(--sans);
+  font: var(--fs-xs) var(--sans);
 }
 .overview button {
   cursor: pointer;
 }
 .overview b {
-  font: 1.5rem var(--mono);
+  font: var(--fs-lg) var(--mono);
   color: var(--cyan);
 }
 .overview button[aria-pressed='true'],

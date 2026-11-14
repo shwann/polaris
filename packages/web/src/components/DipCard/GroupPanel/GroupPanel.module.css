@@ -1,5 +1,5 @@
 [data-dipcard] .dc-sub {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }

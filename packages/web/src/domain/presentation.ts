@@ -48,6 +48,7 @@ export function figures(v: BoardView, now = Date.now()): Figure[] {
       notes: notes[i]!,
       color: laneInfo(lane).c,
       fraction: c.total ? count(lane) / c.total : 0,
+      vivid: lane === 'doing' || lane === 'waiting',
     })),
   ];
 }

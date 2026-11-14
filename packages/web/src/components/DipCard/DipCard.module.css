@@ -30,9 +30,7 @@
   align-items: center;
   gap: 0.35rem;
   font-style: normal;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-xs);
   color: rgb(255, 214, 140);
 }
 .dipcard .dc-head [data-dipper] {
@@ -40,7 +38,7 @@
 }
 .dipcard .dc-name {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--fs-md);
   color: var(--c);
 }
 .dipcard .dc-n {
@@ -53,7 +51,7 @@
 }
 .dipcard .dc-x {
   margin-left: auto;
-  font: 600 0.9rem var(--sans);
+  font: 600 var(--fs-sm) var(--sans);
   color: var(--ink-3);
   background: none;
   border: 0;
@@ -71,7 +69,6 @@
 }
 .dipcard .dc-foot .btn {
   padding: 0.3rem 0.6rem;
-  letter-spacing: 0.04em;
 }
 @media (max-width: 560px) {
   .dipcard {

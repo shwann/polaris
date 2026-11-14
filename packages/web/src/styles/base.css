@@ -15,8 +15,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: var(--fs-md);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -118,36 +118,9 @@ html.sky body {
 .hud {
   position: relative;
   background: var(--glass);
-  clip-path: polygon(
-    var(--cut) 0,
-    100% 0,
-    100% calc(100% - var(--cut)),
-    calc(100% - var(--cut)) 100%,
-    0 100%,
-    0 var(--cut)
-  );
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   isolation: isolate;
-}
-.hud::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    var(--edge-c, var(--edge-hi)),
-    var(--edge) 30%,
-    var(--edge) 70%,
-    var(--edge-c, var(--edge-hi))
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  clip-path: inherit;
 }
 .hud::after {
   content: '';
@@ -155,11 +128,12 @@ html.sky body {
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s;
   background: radial-gradient(
     320px circle at var(--mx, -400px) var(--my, -400px),
-    rgba(46, 230, 255, 0.12),
+    rgba(46, 230, 255, 0.08),
     transparent 70%
   );
 }
@@ -171,12 +145,17 @@ html.sky body {
     animation: boot 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     animation-delay: calc(var(--d, 0) * 90ms);
   }
-  .hud[data-scan]::before {
-    background-size: 100% 100%;
-  }
 }
 
 summary:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

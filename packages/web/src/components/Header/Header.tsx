@@ -16,10 +16,11 @@ import { DispatchSummary } from './DispatchSummary/DispatchSummary';
 import { vars } from '../../styles/style';
 export function Header() {
   const { view, data, ui } = useBoard(),
+    boot = data.booted ? undefined : 'boot',
     latest = latestUpdate(data.snapshot, view.tasks);
   return (
     <header className={styles.cover} ref={useLayout('cover')}>
-      <div className="boot" style={vars({ '--d': 0 })} data-sky-block>
+      <div className={boot} style={vars({ '--d': 0 })} data-sky-block>
         <Title />
         <Ticker />
         <DispatchSummary
@@ -30,7 +31,7 @@ export function Header() {
           {view.note || '由 Claude 维护：任务派出、完成、合入、发版、需要你决定时都会更新。'}
         </p>
       </div>
-      <div className={cn(styles.side, 'boot')} style={vars({ '--d': 1 })} data-sky-block>
+      <div className={cn(styles.side, boot)} style={vars({ '--d': 1 })} data-sky-block>
         <Clock />
         <WatchRows />
       </div>

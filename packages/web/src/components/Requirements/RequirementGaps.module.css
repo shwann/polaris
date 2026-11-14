@@ -5,7 +5,7 @@
 .gaps h3 {
   margin: 0 0 0.8rem;
   color: var(--coral);
-  font-size: 0.9rem;
+  font-size: var(--fs-sm);
 }
 .columns {
   display: grid;
@@ -15,7 +15,7 @@
 .columns h4 {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.8rem;
+  font-size: var(--fs-xs);
   font-weight: 500;
 }
 .columns ul {
@@ -25,11 +25,11 @@
 .columns li,
 .columns p {
   color: var(--ink-2);
-  font-size: 0.8rem;
+  font-size: var(--fs-xs);
   overflow-wrap: anywhere;
 }
 .columns b {
-  font: 0.8rem var(--mono);
+  font: var(--fs-xs) var(--mono);
   color: var(--coral);
 }
 .columns button {
@@ -55,8 +55,7 @@
 
 .columns .more {
   margin-top: 0.4rem;
-  font: 500 0.72rem var(--mono);
-  letter-spacing: 0.06em;
+  font: 500 var(--fs-xs) var(--sans);
   color: var(--ink-3);
   background: none;
   border: 0;

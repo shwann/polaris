@@ -7,7 +7,7 @@
   padding: 0.4rem;
   background: var(--glass);
   color: var(--ink);
-  font: 0.8rem var(--sans);
+  font: var(--fs-xs) var(--sans);
 }
 .priority:focus-visible {
   outline: 2px solid var(--cyan);

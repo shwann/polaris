@@ -7,12 +7,12 @@ import { uiStore } from '../../store/uiStore';
 
 import { vars } from '../../styles/style';
 export function FilterBar() {
-  const { view, ui } = useBoard(),
+  const { view, ui, data } = useBoard(),
     search = useSearch();
   return (
     <div
       id="filter"
-      className={cn(styles.tools, 'hud', 'boot')}
+      className={cn(styles.tools, 'hud', !data.booted && 'boot')}
       style={vars({ '--d': 8 })}
       role="search"
       data-sky-block

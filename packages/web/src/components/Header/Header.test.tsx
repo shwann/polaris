@@ -24,7 +24,7 @@ it('shows the selected system dispatch with the original note as title and chang
   dataStore.setState({ snapshot });
   const { rerender } = render(<Header />);
   const line = screen.getByTitle(current.note);
-  expect(line.textContent).toBe(`派工 Codex gpt-6.1-sol / xhigh · ${dispatchDate(current.setAt)} 用户定`);
+  expect(line.textContent).toBe(`派工 Codex gpt-6.1-sol / 极高 · ${dispatchDate(current.setAt)} 用户定`);
   uiStore.setState({ system: 'other' });
   rerender(<Header />);
   expect(screen.queryByTitle(current.note)).toBeNull();
