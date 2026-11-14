@@ -7,13 +7,13 @@ import { openDip } from '../../store/uiStore';
 
 import { vars } from '../../styles/style';
 export function Digest() {
-  const { view } = useBoard(),
+  const { view, data } = useBoard(),
     groups = groupDigest(view.tasks),
     releases = releaseDigest(view);
   return (
     <div className={styles.digest}>
       <section
-        className={cn(styles.dg, 'hud', 'boot')}
+        className={cn(styles.dg, 'hud', !data.booted && 'boot')}
         style={vars({ '--d': 8 })}
         aria-labelledby="dg-g-h"
         data-sky-block
@@ -40,7 +40,7 @@ export function Digest() {
         </div>
       </section>
       <section
-        className={cn(styles.dg, 'hud', 'boot')}
+        className={cn(styles.dg, 'hud', !data.booted && 'boot')}
         style={vars({ '--d': 8 })}
         aria-labelledby="dg-r-h"
         data-sky-block

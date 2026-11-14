@@ -5,8 +5,7 @@
 }
 .requirements h2 {
   margin: 0;
-  font-size: 1.05rem;
-  letter-spacing: 0.06em;
+  font-size: var(--fs-md);
 }
 .pool {
   display: grid;
@@ -17,7 +16,7 @@
 }
 .group h3 {
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: var(--fs-sm);
   margin: 0 0 0.6rem;
 }
 .group h3 span {

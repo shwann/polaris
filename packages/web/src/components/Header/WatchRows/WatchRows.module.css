@@ -2,15 +2,14 @@
   display: grid;
   gap: 0.1rem;
   min-width: 14.5rem;
-  margin-top: 0.2rem;
-  border-top: 1px solid rgba(120, 170, 230, 0.16);
+  margin-top: 0.4rem;
 }
 .w-row {
   display: grid;
   grid-template-columns: 3.4rem auto minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 0.7rem;
-  padding: 0.32rem 0.1rem;
+  padding: 0.22rem 0.1rem;
   font: inherit;
   text-align: left;
   color: var(--ink-2);
@@ -20,20 +19,18 @@
   cursor: pointer;
 }
 .w-row .k {
-  font-size: 0.74rem;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
 }
 .w-row b {
   font-family: var(--display);
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .w-row .s {
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
@@ -56,6 +53,27 @@
 }
 :global(#w-me).late .s {
   color: var(--coral);
+}
+/* "Needs you" is the first thing to read in the header. */
+.w-row.me {
+  align-items: center;
+  margin-bottom: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 79, 109, 0.45);
+  border-radius: var(--radius);
+  background: rgba(255, 79, 109, 0.1);
+}
+.w-row.me .k {
+  color: var(--ink);
+}
+.w-row.me b {
+  font-size: var(--fs-xl);
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(255, 79, 109, 0.55);
+}
+.w-row.me:hover,
+.w-row.me:focus-visible {
+  background: rgba(255, 79, 109, 0.16);
 }
 @media (max-width: 760px) {
   .watch {

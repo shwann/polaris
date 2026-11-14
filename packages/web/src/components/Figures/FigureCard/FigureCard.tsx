@@ -28,6 +28,7 @@ export function FigureCard({
     <div
       className={cn(styles.fig, 'hud', !booted && 'boot', u.pinned === index && styles.pinned)}
       style={vars({ '--c': `var(${f.color})`, '--d': index + 2 })}
+      data-tone={f.vivid ? 'vivid' : 'quiet'}
       title={title}
       tabIndex={0}
       role="button"

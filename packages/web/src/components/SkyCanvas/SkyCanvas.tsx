@@ -1,6 +1,6 @@
 import styles from './SkyCanvas.module.css';
 import { cn } from '../../styles/cn';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SkyEngine } from '../../sky/SkyEngine';
 import { layoutRegistry } from '../../layout/LayoutRegistry';
 import { attachEngine, selectFromSky } from '../../hooks/skyBridge';
@@ -10,7 +10,26 @@ import { moveStarCard } from '../StarCard/StarCard';
 
 export function SkyCanvas() {
   const canvas = useRef<HTMLCanvasElement>(null),
-    tooltip = useRef<HTMLDivElement>(null);
+    tooltip = useRef<HTMLDivElement>(null),
+    [dim, setDim] = useState(false);
+  useEffect(() => {
+    // Dim the sky behind the content once the title area (above the system tabs) has scrolled away.
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const tabs = document.querySelector('[role="tablist"]');
+      setDim(!!tabs && tabs.getBoundingClientRect().top < 0);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    check();
+    return () => {
+      removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
   useEffect(() => {
     bindTooltip((text, detail, x, y) => {
       const tip = tooltip.current;
@@ -47,7 +66,7 @@ export function SkyCanvas() {
   }, []);
   return (
     <>
-      <canvas className={styles.field} ref={canvas} aria-hidden="true" />
+      <canvas className={cn(styles.field, dim && styles.dim)} ref={canvas} aria-hidden="true" />
       <div className={styles.tip} ref={tooltip} hidden aria-hidden="true" />
     </>
   );

@@ -12,7 +12,7 @@ export function WatchRows() {
   return (
     <div className={styles.watch} aria-label="关注" ref={useLayout('watch')}>
       <button
-        className={cn(styles['w-row'], m.late && styles.late)}
+        className={cn(styles['w-row'], styles.me, m.late && styles.late)}
         id="w-me"
         type="button"
         title="只看需要你处理的任务"

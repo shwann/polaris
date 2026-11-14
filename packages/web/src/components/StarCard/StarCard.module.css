@@ -7,7 +7,6 @@
   padding: 0.85rem 0.95rem 0.8rem;
   display: grid;
   gap: 0.5rem;
-  --edge-c: var(--c);
   background: rgba(6, 14, 26, 0.94);
 }
 .starcard .sc-top {
@@ -17,19 +16,19 @@
 }
 .starcard .sc-code {
   font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: var(--fs-xs);
   color: var(--bg);
   background: var(--c);
   padding: 0 0.45rem;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 50%, transparent);
+  border-radius: 4px;
 }
 .starcard .sc-lane {
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
   color: var(--c);
 }
 .starcard .sc-x {
   margin-left: auto;
-  font: 600 0.9rem var(--sans);
+  font: 600 var(--fs-sm) var(--sans);
   color: var(--ink-3);
   background: none;
   border: 0;
@@ -41,7 +40,7 @@
 }
 .starcard h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--fs-md);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -49,8 +48,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem 0.7rem;
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 .starcard .sc-meta .late {
@@ -58,7 +56,7 @@
 }
 .starcard .sc-detail {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--fs-xs);
   color: var(--ink-2);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -67,7 +65,7 @@
 }
 .starcard .needs {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--fs-xs);
 }
 .starcard .sc-go {
   justify-self: start;

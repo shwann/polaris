@@ -41,4 +41,6 @@ export interface Figure {
   notes: string[];
   color: string;
   fraction: number;
+  /** Only cards that need attention keep their colour and glow. */
+  vivid?: boolean;
 }

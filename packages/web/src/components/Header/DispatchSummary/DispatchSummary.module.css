@@ -3,7 +3,7 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   color: var(--ink-2);
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
 }
 .summary p,
 .summary button {

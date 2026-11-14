@@ -10,9 +10,11 @@ export interface LaneModel {
   delay: number;
   expanded: boolean;
 }
-export function laneModel(tasks: Task[], filter: Filter, now = Date.now()) {
+/** `wide` lifts the waiting group into its own full-width row above the two balanced columns. */
+export function laneModel(tasks: Task[], filter: Filter, now = Date.now(), wide = false) {
   const shown = searchTasks(tasks, filter),
     active: LaneModel[] = [],
+    full: LaneModel[] = [],
     cols: [LaneModel[], LaneModel[]] = [[], []],
     weights = [0, 0];
   let d = 9;
@@ -31,10 +33,14 @@ export function laneModel(tasks: Task[], filter: Filter, now = Date.now()) {
       active.push(model);
       continue;
     }
+    if (wide && lane.key === 'waiting') {
+      full.push(model);
+      continue;
+    }
     const side = lane.key === 'waiting' || weights[0]! <= weights[1]! ? 0 : 1;
     cols[side].push(model);
     weights[side]! += lane.collapsed ? 1.5 : list.length + 1.5;
   }
   if (!cols[0].length) cols[0].push(...cols[1].splice(0));
-  return { shown: shown.length, total: tasks.length, active, cols };
+  return { shown: shown.length, total: tasks.length, active, full, cols };
 }

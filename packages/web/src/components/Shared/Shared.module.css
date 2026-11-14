@@ -1,6 +1,5 @@
 .btn {
-  font: 600 0.74rem var(--mono);
-  letter-spacing: 0.12em;
+  font: 600 var(--fs-sm) var(--sans);
   color: var(--cyan);
   background: rgba(46, 230, 255, 0.08);
   border: 1px solid rgba(46, 230, 255, 0.5);
@@ -17,14 +16,42 @@
   outline-offset: 3px;
 }
 .ref {
-  font-family: var(--mono);
-  font-size: 0.7rem;
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
-  overflow-wrap: anywhere;
+}
+.ref-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ref .copy {
+  flex: none;
+}
+/* The expand toggle sits on the last clamped line instead of taking its own line. */
+.clamp-box {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+.folded .more {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding-left: 1.6rem;
+  background: linear-gradient(90deg, transparent, var(--glass) 1.2rem);
+}
+.folded .clamp {
+  padding-right: 3.2rem;
 }
 .needs {
   margin: 0.3rem 0 0;
-  font-size: 0.88rem;
+  font-size: var(--fs-sm);
+  border-radius: 4px;
   color: var(--ink);
   background: rgba(255, 79, 109, 0.1);
   border: 1px solid rgba(255, 79, 109, 0.45);
@@ -46,11 +73,15 @@
   display: block;
   -webkit-line-clamp: unset;
 }
+.clamp .extra {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--ink-3);
+}
 .more {
   justify-self: start;
   align-self: start;
-  font: 500 0.68rem var(--mono);
-  letter-spacing: 0.06em;
+  font: 500 var(--fs-xs) var(--sans);
   color: var(--ink-3);
   background: none;
   border: 0;
@@ -70,8 +101,7 @@
 }
 .copy {
   margin-left: 0.5rem;
-  font: 600 0.66rem var(--mono);
-  letter-spacing: 0.06em;
+  font: 600 var(--fs-xs) var(--sans);
   color: var(--cyan);
   background: rgba(46, 230, 255, 0.06);
   border: 1px solid rgba(46, 230, 255, 0.35);
@@ -108,8 +138,7 @@
   outline-offset: 2px;
 }
 .locate {
-  font: 600 0.66rem var(--mono);
-  letter-spacing: 0.04em;
+  font: 600 var(--fs-xs) var(--sans);
   color: var(--c, var(--cyan));
   background: color-mix(in srgb, var(--c, var(--cyan)) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 40%, transparent);

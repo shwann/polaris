@@ -32,6 +32,11 @@ it('renders a local writable button preserving the original note as title', () =
   render(<DispatchSummary systems={[system]} all={false} />);
   expect(screen.getByRole('button', { name: /派工 Codex/ }).title).toBe('用户原话');
 });
+it('shows the dispatch effort in Chinese', () => {
+  dataStore.setState({ origin: 'mirror', credentials: null });
+  render(<DispatchSummary systems={[system]} all={false} />);
+  expect(screen.getByTitle('用户原话').textContent).toBe('派工 Codex gpt-6.1-sol / 极高 · 11-13 用户定');
+});
 it.each(['local', 'mirror', 'db'] as const)(
   'keeps %s without local write credentials as plain text with no dialog',
   (origin) => {

@@ -55,7 +55,8 @@ it('runs the original script and the built React bundle against identical legacy
     expect(Array.from(b.querySelectorAll('.p-Matrix-cells i')).map((n) => n.getAttribute('aria-label'))).toEqual(
       Array.from(a.querySelectorAll('.cells i')).map((n) => n.getAttribute('aria-label')),
     );
-    expect(text(b, '#main [data-id]')).toEqual(text(a, '#main [data-id]'));
+    // Wide screens lift the waiting group into its own row, so only the set of cards must match.
+    expect(text(b, '#main [data-id]').sort()).toEqual(text(a, '#main [data-id]').sort());
     expect(text(b, '.p-Digest-dg-row')).toEqual(text(a, '.dg-row'));
     expect(text(b, '.p-LogPanel-log .p-LogPanel-txt')).toEqual(text(a, '.log .txt'));
   });

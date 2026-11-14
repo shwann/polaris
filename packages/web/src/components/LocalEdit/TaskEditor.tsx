@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { useStore } from 'zustand';
 import { LANES, LANE_LABELS, type Task } from '@polaris/core';
 import { dataStore, submitWrite } from '../../store/dataStore';
@@ -36,11 +36,44 @@ function Progress({ task: t }: { task: Task }) {
     />
   );
 }
-export function TaskEditor({ task: t }: { task: Task }) {
+/** Collapsed-by-default edit state for board cards; read-only sources never get a toggle. */
+export function useTaskEdit() {
+  const available = useStore(dataStore, (s) => s.origin === 'local' && !!s.credentials);
+  const [open, setOpen] = useState(false);
+  return {
+    available,
+    open: available && open,
+    onToggle: () => setOpen((v) => !v),
+    // Attach to the card: Esc closes the editor and returns focus to the card's toggle.
+    onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
+      if (e.key !== 'Escape' || !open) return;
+      e.stopPropagation();
+      setOpen(false);
+      e.currentTarget.querySelector<HTMLElement>('[data-edit-toggle]')?.focus();
+    },
+  };
+}
+export type TaskEdit = ReturnType<typeof useTaskEdit>;
+export function EditToggle({ edit, code }: { edit: TaskEdit; code: string }) {
+  if (!edit.available) return null;
+  return (
+    <button
+      type="button"
+      className={styles.toggle}
+      data-edit-toggle
+      aria-expanded={edit.open}
+      aria-label={`${edit.open ? '收起' : '编辑'} ${code} 的分组和进度`}
+      onClick={edit.onToggle}
+    >
+      {edit.open ? '收起' : '编辑'}
+    </button>
+  );
+}
+export function TaskEditor({ task: t, open = true }: { task: Task; open?: boolean }) {
   const credentials = useStore(dataStore, (s) => s.origin === 'local' && s.credentials);
   const writing = useStore(dataStore, (s) => s.writing);
   const revision = useStore(dataStore, (s) => s.writeRevision);
-  if (!credentials) return null;
+  if (!credentials || !open) return null;
   return (
     <div className={styles.editor}>
       <label>

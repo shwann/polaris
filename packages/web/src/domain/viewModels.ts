@@ -27,6 +27,8 @@ export function matrixModel(v: BoardView, f: Filter, now = Date.now()) {
         lane,
         sub: lane.name + (task.status ? ' · ' + task.status : ''),
         hatch: task.lane === 'doing',
+        live: task.lane === 'doing' || task.lane === 'waiting',
+        done: task.lane === 'done',
         old: isOld(task, now),
         dim: filtering(f) && !matches(task, f),
       };

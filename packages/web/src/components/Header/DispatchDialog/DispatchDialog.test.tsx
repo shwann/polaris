@@ -147,7 +147,7 @@ it('posts the correct body and credentials, locks controls, closes on success an
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(document.activeElement).toBe(trigger);
   expect(dataStore.getState().snapshot?.systems[0]?.dispatch?.current).toEqual(updated);
-  expect(trigger.textContent).toContain('historic-codex / xhigh');
+  expect(trigger.textContent).toContain('historic-codex / 极高');
   expect(screen.getByRole('status').textContent).toContain('已修改：派工 Codex historic-codex / xhigh');
   expect(screen.getByRole('button', { name: '撤销' })).toBeTruthy();
 });

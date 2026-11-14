@@ -22,7 +22,7 @@
   align-items: baseline;
   gap: 0.55rem;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--fs-sm);
   color: var(--ink-2);
   background: none;
   border: 1px solid transparent;
@@ -32,14 +32,12 @@
   cursor: pointer;
 }
 .systems button .c {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: var(--fs-sm);
   color: rgb(255, 214, 140);
 }
 .systems button .n {
   font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -64,7 +62,7 @@
   outline-offset: 2px;
 }
 .systems .more {
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 :global(.proj) .systems .more {

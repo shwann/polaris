@@ -1,4 +1,4 @@
-import { TaskEditor } from '../../LocalEdit/TaskEditor';
+import { EditToggle, TaskEditor, useTaskEdit } from '../../LocalEdit/TaskEditor';
 import styles from './ActiveTask.module.css';
 import sharedStyles from '../../Shared/Shared.module.css';
 import { cn } from '../../../styles/cn';
@@ -13,7 +13,8 @@ import { TaskExecution } from '../../TaskExecution/TaskExecution';
 const words = { done: 'DONE · 完成', doing: 'RUNNING · 进行中', blocked: 'BLOCKED · 受阻', todo: 'QUEUED · 未开始' };
 export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean }) {
   const pct = taskProgress(t),
-    meter = useRef<HTMLElement>(null);
+    meter = useRef<HTMLElement>(null),
+    edit = useTaskEdit();
   useEffect(() => {
     let second = 0;
     const first = requestAnimationFrame(() => {
@@ -30,6 +31,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
       data-active-task
       className={cn(styles.active, 'hud', changed && sharedStyles.changed)}
       data-sky-block
+      onKeyDown={edit.onKeyDown}
     >
       <div className={styles['a-top']}>
         <span className={styles['a-code']}>{t.code}</span>
@@ -42,6 +44,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
         >
           ✦ 星图定位
         </button>
+        <EditToggle edit={edit} code={t.code} />
         {pct !== null && (
           <span className={styles['a-pct']}>
             <Count id={'pct:' + t.id} value={pct} />
@@ -66,7 +69,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
       )}
       {t.detail && <Clamp className={styles['a-detail']} id={t.id + ':d'} text={t.detail} />}
       <TaskExecution task={t} />
-      <TaskEditor task={t} />
+      <TaskEditor task={t} open={edit.open} />
       <Needs text={t.needs} />
       <RefLine parts={[t.owner, t.ref, fmt(t.updatedAt)]} reference={t.ref} />
     </article>

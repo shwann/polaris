@@ -14,15 +14,19 @@ export function Clamp({
   text,
   id,
   lines = 2,
+  extra,
 }: {
   className?: string;
   text: string;
   id: string;
   lines?: number;
+  /** Text revealed only when expanded, e.g. a status chip that was cut to one line. */
+  extra?: string;
 }) {
   const ref = useRef<HTMLParagraphElement>(null),
     [open, setOpen] = useState(() => opened.has(id)),
-    [cut, setCut] = useState(false);
+    [overflow, setCut] = useState(false),
+    cut = overflow || !!extra;
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -42,7 +46,7 @@ export function Clamp({
     setOpen(next);
   };
   return (
-    <>
+    <div className={cn(styles['clamp-box'], cut && !open && styles.folded)}>
       <p
         ref={ref}
         data-clamp
@@ -53,13 +57,14 @@ export function Clamp({
         }}
       >
         {text}
+        {open && extra && <span className={styles.extra}>{extra}</span>}
       </p>
       {cut && (
         <button type="button" className={styles.more} onClick={toggle}>
           {open ? '收起 ▴' : '展开 ▾'}
         </button>
       )}
-    </>
+    </div>
   );
 }
 export function RefLine({ parts, reference }: { parts: (string | undefined)[]; reference?: string }) {
@@ -71,8 +76,8 @@ export function RefLine({ parts, reference }: { parts: (string | undefined)[]; r
   useEffect(() => () => clearTimeout(timer.current), []);
   if (!text) return null;
   return (
-    <div className={styles.ref} ref={ref}>
-      {text}
+    <div className={styles.ref} ref={ref} title={text}>
+      <span className={styles['ref-text']}>{text}</span>
       {path && (
         <button
           type="button"

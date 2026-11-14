@@ -8,7 +8,7 @@
   padding: 0.38rem 0.75rem;
   background: transparent;
   color: var(--ink-2);
-  font: 600 0.74rem var(--sans);
+  font: 600 var(--fs-sm) var(--sans);
   cursor: pointer;
 }
 .switch button[aria-pressed='true'] {

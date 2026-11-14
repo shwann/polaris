@@ -10,10 +10,13 @@ export function LaneSection({
   model: m,
   changed,
   booted,
+  two = false,
 }: {
   model: LaneModel;
   changed: Set<string>;
   booted: boolean;
+  /** Lay the cards out in two row-major columns (full-width waiting group). */
+  two?: boolean;
 }) {
   const root = useRef<HTMLDetailsElement>(null),
     older = useRef<HTMLDetailsElement>(null);
@@ -38,15 +41,15 @@ export function LaneSection({
   );
   const body =
     m.lane.key === 'doing' ? (
-      <div style={{ display: 'grid', gap: '1rem' }}>
+      <div style={{ display: 'grid', gap: '0.8rem' }}>
         {m.list.map((t) => (
           <ActiveTask key={t.id} task={t} changed={changed.has(t.id)} />
         ))}
       </div>
     ) : (
       <div
-        className={cn(styles.rows, 'hud')}
-        style={vars({ '--c': `var(${m.lane.c})`, '--edge-c': `var(${m.lane.c})` })}
+        className={cn(styles.rows, two && styles.two, 'hud')}
+        style={vars({ '--c': `var(${m.lane.c})` })}
         data-sky-block
       >
         {m.recent.map((t) => (

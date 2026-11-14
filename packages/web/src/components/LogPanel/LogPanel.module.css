@@ -13,24 +13,21 @@ aside.panel h2 {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
-  font-size: 1.02rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   margin: 0 0 0.7rem;
 }
 aside.panel h2 .today {
   margin-left: auto;
-  font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
   font-weight: 400;
-  letter-spacing: 0.08em;
   color: var(--ink-3);
 }
 aside.panel h2 .today b {
   font-family: var(--display);
-  font-size: 1.15rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--cyan);
-  text-shadow: 0 0 12px rgba(46, 230, 255, 0.5);
   margin: 0 0.2rem;
 }
 .pulse {
@@ -59,10 +56,9 @@ aside.panel h2 .today b {
   display: flex;
   justify-content: space-between;
   font-family: var(--mono);
-  font-size: 0.58rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   margin: 0 0 0.9rem;
-  letter-spacing: 0.05em;
 }
 .log {
   list-style: none;
@@ -87,7 +83,7 @@ aside.panel h2 .today b {
   display: grid;
   gap: 0.2rem;
   padding: 0 0 0.9rem;
-  font-size: 0.86rem;
+  font-size: var(--fs-sm);
 }
 .log li::before {
   content: '';
@@ -102,9 +98,7 @@ aside.panel h2 .today b {
 }
 .log li.day {
   padding: 0.1rem 0 0.55rem;
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.18em;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 .log li.day::before {
@@ -123,7 +117,7 @@ aside.panel h2 .today b {
   gap: 0.2rem 0.5rem;
 }
 .log .kind {
-  font-size: 0.66rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   line-height: 1.45;
   color: var(--k);
@@ -133,13 +127,12 @@ aside.panel h2 .today b {
 }
 .log time {
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 .log .ago {
-  font-family: var(--mono);
-  font-size: 0.64rem;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 .log .txt {
@@ -168,8 +161,8 @@ aside.panel h2 .today b {
 .log li.latest .new {
   margin-left: auto;
   font-family: var(--mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.2em;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
   color: var(--k);
 }
 :global(.proj) .log li.latest .txt {
@@ -178,7 +171,7 @@ aside.panel h2 .today b {
 
 aside.panel .tag {
   font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.2em;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
   color: var(--cyan);
 }

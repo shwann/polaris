@@ -29,13 +29,21 @@ export function RequirementRow({
     <details className={cn(styles.row, 'hud')}>
       <summary className={styles.summary}>
         <span className={styles.code}>{r.id}</span>
-        <strong className={styles.title}>{r.title}</strong>
-        <span className={styles.priority} data-priority={r.priority}>
-          {r.priority}
+        <span className={styles.main}>
+          <strong className={styles.title}>{r.title}</strong>
+          {(constellation || r.scope) && (
+            <span className={styles.scopes}>
+              {constellation && <span className={styles.scope}>{constellation}</span>}
+              {r.scope && <span className={styles.scope}>{r.scope}</span>}
+            </span>
+          )}
         </span>
-        <span>{REQ_SOURCE_LABELS[r.source]}</span>
-        {constellation && <span className={styles.scope}>{constellation}</span>}
-        {r.scope && <span className={styles.scope}>{r.scope}</span>}
+        <span className={styles.meta}>
+          <span className={styles.priority} data-priority={r.priority}>
+            {r.priority}
+          </span>
+          <span>{REQ_SOURCE_LABELS[r.source]}</span>
+        </span>
         <span className={styles.acceptance}>
           验收 {progress.met} / {progress.total}
         </span>
