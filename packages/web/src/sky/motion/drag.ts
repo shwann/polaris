@@ -62,8 +62,7 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
   if (d.release) {
     if (!s.reduce.matches && e.type !== 'pointercancel') {
       const [x, y] = s.at(p.baseX! + p.ox, p.baseY! + p.oy, 14);
-      s.ripples.push({ x, y, c: COL_APP, t0: performance.now(), power: 0.8, small: true, hit: new Set() });
-      if (s.ripples.length > 6) s.ripples.shift();
+      s.ripple(x, y, COL_APP, 0.8, true);
     }
     return;
   }
@@ -72,7 +71,6 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
   d.star.flare = Math.max(d.star.flare, 0.7);
   if (!s.reduce.matches && e.type !== 'pointercancel') {
     const [x, y] = s.at(d.star.x, d.star.y, 14);
-    s.ripples.push({ x, y, c: COL[d.star.group], t0: performance.now(), power: 0.8, small: true, hit: new Set() });
-    if (s.ripples.length > 6) s.ripples.shift();
+    s.ripple(x, y, COL[d.star.group], 0.8, true);
   }
 }

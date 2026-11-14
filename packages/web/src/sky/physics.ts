@@ -1,6 +1,7 @@
 import { layoutHomes } from './geometry/clusters';
 import { cameraMoving } from './motion/cameraMotion';
 import { constellation, moveHeld } from './motion/constellation';
+import { pushByRipple } from './motion/ripple';
 import { spring } from './motion/spring';
 import type { SkyState, Star } from './types';
 
@@ -49,19 +50,7 @@ export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
           s.vy += (dy / distance) * force;
         }
       }
-      for (const r of state.ripples) {
-        if (r.small || r.hit.has(s) || d) continue;
-        const radius = (Math.max(0, t - r.t0) / 1800) * Math.max(state.w, state.h) * 0.7;
-        const dx = s.x - r.x,
-          dy = s.y - r.y,
-          distance = Math.hypot(dx, dy);
-        if (Math.abs(distance - radius) < 18 && distance > 1) {
-          r.hit.add(s);
-          s.vx += (dx / distance) * 240 * r.power;
-          s.vy += (dy / distance) * 240 * r.power;
-          s.flare = Math.max(s.flare, 0.45);
-        }
-      }
+      if (!d && pushByRipple(state, s, [s.x, s.y], t)) s.flare = Math.max(s.flare, 0.45);
       if (state.w <= 560) {
         const weight = root && s.group === root.group ? d?.mobileWeights?.get(s) || 0 : 0;
         const x = spring(s.ox, s.vx, (root?.ox || 0) * weight, dt),

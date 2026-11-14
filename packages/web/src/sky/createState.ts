@@ -151,8 +151,8 @@ export function createState(
     drawEffects: drawEffects.bind(null, s),
     frame: frame.bind(null, s),
     emitTooltip: emitTooltip.bind(null, s),
-    ripple: (x: number, y: number, c: import('./types').Color, power = 0.6) => {
-      s.ripples.push({ x, y, c, t0: performance.now(), power, hit: new Set() });
+    ripple: (x: number, y: number, c: import('./types').Color, power = 0.6, small = false) => {
+      s.ripples.push({ x, y, c, t0: performance.now(), power, small, hit: new Set() });
       if (s.ripples.length > 6) s.ripples.shift();
     },
   });

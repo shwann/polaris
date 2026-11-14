@@ -1,6 +1,7 @@
 import { aquariusParticles, releaseStars } from '../geometry/figures/aquarius';
 import type { SkyState } from '../types';
 import { moveHeld } from './constellation';
+import { pushByRipple } from './ripple';
 import { advance, resetParticle, type Constraint } from './softbody';
 import { MIN_SEPARATION } from './separation';
 
@@ -28,6 +29,9 @@ export function moveAquarius(s: SkyState, dt: number, time?: number) {
     body.pin = undefined;
     body.remainder = 0;
   } else {
+    if (!s.drag && time !== undefined && s.ripples.length) {
+      for (const node of [...stars, ...jar.nodes]) pushByRipple(s, node.particle, s.at(...node.point, 14), time);
+    }
     const duration = time === undefined || body.time === undefined ? dt : Math.max(0, time - body.time);
     if (time !== undefined) body.time = Math.max(time, body.time ?? time);
     advance(

@@ -6,6 +6,7 @@ import { drawReleases, releaseCaption } from '../../draw/releases';
 import { attachInput } from '../../input';
 import { fixture, pointer } from '../../testFixture';
 import { drawPicking } from '../../draw/picking';
+import { physics } from '../../physics';
 import { selectRelease } from '../../../hooks/skyBridge';
 import { uiStore } from '../../../store/uiStore';
 import { emitTooltip } from '../../tooltip';
@@ -35,6 +36,47 @@ it('opens in the finished jar and water layout and keeps every particle still', 
   const rest = aquarius(s.releases, s.w, s.h);
   for (let i = 0; i < 120; i++) constellation(s, [], 1000 / 60);
   expect(releaseStars(s).map(({ particle: _p, ...star }) => star)).toEqual(rest);
+  registry.dispose();
+});
+
+it.each([false, true])('selects and animates both Aquarius anchors according to reduced motion=%s', (reduced) => {
+  const onPickRelease = vi.fn(),
+    onPickStar = vi.fn(),
+    { s, registry } = fixture(reduced, { onPickRelease, onPickStar }),
+    detach = attachInput(s);
+  Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
+  const version = releaseStars(s).at(-1)!,
+    item = s.aquarius!.jar.nodes[0]!;
+  let time = performance.now();
+  for (const node of [version, item]) {
+    const point = s.toScreen(...s.at(...node.point, 14));
+    pointer('pointerdown', ...point, 0);
+    pointer('pointerup', ...point, 10);
+    expect(s.ripples.at(-1)?.small).toBe(reduced ? undefined : true);
+    for (let i = 0; i < 4; i++) physics(s, (time += 17), 17, []);
+    if (reduced) expect(node.particle.oy).toBe(0);
+    else expect(node.particle.oy).toBeLessThan(-1);
+  }
+  expect(onPickRelease).toHaveBeenCalledWith(version.release.version);
+  expect(onPickStar).toHaveBeenCalledWith(item.id, item.release.version);
+  detach();
+  registry.dispose();
+});
+
+it('pushes the jar and water when a click wave reaches them after closing a detail card', () => {
+  const { s, registry } = fixture(),
+    detach = attachInput(s);
+  Object.assign(s, { w: 2000, h: 1250, releases: waterReleases() });
+  s.selectedRelease = releaseStars(s)[0]!.release.version;
+  pointer('pointerdown', 1320, 930, 0);
+  pointer('pointerup', 1320, 930, 10);
+  expect(s.selectedRelease).toBeNull();
+  const wave = s.ripples[0]!;
+  for (let i = 1; i <= 60; i++) physics(s, wave.t0 + i * 17, 17, []);
+  expect(s.aquarius!.jar.nodes.some((node) => wave.hit.has(node.particle))).toBe(true);
+  expect(s.aquarius!.stars.some((node) => wave.hit.has(node.particle))).toBe(true);
+  expect(aquariusParticles(s.aquarius!).some((p) => Math.hypot(p.ox, p.oy) > 1)).toBe(true);
+  detach();
   registry.dispose();
 });
 

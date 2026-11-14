@@ -116,7 +116,7 @@ export interface SkyMethods {
   drawSignals(t: number, live: [Star, Star][]): void;
   drawEffects(t: number, dt: number): void;
   frame(t: number): void;
-  ripple(x: number, y: number, c: Color, power?: number): void;
+  ripple(x: number, y: number, c: Color, power?: number, small?: boolean): void;
   emitTooltip(): void;
 }
 export interface SkyState extends SkyMethods {
@@ -210,7 +210,7 @@ export interface SkyState extends SkyMethods {
   /** Projection is reserved for layout migration; elastic motion runs until every member settles. */
   figureMotion?: Map<Lane, 'forming' | 'elastic'>;
   dust: { x: number; y: number; m: number; ph: number }[];
-  ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Star> }[];
+  ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Particle> }[];
   comets: { x: number; y: number; vx: number; vy: number; delay: number }[];
   pulses: { a: Star; b: Star; t0: number; dur: number }[];
   packets: { a: Lane; b: Lane; t0: number; dur: number }[];

@@ -1,6 +1,6 @@
 import { pickAquarius } from './geometry/figures/aquarius';
 import { clearTooltip } from './tooltip';
-import { COL } from '../domain/lanes';
+import { COL, COL_APP } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
 import { hitDoneLabel, zoomDone } from './draw/doneOverview';
 import { pickAt } from './draw/picking';
@@ -213,6 +213,11 @@ export function attachInput(s: SkyState) {
       lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     }
     if (d.release) {
+      if (!s.reduce.matches) {
+        const { star, particle } = d.release;
+        s.ripple(...s.at(...star.point, 14), COL_APP, 0.8, true);
+        particle.vy -= 120 / s.cam.s;
+      }
       pickWater(d.release);
       return;
     }
@@ -225,16 +230,11 @@ export function attachInput(s: SkyState) {
       return;
     }
     clearTooltip(s);
-    if (s.deliveryVersion || s.selectedRelease) {
-      s.selected = s.selectedRelease = s.deliveryVersion = null;
-      s.events.onPickStar?.(null);
-      return;
-    }
-    if (zoomDone(s, e.clientX, e.clientY)) return;
+    if (!s.deliveryVersion && !s.selectedRelease && zoomDone(s, e.clientX, e.clientY)) return;
     const [x, y] = s.toWorld(e.clientX, e.clientY);
     if (!s.reduce.matches) s.ripple(x, y, COL.doing, 0.8);
-    if (s.selected) {
-      s.selected = null;
+    if (s.selected || s.deliveryVersion || s.selectedRelease) {
+      s.selected = s.selectedRelease = s.deliveryVersion = null;
       s.events.onPickStar?.(null);
     }
   };
