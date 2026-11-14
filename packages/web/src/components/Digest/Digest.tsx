@@ -4,6 +4,7 @@ import { groupDigest, releaseDigest } from '../../domain/presentation';
 import { useBoard } from '../../hooks/useBoard';
 import { goLane } from '../../hooks/skyBridge';
 import { openDip } from '../../store/uiStore';
+import { SectionHeading } from '../Shared/Shared';
 
 import { vars } from '../../styles/style';
 export function Digest() {
@@ -18,7 +19,7 @@ export function Digest() {
         aria-labelledby="dg-g-h"
         data-sky-block
       >
-        <h2 id="dg-g-h">任务分组</h2>
+        <SectionHeading id="dg-g-h">任务分组</SectionHeading>
         <div className={styles['dg-rows']}>
           {groups.length ? (
             groups.map((r) => (
@@ -45,7 +46,7 @@ export function Digest() {
         aria-labelledby="dg-r-h"
         data-sky-block
       >
-        <h2 id="dg-r-h">发版动态</h2>
+        <SectionHeading id="dg-r-h">发版动态</SectionHeading>
         <div className={styles['dg-rows']}>
           {releases.length ? (
             releases.map((r) => (

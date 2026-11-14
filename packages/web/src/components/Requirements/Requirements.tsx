@@ -8,6 +8,7 @@ import { RequirementOverview } from './RequirementOverview';
 import { RequirementGaps } from './RequirementGaps';
 import { RequirementFilters } from './RequirementFilters';
 import { RequirementRow } from './RequirementRow';
+import { SectionHeading } from '../Shared/Shared';
 
 export function Requirements() {
   const { data, view, ui } = useBoard();
@@ -16,7 +17,7 @@ export function Requirements() {
     uiStore.setState({ requirementsFilter: { ...ui.requirementsFilter, ...patch } });
   return (
     <main className={styles.requirements} aria-label="需求视图" data-sky-block>
-      <h2>{systemLabel(view)} · 需求概况</h2>
+      <SectionHeading>{systemLabel(view)} · 需求概况</SectionHeading>
       <RequirementOverview
         model={model}
         status={ui.requirementsFilter.status}

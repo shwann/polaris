@@ -104,7 +104,10 @@
 .w-row.me b {
   font-size: var(--fs-xl);
   line-height: 1;
-  text-shadow: 0 0 18px rgba(255, 79, 109, 0.55);
+  text-shadow:
+    -1px 0 rgba(255, 46, 136, 0.32),
+    1px 0 rgba(0, 240, 255, 0.32),
+    0 0 18px rgba(255, 79, 109, 0.55);
 }
 .w-row.me:hover,
 .w-row.me:focus-visible {

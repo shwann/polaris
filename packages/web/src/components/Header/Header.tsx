@@ -2,9 +2,11 @@ import styles from './Header.module.css';
 import { cn } from '../../styles/cn';
 import { Title } from './Title/Title';
 import { Ticker } from './Ticker/Ticker';
+import { Telemetry } from './Telemetry/Telemetry';
 import { Clock } from './Clock/Clock';
 import { WatchRows } from './WatchRows/WatchRows';
 import { Figures } from '../Figures/Figures';
+import { SectionHeading } from '../Shared/Shared';
 import { SystemTabs } from '../SystemTabs/SystemTabs';
 import { ViewButtons } from '../ViewButtons/ViewButtons';
 import { useBoard } from '../../hooks/useBoard';
@@ -22,6 +24,7 @@ export function Header() {
     <header className={styles.cover} ref={useLayout('cover')}>
       <div className={boot} style={vars({ '--d': 0 })} data-sky-block>
         <Title />
+        <Telemetry />
         <Ticker />
         <DispatchSummary
           systems={view.systemKey === 'all' ? view.systems : [view.system]}
@@ -42,7 +45,7 @@ export function Header() {
       {ui.view === 'tasks' && (
         <>
           <div className={styles['sec-h']} data-sky-block>
-            <h2>{systemLabel(view)} · 任务概况</h2>
+            <SectionHeading>{systemLabel(view)} · 任务概况</SectionHeading>
             <span className={styles.stamp} title={view.note}>
               {latest ? '最近更新 ' + fmt(latest, true) : data.snapshot ? '' : '读取中…'}
             </span>

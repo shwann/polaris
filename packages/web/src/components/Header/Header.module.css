@@ -1,8 +1,29 @@
 .cover {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.2rem 1.6rem;
   align-items: end;
+}
+.cover::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: -6px;
+  height: 120px;
+  pointer-events: none;
+  background:
+    linear-gradient(transparent, rgba(46, 230, 255, 0.1)),
+    repeating-linear-gradient(90deg, rgba(46, 230, 255, 0.35) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(0deg, rgba(46, 230, 255, 0.28) 0 1px, transparent 1px 18px);
+  transform: perspective(260px) rotateX(62deg);
+  transform-origin: bottom;
+  opacity: 0.3;
+  mask-image: linear-gradient(transparent, #000 70%);
+}
+:global(.sky) .cover::after {
+  display: none;
 }
 @media (max-width: 760px) {
   .cover {

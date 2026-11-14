@@ -6,6 +6,7 @@ import { matrixModel } from '../../domain/viewModels';
 import { openDip } from '../../store/uiStore';
 import { getEngine } from '../../hooks/skyBridge';
 import { showTooltip } from '../SkyCanvas/tooltipBridge';
+import { SectionHeading } from '../Shared/Shared';
 
 import { vars } from '../../styles/style';
 export function Matrix() {
@@ -21,7 +22,7 @@ export function Matrix() {
       data-sky-block
     >
       <div className={styles['ribbon-h']}>
-        <span className={styles.t}>任务矩阵</span>
+        <SectionHeading className={styles.t}>任务矩阵</SectionHeading>
         <span className={styles.tag}>{model.label} · 一格一项</span>
         <button
           type="button"

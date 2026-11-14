@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react';
 import type { LaneModel } from '../../../domain/laneModel';
 import { TaskRow } from '../TaskRow/TaskRow';
 import { ActiveTask } from '../ActiveTask/ActiveTask';
+import { SectionHeading } from '../../Shared/Shared';
 
 import { vars } from '../../../styles/style';
 import { WAITING_ON_LABELS } from '@polaris/core';
@@ -29,7 +30,7 @@ export function LaneSection({
     }
   }, [m.expanded]);
   const head = (
-    <h2
+    <SectionHeading
       id={'lane-' + m.lane.key}
       data-lane-heading
       className={styles['lane-h']}
@@ -39,7 +40,7 @@ export function LaneSection({
       <span className={styles.name}>{m.lane.name}</span>
       <span className={styles.n}>{m.list.length}</span>
       {m.hint && <span className={styles.hint}>{m.hint}</span>}
-    </h2>
+    </SectionHeading>
   );
   const rows = (list: typeof m.list, c = m.lane.c) => (
     <div

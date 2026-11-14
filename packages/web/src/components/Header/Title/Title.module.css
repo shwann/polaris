@@ -47,3 +47,19 @@
   letter-spacing: 0.14em;
   color: var(--ink-2);
 }
+.motto::after {
+  content: '_';
+  color: rgba(46, 230, 255, 0.55);
+  margin-left: 0.15em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .motto::after {
+    animation: blink 1.1s step-end infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motto::after {
+    animation: none;
+    opacity: 1;
+  }
+}

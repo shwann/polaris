@@ -2,11 +2,14 @@ import type { WaitingOn } from '@polaris/core';
 import styles from './Shared.module.css';
 import { cn } from '../../styles/cn';
 import { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
 import { vars } from '../../styles/style';
 import { useCountUp } from '../../hooks/useCountUp';
 const opened = new Set<string>();
+export function SectionHeading({ className, ...props }: ComponentProps<'h2'>) {
+  return <h2 {...props} className={cn(styles['section-heading'], className)} />;
+}
 export function Count({ id, value }: { id: string; value: number }) {
   return <span ref={useCountUp(id, value)}>{value}</span>;
 }
