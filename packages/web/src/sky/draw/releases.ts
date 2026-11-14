@@ -55,6 +55,6 @@ export function drawReleases(s: SkyState) {
   c.fillStyle = rgba(COL_APP, 0.75 * s.skyK);
   c.font = `500 ${Math.max(12, s.unit * 0.01) * s.sz}px "Noto Sans SC", sans-serif`;
   c.textAlign = 'left';
-  c.fillText('水瓶 · 发布记录', points[0]![0] - 16 * s.sz, points[0]![1] - 42 * s.sz);
+  c.fillText('水瓶 · 发布记录', points[0]![0] + 18 * s.sz, points[0]![1] + 4 * s.sz);
   c.restore();
 }
