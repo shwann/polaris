@@ -84,17 +84,30 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
       MIN_SEPARATION / s.cam.s,
     );
   }
+  // Project only Scorpius onto one translation after the existing solver. A held star leads the whole figure;
+  // otherwise the mean preserves its spring return and pointer response without bending the claws or tail.
+  const scorpion = list.filter((p) => !p.dead && p.group === 'waiting' && p.figureRole);
+  if (s.sky && scorpion.length) {
+    const held = scorpion.find((p) => p === particle),
+      mean = (key: 'ox' | 'oy' | 'vx' | 'vy') =>
+        held ? held[key] : scorpion.reduce((sum, p) => sum + p[key], 0) / scorpion.length;
+    const [ox, oy, vx, vy] = [mean('ox'), mean('oy'), mean('vx'), mean('vy')];
+    for (const p of scorpion) Object.assign(p, { ox, oy, vx, vy });
+  }
   for (const p of list) [p.x, p.y] = [p.baseX! + p.ox, p.baseY! + p.oy];
 }
 
 /** One selection path keeps the dotted endpoint and the simulated attachment identical. */
 export function clusterTether(s: SkyState, k: number, from = s.hubs()[k]!, locked = false) {
   const group = FIG_LANE[k]!,
-    previous = s.tetherHub.get(group);
+    heart = group === 'waiting' ? s.figures.get(group)?.nodes.find((n) => n.main)?.id : undefined,
+    previous = heart ?? s.tetherHub.get(group);
   const hit = tetherEnd(
     from,
     [...s.stars.values()]
-      .filter((v) => v.group === group && !v.dead && (!locked || !previous || v.id === previous))
+      .filter(
+        (v) => v.group === group && !v.dead && (heart ? v.id === heart : !locked || !previous || v.id === previous),
+      )
       .map((v) => ({ id: v.id, point: s.at(v.x, v.y, 14), alpha: v.alpha })),
     7 * s.sz,
     previous,

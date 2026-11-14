@@ -49,13 +49,14 @@ for (const [lane, counts] of [
     });
   });
 }
-it('omits the scorpion sting and tail before the claws and heart', () => {
-  for (let n = 10; n <= 19; n++) {
+it('omits skeleton slots by user count while protecting both claws and three tail joints', () => {
+  for (let n = 11; n <= 15; n++) {
     const f = scorpius(tasks(n), [0, 0, 100]),
-      omitted = SCORPIUS_OMIT.slice(0, 19 - n);
+      omitted = SCORPIUS_OMIT.slice(0, 15 - n);
     for (const slot of omitted) expect(f.nodes.some((p) => p.slot === slot)).toBe(false);
-    for (const slot of ['heart', 'H', 'A', 'C', 'UJ1', 'UJ2', 'LJ1', 'LJ2'])
+    for (const slot of ['heart', 'A', 'C', 'UJ1', 'UJ2', 'LJ1', 'LJ2', 'T1', 'T2', 'T3'])
       expect(f.nodes.some((p) => p.slot === slot)).toBe(true);
+    expect(f.spur?.at).toBe(f.nodes.findLastIndex((p) => /^(T[1-4]|S)$/.test(p.slot)));
   }
 });
 it('puts the oldest user wait in the heart and external waits on dim legs', () => {
@@ -84,7 +85,7 @@ it('keeps external-only waiting groups connected and dim, with one main star', (
 });
 it('makes every scorpion overflow star dim', () => {
   const f = scorpius(tasks(30), [0, 0, 100]);
-  expect(f.nodes.filter((n) => n.slot.startsWith('extra-'))).toHaveLength(11);
+  expect(f.nodes.filter((n) => n.slot.startsWith('extra-'))).toHaveLength(15);
   expect(f.nodes.filter((n) => n.slot.startsWith('extra-')).every((n) => !n.bright)).toBe(true);
 });
 it('uses progress for the arrow tip and fills optional slots in order', () => {
@@ -154,11 +155,19 @@ it('resamples a closed polygon and triangulates without supertriangle vertices',
     expect(delaunay(ps)).toEqual([]);
 });
 
-it('preserves all nineteen scorpion slots when external waits exceed the four legs', () => {
+it('keeps eight external waits on legs and satellites, away from the eleven user skeleton stars', () => {
   const input = tasks(19).map((task, i) => ({ ...task, waitingOn: i < 8 ? ('dependency' as const) : undefined }));
   const f = scorpius(input, [0, 0, 100]);
   connected(f, 19);
-  expect(f.nodes.map((n) => n.slot)).toContain('S');
+  expect(f.nodes.map((n) => n.slot)).not.toContain('S');
+  expect(f.nodes.filter((n) => n.bright)).toHaveLength(11);
+  expect(f.nodes.filter((n) => n.slot.startsWith('extra-'))).toHaveLength(4);
+  for (const t of input.slice(0, 8)) {
+    const node = f.nodes.find((n) => n.id === t.id)!;
+    expect(node.slot).toMatch(/^(L[1-4]|extra-)/);
+    expect(node.bright).toBe(false);
+  }
+  expect(f.spur).toBeDefined();
   expect(f.nodes.filter((n) => /^L[1-4]$/.test(n.slot))).toHaveLength(4);
   expect(f.nodes.filter((n) => !n.bright)).toHaveLength(8);
   expect(f.nodes.find((n) => n.main)?.id).toBe(input[8]!.id);

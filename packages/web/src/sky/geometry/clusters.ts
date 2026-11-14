@@ -30,8 +30,10 @@ export function centre(state: SkyState, g: Lane): [number, number, number] {
         : Math.max(state.unit * (0.05 + 0.016 * Math.sqrt(n)), packed),
     rx = R * 1.25 + 24,
     ry = R * 0.85 + 40;
-  // Waiting work rides in the Dipper's bowl, filling it as the count grows; past that it spills over rather than
-  // packing its stars tighter than a label needs.
+  // Scorpius has its own patch outside the bowl, clear of the Dipper and the other two figures.
+  // The board keeps its original waiting-cloud position.
+  if (g === 'waiting' && state.sky && state.ZONE.dip)
+    return [state.w * 0.86, state.h * 0.4, Math.max(R, state.unit * 0.11)];
   if (g === 'waiting' && state.ZONE.dip && state.bowl)
     return [state.bowl[0]!, state.bowl[1]!, Math.max(Math.min(R, state.bowl[2]! * BOWL_GROWTH), packed)];
   // On the board the clusters keep clear of the header (the small Dipper lives there); they rise into place with the sky view.
@@ -95,7 +97,7 @@ export function advanceSpin(state: SkyState, dt: number) {
 export function home(state: SkyState, s: Star, t: number): Point {
   const clock = t === 0 ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
     [cx, cy, R] = state.centre(s.group),
-    spin = (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
+    spin = s.group === 'waiting' && s.figureRole ? 0 : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
   if (state.sky && (state.w > 560 || s.figureRole) && s.layoutX !== undefined && s.layoutY !== undefined) {
     return [
       cx + s.layoutX * Math.cos(spin) - s.layoutY * Math.sin(spin),
