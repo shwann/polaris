@@ -36,7 +36,7 @@ function setup() {
 }
 
 it.each(lanes.flatMap((lane) => [30, 60, 144].flatMap((fps) => [false, true].map((fast) => ({ lane, fps, fast })))))(
-  'transmits an elastic $lane pull at $fps Hz and returns within 1.5 seconds (fast release: $fast)',
+  'transmits an elastic $lane pull at $fps Hz and returns within 4.1 seconds (fast release: $fast)',
   ({ lane, fps, fast }) => {
     const { s, registry } = setup();
     Object.assign(s, { w: 2000, h: 1250, unit: 1750 });
@@ -109,7 +109,7 @@ it.each(lanes.flatMap((lane) => [30, 60, 144].flatMap((fps) => [false, true].map
       s.drag = null;
       constellation(s, stars, 1000 / fps);
       expect(Math.hypot(root.ox, root.oy)).toBeGreaterThan(before * 0.5);
-      for (let i = 1; i < Math.ceil(fps * 1.5); i++) constellation(s, stars, 1000 / fps);
+      for (let i = 1; i < Math.ceil(fps * 4.1); i++) constellation(s, stars, 1000 / fps);
       expect
         .soft(
           Math.max(...stars.map((star) => Math.hypot(star.ox, star.oy))) / size,

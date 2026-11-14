@@ -59,7 +59,7 @@ for (const lane of ['risk', 'release', 'planned'] as const) {
         expect(Math.max(...others.map((star) => Math.hypot(star.ox, star.oy)))).toBeLessThan(Math.hypot(130, 80) * 0.6);
       releaseHeld(s, s.drag, new MouseEvent('pointerup', { clientX: s.px, clientY: s.py }) as PointerEvent);
       s.drag = null;
-      for (let i = 0; i < 180; i++) constellation(s, stars, 1000 / 120);
+      for (let i = 0; i < 492; i++) constellation(s, stars, 1000 / 120);
       const nodes = s.figures.get(lane)!.nodes;
       const size = Math.max(
         Math.max(...nodes.map((node) => node.point[0])) - Math.min(...nodes.map((node) => node.point[0])),

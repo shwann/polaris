@@ -2,6 +2,7 @@ import type { Release } from '@polaris/core';
 import type { Point, SkyState } from '../../types';
 import { softBody, type Particle, type SoftBody } from '../../motion/softbody';
 import { MIN_SEPARATION } from '../../motion/separation';
+import type { ReturnTiming } from '../../motion/returnTiming';
 import { aquariusJar, aquariusPoint, chronological } from './aquariusJar';
 
 export interface ReleaseStar {
@@ -24,8 +25,8 @@ export interface AquariusBody {
   soft: SoftBody;
   returning?: {
     elapsed: number;
-    lastDelay: number;
-    steps: Map<Particle, { from: Point; velocity: Point; delay: number }>;
+    end: number;
+    steps: Map<Particle, { from: Point; velocity: Point; timing: ReturnTiming }>;
   };
 }
 export interface ReleaseDrag {

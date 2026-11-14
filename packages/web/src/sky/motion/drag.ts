@@ -44,7 +44,7 @@ export function releaseHeld(s: SkyState, d: Drag, e: PointerEvent) {
     // Slow star releases return immediately; a sub-frame launch must not creep past the pointer.
     const slow = (d.star || d.release) && Math.hypot(...v) / s.cam.s < THROW_FROM;
     if (d.release) {
-      returnAquarius(s.aquarius!, p, slow ? [0, 0] : v, s.cam.s);
+      returnAquarius(s, s.aquarius!, p, slow ? [0, 0] : v);
     } else {
       const group = d.star
         ? [...s.stars.values()].filter((star) => !star.dead && star.group === d.star!.group)

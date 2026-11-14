@@ -5,6 +5,8 @@ import { MIN_SEPARATION } from '../motion/separation';
 import { figureFor } from './figures';
 import { clusterSpacing, DONE_SPACING, separatePoints } from './spacing';
 import { assignSlots, clusterTree } from './chains';
+import { SCORPIUS_SWING_PERIOD, SCORPIUS_SWING_WIDE, scorpiusSwingDegrees } from './scorpiusSwing';
+import { OVERVIEW_SPIN_SPEED, swingPeriod } from './spinSpeed';
 import type { Point, SkyState, Star } from '../types';
 
 /** How far past the bowl's resting radius the waiting cluster may grow with its count. */
@@ -104,9 +106,16 @@ export function advanceSpin(state: SkyState, dt: number) {
     state.spinHeld ??= new Map();
     for (const g of held) state.spinHeld.set(g, (state.spinHeld.get(g) ?? 0) + step);
   }
+  if (state.sky && state.figures?.has('waiting') && step && !held.has('waiting')) {
+    const clock = state.spinT - (state.spinHeld?.get('waiting') ?? 0);
+    // Re-evaluate clearance at the neutral angle so the figure never snaps mid-swing.
+    if (state.scorpiusSwing === undefined || clock % (SCORPIUS_SWING_PERIOD / 2) < step) {
+      state.scorpiusSwing = scorpiusSwingDegrees(state);
+    }
+  }
   if (
     state.sky &&
-    !state.drag?.release &&
+    !state.drag &&
     !state.aquarius?.returning &&
     !state.hoverRelease &&
     !state.hoverItem &&
@@ -117,22 +126,31 @@ export function advanceSpin(state: SkyState, dt: number) {
   }
 }
 
+export function figurePivot(s: SkyState, lane: Lane): Point {
+  if (lane === 'risk' || lane === 'waiting') {
+    const slot = lane === 'risk' ? 'pivot' : 'heart';
+    return (
+      s.figures.get(lane)?.nodes.find((node) => node.slot === slot || (lane === 'waiting' && node.main))?.point ?? [
+        0, 0,
+      ]
+    );
+  }
+  return [0, 0];
+}
+
 export function home(state: SkyState, s: Star, t: number): Point {
   const clock = t === 0 || state.reduce?.matches ? 0 : (state.spinT ?? t) - (state.spinHeld?.get(s.group) ?? 0),
     [cx, cy, R] = state.centre(s.group),
-    swing = s.figureRole && (s.group === 'risk' || s.group === 'release'),
+    swing = s.figureRole && (s.group === 'risk' || s.group === 'release' || s.group === 'waiting'),
+    degrees = s.group === 'waiting' ? (state.scorpiusSwing ?? SCORPIUS_SWING_WIDE) : s.group === 'risk' ? 10 : 15,
+    period = s.group === 'waiting' ? SCORPIUS_SWING_PERIOD : swingPeriod(degrees),
     spin = swing
-      ? (((s.group === 'risk' ? 3 : 5) * Math.PI) / 180) *
-        Math.sin((clock * 2 * Math.PI) / (s.group === 'risk' ? 18000 : 24000))
-      : s.figureRole && (s.group === 'waiting' || s.group === 'planned')
+      ? ((degrees * Math.PI) / 180) * Math.sin((clock * 2 * Math.PI) / period)
+      : s.figureRole && s.group === 'planned'
         ? 0
-        : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * 0.012;
+        : (((s.group.length % 2 ? 1 : -1) * clock) / 1000) * OVERVIEW_SPIN_SPEED;
   if (state.sky && (state.w > 560 || s.figureRole) && s.layoutX !== undefined && s.layoutY !== undefined) {
-    const pivot =
-        s.group === 'risk' && swing
-          ? state.figures.get('risk')?.nodes.find((n) => n.slot === 'pivot')?.point
-          : undefined,
-      [px, py] = pivot ?? [0, 0],
+    const [px, py] = swing ? figurePivot(state, s.group) : [0, 0],
       x = s.layoutX - px,
       y = s.layoutY - py;
     return [cx + px + x * Math.cos(spin) - y * Math.sin(spin), cy + py + x * Math.sin(spin) + y * Math.cos(spin)];

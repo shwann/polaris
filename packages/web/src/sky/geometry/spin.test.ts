@@ -4,6 +4,8 @@ import { advanceSpin, home, SPIN_FULL, SPIN_STOP, spinRate } from './clusters';
 import type { SkyState, Star } from '../types';
 import { fixture } from '../testFixture';
 import { figureFor } from './figures';
+import { scorpiusSwingDegrees } from './scorpiusSwing';
+import { OVERVIEW_SPIN_SPEED, swingPeriod } from './spinSpeed';
 
 it('spins fully in the overview and stops once zoomed in for reading', () => {
   expect(spinRate(0.5)).toBe(1);
@@ -27,9 +29,10 @@ it('keeps star homes still while zoomed in and resumes without a jump', () => {
 });
 
 it.each([
-  ['risk', 3, 18000],
-  ['release', 5, 24000],
-] as const)('rocks %s by up to %s degrees and holds the angle when paused', (lane, maxAngle, period) => {
+  ['waiting', 20],
+  ['risk', 10],
+  ['release', 15],
+] as const)('rocks %s by up to %s degrees at the overview rotation speed', (lane, maxAngle) => {
   const { s, star, registry } = fixture();
   s.centre = () => [0, 0, 100];
   const figure = figureFor(
@@ -44,9 +47,13 @@ it.each([
       layoutX: role.point[0],
       layoutY: role.point[1],
     }),
-    pivot = lane === 'risk' ? figure.nodes[0]!.point : [0, 0];
+    pivot = lane === 'release' ? [0, 0] : figure.nodes.find((node) => node.main)!.point;
   const angle = ([x, y]: [number, number]) => Math.atan2(y - pivot[1]!, x - pivot[0]!);
   const resting = angle(home(s, node, 0));
+  const period = swingPeriod(maxAngle);
+  advanceSpin(s, 10);
+  expect((angle(home(s, node, 1)) - resting) / 0.01).toBeCloseTo(OVERVIEW_SPIN_SPEED, 6);
+  s.spinT = 0;
   advanceSpin(s, period / 4);
   const peak = home(s, node, 1);
   expect(angle(peak) - resting).toBeCloseTo((maxAngle * Math.PI) / 180);
@@ -60,5 +67,28 @@ it.each([
   s.cam.s = 1;
   advanceSpin(s, period / 2);
   expect(angle(home(s, node, 1)) - resting).toBeCloseTo((-maxAngle * Math.PI) / 180);
+  registry.dispose();
+});
+
+it('limits the narrow Scorpius sweep when it would hit a caption or Dipper line', () => {
+  const { s, registry } = fixture();
+  s.w = 560;
+  s.centre = () => [280, 300, 70];
+  s.figures.set(
+    'waiting',
+    figureFor(
+      'waiting',
+      ['a', 'b', 'c'].map((id) => ({ id })),
+      [0, 0, 70],
+    ),
+  );
+  s.hubLabelBoxes = [[[0, 0, 10, 10]]];
+  expect(scorpiusSwingDegrees(s)).toBe(20);
+  s.hubLabelBoxes = [[[265, 285, 295, 315]]];
+  expect(scorpiusSwingDegrees(s)).toBe(8);
+  s.hubLabelBoxes = [[[0, 0, 10, 10]]];
+  s.dipPos[0] = [0, 300];
+  s.dipPos[7] = [560, 300];
+  expect(scorpiusSwingDegrees(s)).toBe(8);
   registry.dispose();
 });

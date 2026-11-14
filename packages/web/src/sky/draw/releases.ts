@@ -4,10 +4,12 @@ import { aquariusFrame } from '../geometry/figures/aquariusJar';
 import { rgba } from '../palette';
 import type { Point, SkyState } from '../types';
 import { aquariusLabelZoom } from './aquariusLabels';
-import { RETURN_GLIDE, RETURN_SPLASH } from '../motion/aquarius';
+import { RETURN_SPLASH } from '../motion/aquarius';
+import { returnProgress } from '../motion/returnTiming';
 import type { Particle } from '../motion/softbody';
 import { travelingGlow } from './travelingGlow';
 import { SPIN_STOP } from '../geometry/clusters';
+import { waterImpact } from './waterImpact';
 
 import { releaseCaption, waterBanks } from './releasePaths';
 export { releaseCaption, waterBanks } from './releasePaths';
@@ -46,7 +48,9 @@ export function drawReleases(s: SkyState) {
   path(jarOutline(body).map(at), hovering ? 0.45 : 0.9, true, true);
   path([at(mouth), at(stars[0]!.point)], 0.5);
   const points = stars.map((star) => at(star.point));
-  const [leftBank, rightBank] = waterBanks([at(mouth), ...points], Math.max(5, aquariusFrame(s.w, s.h).w * 0.018));
+  const frame = aquariusFrame(s.w, s.h);
+  const last = points.at(-1)!;
+  const [leftBank, rightBank] = waterBanks([at(mouth), ...points], Math.max(5, frame.w * 0.018));
   path(leftBank, 0.78, true);
   path(rightBank, 0.78, true);
   if (
@@ -58,13 +62,17 @@ export function drawReleases(s: SkyState) {
     !s.deliveryVersion &&
     s.cam.s < SPIN_STOP
   ) {
-    const flow = leftBank.map(([x, y], i): Point => [(x + rightBank[i]![0]) / 2, (y + rightBank[i]![1]) / 2]);
-    travelingGlow(s, flow, COL_APP, s.aquariusFlowT ?? 0, 5400, 2200);
+    const phase = (s.aquariusFlowT ?? 0) % 9000,
+      pour = 4800;
+    if (phase > 0 && phase < pour) {
+      const flow = leftBank.map(([x, y], i): Point => [(x + rightBank[i]![0]) / 2, (y + rightBank[i]![1]) / 2]);
+      travelingGlow(s, flow, COL_APP, phase / pour, { width: 3.2, trail: 0.43, opacity: Math.min(0.95, phase / 550) });
+    }
+    waterImpact(s, last, phase - pour, frame.w * 0.19);
   }
-  const last = points.at(-1)!;
   c.setLineDash([3 * s.sz, 4 * s.sz]);
   for (const fraction of [0.06, 0.1, 0.14]) {
-    const radius = aquariusFrame(s.w, s.h).w * fraction;
+    const radius = frame.w * fraction;
     c.strokeStyle = rgba(COL_APP, (0.5 - fraction * 1.8) * s.skyK);
     c.lineWidth = 0.8;
     c.beginPath();
@@ -73,7 +81,7 @@ export function drawReleases(s: SkyState) {
   }
   const returning = body.returning;
   if (returning) {
-    const k = (returning.elapsed - returning.lastDelay - RETURN_GLIDE) / RETURN_SPLASH;
+    const k = (returning.elapsed - returning.end) / RETURN_SPLASH;
     if (k > 0 && k < 1) {
       const radius = (8 + 48 * k) * s.sz;
       c.setLineDash([]);
@@ -87,7 +95,7 @@ export function drawReleases(s: SkyState) {
   const returnGlow = (p: Particle) => {
     const step = returning?.steps.get(p);
     if (!returning || !step) return 0;
-    const k = (returning.elapsed - step.delay) / RETURN_GLIDE;
+    const k = returnProgress(returning.elapsed, step.timing);
     return k > 0 && k < 1 ? Math.sin(Math.PI * k) ** 2 : 0;
   };
   const dot = (p: Point, radius: number, alpha: number, glow: number) => {
@@ -135,7 +143,6 @@ export function drawReleases(s: SkyState) {
     c.textAlign = caption.align;
     if (!aquariusLabelZoom(s)) c.fillText(star.release.version, ...caption.point);
   });
-  const frame = aquariusFrame(s.w, s.h);
   c.fillStyle = rgba(COL_APP, 0.8 * s.skyK);
   c.font = `500 ${Math.max(12, s.unit * 0.01) * s.sz}px "Noto Sans SC", sans-serif`;
   c.textAlign = 'center';

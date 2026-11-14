@@ -1,17 +1,15 @@
 import { rgba } from '../palette';
 import type { Color, Point, SkyState } from '../types';
 
-/** Paint a short pulse along the live outline, with a quiet interval between passes. */
+/** Paint a bright front and a fading trail along the live outline. */
 export function travelingGlow(
   s: SkyState,
   points: Point[],
   color: Color,
-  time: number,
-  period: number,
-  travel: number,
+  progress: number,
+  { width, trail, opacity }: { width: number; trail: number; opacity: number },
 ) {
-  const progress = (time % period) / travel;
-  if (progress <= 0 || progress >= 1 || points.length < 2) return;
+  if (progress <= 0 || progress > 1 || opacity <= 0 || points.length < 2) return;
   const lengths = [0];
   for (let i = 1; i < points.length; i++) {
     const [x, y] = points[i]!,
@@ -21,7 +19,7 @@ export function travelingGlow(
   const total = lengths.at(-1)!;
   if (!total) return;
   const head = total * progress,
-    tail = Math.max(0, head - Math.min(total * 0.25, 32 * s.sz)),
+    tail = Math.max(0, head - total * trail),
     path: Point[] = [];
   for (let i = 1; i < points.length; i++) {
     const start = lengths[i - 1]!,
@@ -39,18 +37,32 @@ export function travelingGlow(
   }
   if (path.length < 2) return;
   const ctx = s.ctx,
-    alpha = Math.sin(Math.PI * progress) * s.skyK,
-    gradient = ctx.createLinearGradient(...path[0]!, ...path.at(-1)!);
+    alpha = opacity * s.skyK,
+    tip = path.at(-1)!,
+    gradient = ctx.createLinearGradient(...path[0]!, ...tip);
   gradient.addColorStop(0, rgba(color, 0));
-  gradient.addColorStop(1, rgba(color, 0.9 * alpha));
+  gradient.addColorStop(0.65, rgba(color, 0.5 * alpha));
+  gradient.addColorStop(1, rgba(color, alpha));
   ctx.save();
   ctx.setLineDash([]);
   ctx.lineCap = 'round';
-  ctx.lineWidth = 2;
   ctx.strokeStyle = gradient;
   ctx.beginPath();
   ctx.moveTo(...path[0]!);
   for (const point of path.slice(1)) ctx.lineTo(...point);
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = width * 2.7;
   ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = width;
+  ctx.stroke();
+  ctx.globalAlpha = 0.85 * alpha;
+  const glow = width * 5 * s.sz;
+  ctx.drawImage(s.tint(color), tip[0] - glow, tip[1] - glow, glow * 2, glow * 2);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = rgba([240, 253, 255], alpha);
+  ctx.beginPath();
+  ctx.arc(...tip, width * 0.55 * s.sz, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }

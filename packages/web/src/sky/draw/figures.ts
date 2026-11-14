@@ -3,6 +3,7 @@ import type { Lane } from '../../domain/types';
 import type { Point, SkyState } from '../types';
 import { rgba } from '../palette';
 import { SPIN_STOP } from '../geometry/clusters';
+import { SCORPIUS_SWING_PERIOD } from '../geometry/scorpiusSwing';
 import { travelingGlow } from './travelingGlow';
 
 /** All endpoints are resolved from the simulated stars, never from cached template coordinates. */
@@ -82,14 +83,13 @@ export function drawFigure(s: SkyState, lane: Lane) {
       !stars[at]!.dead
     ) {
       const tail = figure.nodes.flatMap((node, i) => (/^(T[1-4]|S)$/.test(node.slot) ? [points[i]!] : []));
-      travelingGlow(
-        s,
-        tail.length > 1 ? [...tail, tip] : [p, q, tip],
-        COL[lane],
-        (s.spinT ?? 0) - (s.spinHeld?.get(lane) ?? 0) + 3200,
-        8400,
-        1700,
-      );
+      const clock = (s.spinT ?? 0) - (s.spinHeld?.get(lane) ?? 0);
+      const phase = (clock + SCORPIUS_SWING_PERIOD / 4) % (SCORPIUS_SWING_PERIOD / 2);
+      travelingGlow(s, tail.length > 1 ? [...tail, tip] : [p, q, tip], COL[lane], Math.min(1, phase / 2300), {
+        width: 3,
+        trail: 0.42,
+        opacity: Math.min(1, phase / 250, (3000 - phase) / 700),
+      });
     }
   }
   c.restore();

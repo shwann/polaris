@@ -62,6 +62,7 @@ export function size(s: SkyState) {
   s.h = innerHeight;
   s.unit = Math.min(s.w, s.h * 1.4);
   s.ZONE = s.h > s.w * 1.15 ? TALL : WIDE;
+  s.scorpiusSwing = undefined;
   s.cvs.width = Math.round(s.w * s.dpr);
   s.cvs.height = Math.round(s.h * s.dpr);
   s.ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);

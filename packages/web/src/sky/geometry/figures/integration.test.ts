@@ -175,10 +175,10 @@ it.each(lanes)('returns the %s stars to their own slots in sequence after a long
   runFrames(s, 300);
   const displaced = list.filter((star) => Math.hypot(star.ox, star.oy) > 0.1);
   expect(displaced.length).toBeGreaterThan(1);
-  runFrames(s, 460);
+  runFrames(s, 1250);
   expect(Math.hypot(root.ox, root.oy)).toBeLessThan(0.001);
   expect(displaced.some((star) => Math.hypot(star.ox, star.oy) > 0.1)).toBe(true);
-  runFrames(s, 900);
+  runFrames(s, 2650);
   expect(list.every((star) => Math.hypot(star.ox, star.oy) < 0.001)).toBe(true);
   expect(s.figureReturns?.size).toBe(0);
   detach();

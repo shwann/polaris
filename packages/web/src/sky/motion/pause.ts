@@ -13,7 +13,11 @@ export function pausedGroups(s: SkyState): Set<Lane> {
   const out = new Set<Lane>();
   if (!s.sky) return out;
   const picked = s.selected ? s.stars.get(s.selected) : undefined;
-  if (picked && !picked.dead && (s.w > 560 || picked.group === 'risk' || picked.group === 'release'))
+  if (
+    picked &&
+    !picked.dead &&
+    (s.w > 560 || picked.group === 'risk' || picked.group === 'release' || picked.group === 'waiting')
+  )
     out.add(picked.group);
   if (s.w <= 560) return out;
   if (s.hover && !s.hover.dead) out.add(s.hover.group);

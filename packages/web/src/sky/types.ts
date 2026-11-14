@@ -124,6 +124,7 @@ export interface SkyState extends SkyMethods {
   /** Cluster spin clock in ms; advances slower when zoomed in. */
   spinT?: number;
   aquariusFlowT?: number;
+  scorpiusSwing?: number;
   cvs: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   registry: LayoutRegistry;
@@ -212,6 +213,7 @@ export interface SkyState extends SkyMethods {
   /** Projection is reserved for layout migration; elastic motion runs until every member settles. */
   figureMotion?: Map<Lane, 'forming' | 'elastic'>;
   figureReturns?: Map<Lane, FigureReturn>;
+  returnVariants?: Map<string, boolean>;
   dust: { x: number; y: number; m: number; ph: number }[];
   ripples: { x: number; y: number; c: Color; t0: number; power: number; small?: boolean; hit: Set<Particle> }[];
   comets: { x: number; y: number; vx: number; vy: number; delay: number }[];

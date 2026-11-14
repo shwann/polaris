@@ -8,7 +8,12 @@ export function devProxy(): Plugin {
     config: () => ({
       server: {
         host: '127.0.0.1',
-        proxy: { '/data.json': { target: process.env.POLARIS_SERVE_URL || 'http://127.0.0.1:8790' } },
+        proxy: {
+          '/data.json': {
+            target: process.env.POLARIS_SERVE_URL || 'http://127.0.0.1:8790',
+            changeOrigin: true,
+          },
+        },
       },
     }),
   };

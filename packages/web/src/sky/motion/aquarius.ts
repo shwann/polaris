@@ -4,12 +4,11 @@ import { moveHeld } from './constellation';
 import { pushByRipple } from './ripple';
 import { advance, resetParticle, THROW_SPEED, type Constraint, type Particle } from './softbody';
 import { MIN_SEPARATION } from './separation';
+import { figureReturnTimings, returnOffset, returnProgress } from './returnTiming';
 
-export const RETURN_GLIDE = 980;
-const RETURN_SPREAD = 900;
 export const RETURN_SPLASH = 520;
 
-export function returnAquarius(body: AquariusBody, root: Particle, velocity: Point, scale: number) {
+export function returnAquarius(s: SkyState, body: AquariusBody, root: Particle, velocity: Point) {
   const jar = body.jar.nodes.map((node) => node.particle);
   const mouth = jar[body.jar.mouth];
   if (mouth) {
@@ -17,20 +16,20 @@ export function returnAquarius(body: AquariusBody, root: Particle, velocity: Poi
     jar.sort((a, b) => distance(b) - distance(a));
   }
   const particles = [root, ...[...jar, ...body.stars.map((node) => node.particle)].filter((p) => p !== root)];
-  const interval = Math.min(100, RETURN_SPREAD / Math.max(1, particles.length - 1));
+  const timings = figureReturnTimings(s, 'aquarius', particles);
   const speed = Math.hypot(...velocity);
   // Retain a little of a flick's momentum without sending the star far past the release point.
-  const kick = Math.min(0.45 / scale, (THROW_SPEED * 0.25) / (speed || 1));
+  const kick = Math.min(0.45 / s.cam.s, (THROW_SPEED * 0.25) / (speed || 1));
   body.returning = {
     elapsed: 0,
-    lastDelay: (particles.length - 1) * interval,
+    end: Math.max(...Array.from(timings.values(), ({ delay, duration }) => delay + duration)),
     steps: new Map(
-      particles.map((p, i) => [
+      particles.map((p) => [
         p,
         {
           from: [p.ox, p.oy],
           velocity: p === root ? [velocity[0] * kick, velocity[1] * kick] : [0, 0],
-          delay: i * interval,
+          timing: timings.get(p)!,
         },
       ]),
     ),
@@ -40,15 +39,15 @@ export function returnAquarius(body: AquariusBody, root: Particle, velocity: Poi
 function glideHome(body: AquariusBody, dt: number) {
   const returning = body.returning!;
   returning.elapsed += dt;
-  for (const [p, { from, velocity, delay }] of returning.steps) {
-    const k = Math.min(1, Math.max(0, (returning.elapsed - delay) / RETURN_GLIDE));
-    const left = (1 - k) ** 2 * (1 + 2 * k);
-    const carry = k * (1 - k) ** 2 * (RETURN_GLIDE / 1000);
+  for (const [p, { from, velocity, timing }] of returning.steps) {
+    const k = returnProgress(returning.elapsed, timing);
+    const [x, y] = returnOffset(from, returning.elapsed, timing);
+    const carry = k * (1 - k) ** 2 * (timing.duration / 1000);
     resetParticle(p);
-    p.ox = from[0] * left + velocity[0] * carry;
-    p.oy = from[1] * left + velocity[1] * carry;
+    p.ox = x + velocity[0] * carry;
+    p.oy = y + velocity[1] * carry;
   }
-  if (returning.elapsed >= returning.lastDelay + RETURN_GLIDE + RETURN_SPLASH) body.returning = undefined;
+  if (returning.elapsed >= returning.end + RETURN_SPLASH) body.returning = undefined;
 }
 
 /** The same solver and defaults run on an isolated body with no physical tether to Dubhe. */

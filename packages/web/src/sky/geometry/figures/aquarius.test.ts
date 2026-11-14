@@ -174,10 +174,11 @@ it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))
 
     expect(cameraBounds(s)).toEqual(bounds);
     pointer('pointerup', x + dx, y + dy, 1001);
-    for (let i = 1; i <= fps * 2; i++) {
+    const end = s.aquarius!.returning!.end;
+    for (let i = 1; i <= Math.ceil((fps * (end + 120)) / 1000); i++) {
       constellation(s, [], 1000 / fps, 1001 + (i * 1000) / fps);
       if (i === Math.ceil(fps * 0.4)) expect(displacement(root.particle)).toBeGreaterThan(60);
-      if (i === Math.ceil(fps * 1.05)) {
+      if (i === Math.ceil(fps * 1.35)) {
         expect(displacement(root.particle)).toBe(0);
         expect(Math.max(...aquariusParticles(s.aquarius!).map(displacement))).toBeGreaterThan(4);
       }
@@ -186,7 +187,7 @@ it.each([30, 60, 144].flatMap((fps) => [11, 12].map((count) => ({ fps, count }))
     vi.mocked(s.ctx.ellipse).mockClear();
     drawReleases(s);
     expect(vi.mocked(s.ctx.ellipse).mock.calls).toHaveLength(4);
-    constellation(s, [], 500, 3501);
+    constellation(s, [], 600, 1001 + end + 600);
     expect(s.aquarius!.returning).toBeUndefined();
     detach();
     registry.dispose();
@@ -220,7 +221,8 @@ it('lets a jar point tension its neighbours, keeps tasks and hubs still, and sup
   pointer('pointerup', x, y - 150, 1001);
   expect(onPickRelease).not.toHaveBeenCalled();
   expect(tooltipAllowed(s)).toBe(false);
-  for (let i = 1; i <= 120; i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
+  const end = s.aquarius!.returning!.end;
+  for (let i = 1; i <= Math.ceil((end * 60) / 1000); i++) constellation(s, [task], 1000 / 60, 1001 + (i * 1000) / 60);
   expect(Math.max(...aquariusParticles(s.aquarius!).map((p) => Math.hypot(p.ox, p.oy)))).toBeLessThan(6);
   detach();
   registry.dispose();

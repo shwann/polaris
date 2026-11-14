@@ -6,6 +6,7 @@ import { advance, HOME, DAMPING, resetParticle, type Constraint, type Particle }
 import { MIN_SEPARATION } from './separation';
 import { moveAquarius } from './aquarius';
 import { moveReturningFigures } from './figureReturn';
+import { figurePivot } from '../geometry/clusters';
 
 export const HUB_HOME = 100;
 export const HUB_DAMPING = 16;
@@ -110,12 +111,16 @@ export function constellation(s: SkyState, list: Star[], dt: number, time?: numb
     const mean = (key: 'ox' | 'oy' | 'vx' | 'vy') => figure.reduce((sum, p) => sum + p[key], 0) / figure.length;
     const [ox, oy, vx, vy] = [mean('ox'), mean('oy'), mean('vx'), mean('vy')];
     for (const p of figure) Object.assign(p, { ox, oy, vx, vy });
+    const [px, py] = figurePivot(s, lane);
+    const lag = lane === 'waiting' || lane === 'risk' || lane === 'release' ? 0.029 : 0.01;
     if (
       s.skyK === 1 &&
       figure.every((p) => {
         const [x, y] = s.home(p, time ?? s.last);
-        // Allow the small steady easing lag of the figures that slowly rotate at overview zoom.
-        return Math.hypot(p.baseX! - x, p.baseY! - y) < Math.max(0.5, Math.hypot(p.layoutX!, p.layoutY!) * 0.01);
+        // Allow the steady easing lag around the rotation or swing pivot.
+        return (
+          Math.hypot(p.baseX! - x, p.baseY! - y) < Math.max(0.5, Math.hypot(p.layoutX! - px, p.layoutY! - py) * lag)
+        );
       })
     )
       s.figureMotion.delete(lane);
