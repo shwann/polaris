@@ -1,3 +1,4 @@
+import { pickRelease } from './geometry/figures/aquarius';
 import { clearTooltip } from './tooltip';
 import { COL } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
@@ -26,6 +27,11 @@ export function attachInput(s: SkyState) {
   const double = (x: number, y: number) => {
     if (hitDoneLabel(s, x, y)) {
       zoomDone(s, x, y);
+      return;
+    }
+    const release = pickRelease(s, x, y);
+    if (release) {
+      s.events.onPickRelease?.(release.release.version);
       return;
     }
     const hit = pickAt(s, x, y);
@@ -132,8 +138,8 @@ export function attachInput(s: SkyState) {
           cx: s.cam.x,
           cy: s.cam.y,
           moved: false,
-          star: hit.star,
-          dip: hit.dip,
+          star: pickRelease(s, e.clientX, e.clientY) ? null : hit.star,
+          dip: pickRelease(s, e.clientX, e.clientY) ? -1 : hit.dip,
           grab: [0, 0],
           samples: [{ x: e.clientX, y: e.clientY, t: e.timeStamp }],
         };
@@ -182,6 +188,12 @@ export function attachInput(s: SkyState) {
         return;
       }
       lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+    }
+    const release = pickRelease(s, e.clientX, e.clientY);
+    if (release) {
+      clearTooltip(s);
+      s.events.onPickRelease?.(release.release.version);
+      return;
     }
     if (hitDoneLabel(s, e.clientX, e.clientY)) {
       zoomDone(s, e.clientX, e.clientY);

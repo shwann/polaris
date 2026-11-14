@@ -3,6 +3,7 @@ import styles from './App.module.css';
 import { useClock } from './hooks/useClock';
 import { Header } from './components/Header/Header';
 import { Matrix } from './components/Matrix/Matrix';
+import { ReleaseLog } from './components/ReleaseLog/ReleaseLog';
 import { Digest } from './components/Digest/Digest';
 import { FilterBar } from './components/FilterBar/FilterBar';
 import { Lanes } from './components/Lanes/Lanes';
@@ -45,6 +46,7 @@ export function Dashboard() {
           <>
             <Matrix />
             <Digest />
+            <ReleaseLog key={ui.system} />
           </>
         )}
         <p className={styles.state} hidden={!data.message}>

@@ -1,5 +1,6 @@
 import {
   EVENT_LIMIT,
+  releaseDetails,
   type Snapshot,
   type Task,
   type Requirement,
@@ -57,6 +58,11 @@ export function snapshot(db: Database, now = new Date().toISOString()): Snapshot
         taskIds: taskLinks(db, String(r.id)).map((x) => String(x.task_id)),
       }) as unknown as Requirement,
   );
+  for (const s of systems)
+    s.releases = releaseDetails(
+      s.releases,
+      tasks.filter((t) => t.systemKey === s.key),
+    );
   const events = eventRows(db, EVENT_LIMIT).map((e) => camel(e) as unknown as EventItem);
   const updatedAt = [
     ...tasks.map((t) => t.updatedAt),

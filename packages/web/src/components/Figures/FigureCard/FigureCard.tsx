@@ -7,7 +7,7 @@ import { useUI } from '../../../hooks/useBoard';
 import { uiStore } from '../../../store/uiStore';
 import { DipperMark } from '../DipperMark/DipperMark';
 import { Count } from '../../Shared/Shared';
-import { goLane, scrollToNode } from '../../../hooks/skyBridge';
+import { goLane, goRelease } from '../../../hooks/skyBridge';
 import { FIG_LANE } from '../../../domain/lanes';
 
 import { vars } from '../../../styles/style';
@@ -39,11 +39,11 @@ export function FigureCard({
       onPointerLeave={() => uiStore.setState({ hovered: -1 })}
       onClick={toggle}
       onDoubleClick={() => {
-        // Double-click jumps to the detail section: the release digest for the app card, the lane for the rest.
+        // Double-click jumps to the detail section: release history for the app card, the lane for the rest.
         uiStore.setState({ pinned: index });
         const lane = FIG_LANE[index];
         if (lane) goLane(lane);
-        else scrollToNode(document.getElementById('dg-r-h')?.closest('section') ?? null);
+        else goRelease();
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

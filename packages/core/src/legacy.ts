@@ -1,3 +1,4 @@
+import { releaseDetails } from './releases.js';
 import { EVENT_LIMIT, isLane, isStepState } from './enums.js';
 import type { AppInfo, EventItem, Release, Snapshot, SystemInfo, Task, TaskStep } from './types.js';
 
@@ -98,12 +99,18 @@ export function fromLegacy(
     .filter((e) => e && typeof e.at === 'string' && typeof e.text === 'string')
     .slice(0, EVENT_LIMIT)
     .map((e) => ({ at: e.at, text: e.text }));
+  const tasks = input.tasks.map((t) => convertTask(t, first));
+  for (const s of systems)
+    s.releases = releaseDetails(
+      s.releases,
+      tasks.filter((t) => t.systemKey === s.key),
+    );
   return {
     schema: 1,
     generatedAt: now,
     ...(str(board.updatedAt) ? { updatedAt: str(board.updatedAt) } : {}),
     systems,
-    tasks: input.tasks.map((t) => convertTask(t, first)),
+    tasks,
     requirements: [],
     events,
   };

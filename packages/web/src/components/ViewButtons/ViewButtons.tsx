@@ -17,7 +17,7 @@ export function ViewButtons({ className }: { className?: string }) {
         className={sharedStyles.btn}
         type="button"
         aria-pressed={u.sky}
-        title="淡出面板看完整星图；每颗星是一项任务，点星可跳到任务（快捷键 S）"
+        title="淡出面板看完整星图；任务星查看详情，版本星跳到发布记录（快捷键 S）"
         onClick={() => setSky(true)}
       >
         ✦ 星图

@@ -14,7 +14,9 @@ dispatch set --engine codex|claude --model MODEL --effort EFFORT --note 原话 [
 dispatch show [--task ID] [--history] [--json]（默认当前系统或 beidou，只读）
 task move ID --lane waiting [--status TEXT --waiting-on 你|客户|前置]；task step ID --seq 1 --name TEXT --state done
 task link ID --req REQ；task list|show [ID]；task delete ID
-release record --version VERSION [--tasks ID,ID ... --build BUILD --ref REF]
+release record --version VERSION [--title TEXT --tag TAG --tasks ID,ID ... --build BUILD --ref REF --note TEXT]
+release edit --version VERSION [--title TEXT --tag TAG --build BUILD --note TEXT --ref REF --add-tasks ID,ID --remove-tasks ID,ID]（修改已有发布记录）
+发版标签 TAG：功能/修复/热修/里程碑，或 feature/fix/hotfix/milestone；版本不存在会报错。
 release next --version VERSION [--note TEXT]（只改下一版；--note "" 清空说明，省略则保留）
 log add --text TEXT；status [--system KEY]；check；undo BATCH
 backup；restore FILE.sql；import-json DIR [--artifact-export]

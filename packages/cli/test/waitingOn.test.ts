@@ -33,11 +33,11 @@ const hookText = async (home: string) => {
   return String(log.mock.calls.at(-1)![0]);
 };
 
-test('v2 upgrades to v3 with a pre-migration backup, intact rows and a NULL waiting_on', () => {
+test('v2 upgrades to the latest schema with a pre-migration backup, intact rows and a NULL waiting_on', () => {
   const { home, path, db } = v2Database();
   try {
     migrate(db, path);
-    expect(db.get('SELECT MAX(version) AS v FROM schema_version')!.v).toBe(3);
+    expect(db.get('SELECT MAX(version) AS v FROM schema_version')!.v).toBe(4);
     expect(db.all('SELECT id,lane,needs,waiting_on FROM tasks ORDER BY id')).toEqual([
       { id: 'D1', lane: 'doing', needs: null, waiting_on: null },
       { id: 'W1', lane: 'waiting', needs: '请确认', waiting_on: null },

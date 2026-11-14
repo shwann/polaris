@@ -43,8 +43,14 @@ export interface AppInfo {
 export interface Release {
   version: string;
   releasedAt: IsoTime;
+  title?: string;
+  tag?: 'feature' | 'fix' | 'hotfix' | 'milestone';
+  build?: string;
   ref?: string;
   note?: string;
+  /** Derived fields are optional only for older snapshots and legacy mirrors. */
+  items?: { id: string; code: string; title: string; kind: 'feature' | 'fix' }[];
+  stats?: { items: number; features: number; fixes: number; unverified: number; rollback?: string };
 }
 
 /** One system, drawn as one constellation under 北辰. */

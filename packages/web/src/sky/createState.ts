@@ -65,6 +65,8 @@ export function createState(
     ty: 0,
     focus: null,
     hover: null,
+    hoverRelease: null,
+    releases: [],
     dipLit: -1,
     dipGlow: 0,
     dipPin: -1,

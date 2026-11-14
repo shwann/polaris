@@ -17,7 +17,7 @@ const actions: Record<string, readonly string[]> = {
   system: ['add', 'update', 'list'],
   req: ['add', 'update', 'move', 'check', 'link', 'unlink', 'list', 'show'],
   task: ['add', 'update', 'move', 'step', 'link', 'list', 'show', 'delete'],
-  release: ['record', 'next'],
+  release: ['record', 'next', 'edit'],
   log: ['add'],
   dispatch: ['set', 'show'],
 };

@@ -2,7 +2,7 @@ import styles from './Digest.module.css';
 import { cn } from '../../styles/cn';
 import { groupDigest, releaseDigest } from '../../domain/presentation';
 import { useBoard } from '../../hooks/useBoard';
-import { goLane } from '../../hooks/skyBridge';
+import { goLane, goRelease } from '../../hooks/skyBridge';
 import { openDip } from '../../store/uiStore';
 import { SectionHeading } from '../Shared/Shared';
 
@@ -56,7 +56,7 @@ export function Digest() {
                 className={styles['dg-row']}
                 style={vars({ '--c': `var(${r.color})` })}
                 title={r.text}
-                onClick={() => openDip(0)}
+                onClick={() => (r.title === '正式 App' ? goRelease() : openDip(0))}
               >
                 <b>{r.title}</b>
                 <span>{r.text}</span>

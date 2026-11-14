@@ -42,7 +42,7 @@ test('doctor checks Node, SQLite, writable home, schema/check, git, backup and p
   expect(result.ok).toBe(true);
   expect(result.checks.map((c) => c.name)).toEqual(['node', 'sqlite', 'home', 'database', 'git', 'backup', 'port']);
   expect(byName(result, 'home')).toMatchObject({ path: home, exists: true, writable: true });
-  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 3, check: { errors: 0 } });
+  expect(byName(result, 'database')).toMatchObject({ exists: true, migrationVersion: 4, check: { errors: 0 } });
   expect(fs.readFileSync(path)).toEqual(before);
   expect(inspectPort).toHaveBeenCalledWith(8790);
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});

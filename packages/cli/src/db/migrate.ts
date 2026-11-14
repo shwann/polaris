@@ -3,11 +3,13 @@ import type { Database } from './connection.js';
 import init from './migrations/0001_init.sql?raw';
 import dispatch from './migrations/0002_dispatch.sql?raw';
 import waitingOn from './migrations/0003_waiting_on.sql?raw';
+import releaseLog from './migrations/0004_release_log.sql?raw';
 
 const migrations = [
   { version: 1, sql: init },
   { version: 2, sql: dispatch },
   { version: 3, sql: waitingOn },
+  { version: 4, sql: releaseLog },
 ];
 export function migrate(db: Database, path: string): void {
   db.exec('BEGIN IMMEDIATE');

@@ -1,6 +1,6 @@
 import styles from './SkyLegend.module.css';
 import { useState, type ReactNode } from 'react';
-import { COL, LANES } from '../../domain/lanes';
+import { COL, COL_APP, LANES } from '../../domain/lanes';
 import { LATE_DAYS, RECENT_DAYS } from '../../domain/time';
 import type { Lane } from '../../domain/types';
 import { useUI } from '../../hooks/useBoard';
@@ -93,6 +93,12 @@ export function SkyLegend() {
       </button>
       {open && (
         <ul className={styles.list}>
+          <li className={styles.row} style={{ color: `rgb(${COL_APP.join(',')})` }}>
+            <Icon>
+              <path d="M2 3 L12 7 L5 11 L16 15" fill="none" stroke="currentColor" strokeDasharray="3 2" />
+            </Icon>
+            <span className={styles.name}>水瓶 · 发布记录：一颗星一个版本</span>
+          </li>
           {LANES.map((lane) => (
             <li key={lane.key} className={styles.row} style={{ color: rgb(lane.key) }}>
               <Icon>{MARKS[lane.key].icon}</Icon>

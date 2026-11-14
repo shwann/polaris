@@ -3,7 +3,7 @@ import { required, write, type Context } from '../service/context.js';
 import { changeTask } from '../service/tasks.js';
 import { changeRequirement, checkRequirement } from '../service/requirements.js';
 import { changeSystem } from '../service/systems.js';
-import { recordRelease, setNextRelease } from '../service/releases.js';
+import { recordRelease, editRelease, setNextRelease } from '../service/releases.js';
 import { undo } from '../service/undo.js';
 import { setDispatch, taskDispatchPatch } from '../service/dispatch.js';
 import { readLegacy, importSnapshot } from '../export/importer.js';
@@ -40,6 +40,14 @@ const appFields = [
   'next',
   'next-note',
   'ref',
+];
+const taskList = (args: Parsed, key: string) => [
+  ...new Set(
+    (multi(args, key) ?? [])
+      .flatMap((v) => v.split(','))
+      .map((v) => v.trim())
+      .filter(Boolean),
+  ),
 ];
 export function executeWrite(ctx: Context, args: Parsed) {
   const [command, action, positionalId] = args.positionals;
@@ -127,15 +135,16 @@ export function executeWrite(ctx: Context, args: Parsed) {
   } else if (command === 'release' && action === 'next') {
     text = `设置系统 ${ctx.config.system || ''} 下一版 ${string(args, 'version') || ''}${note === undefined ? '' : `：${note || '清空说明'}`}`;
     apply = () => setNextRelease(ctx, string(args, 'version'), note);
+  } else if (command === 'release' && action === 'edit') {
+    const fields = patch(args, ['version', 'title', 'tag', 'build', 'note', 'ref']);
+    const add = taskList(args, 'add-tasks'),
+      remove = taskList(args, 'remove-tasks');
+    if (add.some((id) => remove.includes(id))) throw new Error('同一任务不能同时添加和移除');
+    text = releaseText(ctx.config.system || '', string(args, 'version') || '', add, fields, remove);
+    apply = () => editRelease(ctx, fields, add, remove);
   } else if (command === 'release') {
     text = releaseText(ctx.config.system || '', string(args, 'version') || '', multi(args, 'tasks') || []);
-    apply = () =>
-      recordRelease(
-        ctx,
-        patch(args, appFields),
-        (multi(args, 'tasks') ?? []).flatMap((v) => v.split(',')).filter(Boolean),
-        note,
-      );
+    apply = () => recordRelease(ctx, patch(args, [...appFields, 'title', 'tag']), taskList(args, 'tasks'), note);
   } else if (command === 'log') {
     text = required(string(args, 'text') || note || positionalId, '--text');
     apply = () => null;
@@ -159,7 +168,7 @@ export function executeWrite(ctx: Context, args: Parsed) {
           : ctx;
   const result = write(
     eventContext,
-    command === 'dispatch' || (command === 'release' && action === 'next') ? text : note || text,
+    command === 'dispatch' || (command === 'release' && ['next', 'edit'].includes(action!)) ? text : note || text,
     apply,
     preserveEvents,
   );

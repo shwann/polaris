@@ -13,6 +13,7 @@ export interface UIState extends Filter {
   inputChosen: boolean;
   projection: boolean;
   selected: string | null;
+  releaseFocus: string | null;
   dip: number;
   dipAll: boolean;
   dipKeyboard: boolean;
@@ -32,6 +33,7 @@ export const uiStore = createStore<UIState>(() => ({
   inputChosen: !!readPreference('board-input'),
   projection: !!readPreference('board-proj'),
   selected: null,
+  releaseFocus: null,
   dip: -1,
   dipAll: false,
   dipKeyboard: false,

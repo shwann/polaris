@@ -1,5 +1,6 @@
 import type { Figure, FigureNode, FigureTask } from './geometry/figures';
-import type { WaitingOn } from '@polaris/core';
+import type { ReleaseStar } from './geometry/figures/aquarius';
+import type { Release, WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
 import type { Sample } from './motion/inertia';
 import type { Color } from '../domain/lanes';
@@ -75,6 +76,7 @@ export interface Zone extends Record<Lane | 'pole', Point> {
 }
 export interface SkyEvents {
   onPickStar?(id: string | null): void;
+  onPickRelease?(version: string): void;
   onPickDipper?(index: number): void;
   onSelectedMove?(x: number, y: number, cluster?: Box): Point | void;
   onTooltip?(text: string, detail: string, x: number, y: number): void;
@@ -158,6 +160,8 @@ export interface SkyState extends SkyMethods {
   ty: number;
   focus: { id: string; x: number; y: number } | null;
   hover: Star | null;
+  hoverRelease: ReleaseStar | null;
+  releases: Release[];
   dipLit: number;
   dipGlow: number;
   dipPin: number;
