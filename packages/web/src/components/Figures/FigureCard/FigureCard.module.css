@@ -177,10 +177,15 @@
   cursor: pointer;
 }
 .fig.pinned {
+  /* Selected card: a solid 2px edge, brighter outer glow and a tinted fill so it clearly stands out. */
+  --edge-c: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, var(--glass, rgba(9, 14, 26, 0.84)));
+  /* The HUD clip-path cuts outer shadows, so the ring and glow are drawn inside the card. */
   box-shadow:
-    0 0 0 1px var(--c),
-    0 0 26px color-mix(in srgb, var(--c) 30%, transparent),
-    inset 0 0 30px color-mix(in srgb, var(--c) 10%, transparent);
+    inset 0 0 0 2px var(--c),
+    inset 0 0 22px color-mix(in srgb, var(--c) 45%, transparent),
+    inset 0 -3px 0 0 var(--c);
+  transform: translateY(-3px);
 }
 .fig.pinned .lab em {
   color: rgb(255, 214, 140);

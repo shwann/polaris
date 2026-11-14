@@ -7,6 +7,8 @@ import { useUI } from '../../../hooks/useBoard';
 import { uiStore } from '../../../store/uiStore';
 import { DipperMark } from '../DipperMark/DipperMark';
 import { Count } from '../../Shared/Shared';
+import { goLane, scrollToNode } from '../../../hooks/skyBridge';
+import { FIG_LANE } from '../../../domain/lanes';
 
 import { vars } from '../../../styles/style';
 export function FigureCard({
@@ -22,7 +24,7 @@ export function FigureCard({
 }) {
   const u = useUI(),
     d = DIPPER[index]!,
-    title = `北斗${'一二三四五六七'[index]} · ${d.zh}（${d.en}） · 点击点亮北斗里的这颗星，再点一次熄灭`,
+    title = `北斗${'一二三四五六七'[index]} · ${d.zh}（${d.en}） · 单击点亮北斗里的这颗星，双击跳到对应模块`,
     toggle = () => uiStore.setState({ pinned: u.pinned === index ? -1 : index });
   return (
     <div
@@ -36,6 +38,13 @@ export function FigureCard({
       onPointerEnter={() => uiStore.setState({ hovered: index })}
       onPointerLeave={() => uiStore.setState({ hovered: -1 })}
       onClick={toggle}
+      onDoubleClick={() => {
+        // Double-click jumps to the detail section: the release digest for the app card, the lane for the rest.
+        uiStore.setState({ pinned: index });
+        const lane = FIG_LANE[index];
+        if (lane) goLane(lane);
+        else scrollToNode(document.getElementById('dg-r-h')?.closest('section') ?? null);
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
