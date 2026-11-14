@@ -44,6 +44,7 @@
   white-space: nowrap;
 }
 [data-dipcard] li [data-right] {
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--ink-3);
   white-space: nowrap;

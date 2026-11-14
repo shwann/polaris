@@ -7,7 +7,7 @@ import { drawStarLabels, labelLines, placeLabel } from './starLabels';
 /** Older shipped stars recede: smaller and dimmer than work shipped in the last few days. */
 export const OLD_DONE = { size: 0.7, alpha: 0.4 };
 /** 等客户 and 等前置 stars sit a step below 等你: dimmer, smaller halo, steady (no twinkle or sonar). */
-export const QUIET_WAIT = { size: 0.85, alpha: 0.6, halo: 0.55 };
+export const QUIET_WAIT = { size: 0.85, alpha: 0.7, halo: 0.65 };
 export const quietWait = (s: Star) => s.group === 'waiting' && !!s.wait && s.wait !== 'user';
 /** The hovered star's chain mates light up with it. */
 export const chainLit = (state: SkyState, s: Star) =>

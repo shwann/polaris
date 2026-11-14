@@ -1,7 +1,7 @@
 .cover {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.9rem 1.6rem;
+  gap: 1.2rem 1.6rem;
   align-items: end;
 }
 @media (max-width: 760px) {
@@ -13,17 +13,10 @@
 .sub {
   display: none;
 }
-/* Clock and its status share one line so the "needs you" block sits near the top. */
 .side {
   display: grid;
-  grid-template-columns: auto auto;
-  align-items: baseline;
-  gap: 0.35rem 0.9rem;
-  justify-content: end;
+  gap: 0.5rem;
   justify-items: end;
-}
-.side > :last-child {
-  grid-column: 1 / -1;
 }
 @media (max-width: 760px) {
   .side {
@@ -31,6 +24,7 @@
   }
 }
 .stamp {
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
@@ -64,6 +58,7 @@
 .sec-h h2 {
   margin: 0;
   font-size: var(--fs-md);
+  letter-spacing: 0.06em;
 }
 
 :global(.proj) .cover .sub {

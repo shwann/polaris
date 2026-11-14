@@ -7,6 +7,7 @@
   padding: 0.85rem 0.95rem 0.8rem;
   display: grid;
   gap: 0.5rem;
+  --edge-c: var(--c);
   background: rgba(6, 14, 26, 0.94);
 }
 .starcard .sc-top {
@@ -20,7 +21,7 @@
   color: var(--bg);
   background: var(--c);
   padding: 0 0.45rem;
-  border-radius: 4px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 50%, transparent);
 }
 .starcard .sc-lane {
   font-size: var(--fs-xs);
@@ -48,6 +49,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem 0.7rem;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--ink-3);
 }

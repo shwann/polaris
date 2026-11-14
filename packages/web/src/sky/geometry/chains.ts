@@ -60,27 +60,37 @@ export function assignSlots(stars: Star[], done: boolean) {
 }
 const slotRadius = (s: { ang: number; rad: number }, done: boolean) => Math.hypot(...slotPoint(s, done));
 
-/** One open string through each chain's stars (nearest neighbour from its outermost end); chains are not joined. */
-export function chainEdges(stars: Star[], at: (s: Star) => Point): [Star, Star][] {
-  const chains = new Map<string, Star[]>();
-  for (const s of stars) if (s.chain) (chains.get(s.chain) ?? chains.set(s.chain, []).get(s.chain)!).push(s);
+/** A link inside one chain counts as this fraction of its length, so chain mates join up before the strings meet. */
+export const CHAIN_PULL = 0.6;
+/** Whether a link joins two stars of the same chain (same requirement or module). */
+export const sameChain = (a: Star, b: Star) => !!a.chain && a.chain === b.chain;
+
+/**
+ * The whole cluster as one constellation: a minimum spanning tree over the stars' resting places, where links inside a
+ * chain are shortened by CHAIN_PULL so each chain reads as one string and the strings are joined by their nearest ends.
+ */
+export function clusterTree(stars: Star[], at: (s: Star) => Point): [Star, Star][] {
+  const list = [...stars].sort((a, b) => a.id.localeCompare(b.id)),
+    pts = list.map(at),
+    n = list.length,
+    cost = (i: number, j: number) =>
+      Math.hypot(pts[i]![0] - pts[j]![0], pts[i]![1] - pts[j]![1]) * (sameChain(list[i]!, list[j]!) ? CHAIN_PULL : 1);
   const edges: [Star, Star][] = [];
-  for (const members of chains.values()) {
-    if (members.length < 2) continue;
-    members.sort((a, b) => a.id.localeCompare(b.id));
-    const pts = new Map(members.map((s) => [s, at(s)] as const)),
-      cx = members.reduce((a, s) => a + pts.get(s)![0], 0) / members.length,
-      cy = members.reduce((a, s) => a + pts.get(s)![1], 0) / members.length;
-    const d = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-    let cur = members.reduce((best, s) => (d(pts.get(s)!, [cx, cy]) > d(pts.get(best)!, [cx, cy]) + 1e-9 ? s : best));
-    const left = new Set(members.filter((s) => s !== cur));
-    while (left.size) {
-      let next: Star | null = null;
-      for (const s of left)
-        if (!next || d(pts.get(s)!, pts.get(cur)!) < d(pts.get(next)!, pts.get(cur)!) - 1e-9) next = s;
-      edges.push([cur, next!]);
-      left.delete(next!);
-      cur = next!;
+  if (n < 2) return edges;
+  // Prim's algorithm: best[j] is the cheapest link from the tree to star j, from[j] the tree star it comes from.
+  const inTree = new Array<boolean>(n).fill(false),
+    best = new Array<number>(n).fill(Infinity),
+    from = new Array<number>(n).fill(-1);
+  best[0] = 0;
+  for (let k = 0; k < n; k++) {
+    let u = -1;
+    for (let j = 0; j < n; j++) if (!inTree[j] && (u < 0 || best[j]! < best[u]! - 1e-9)) u = j;
+    inTree[u] = true;
+    if (from[u]! >= 0) edges.push([list[from[u]!]!, list[u]!]);
+    for (let j = 0; j < n; j++) {
+      if (inTree[j]) continue;
+      const c = cost(u, j);
+      if (c < best[j]! - 1e-9) [best[j], from[j]] = [c, u];
     }
   }
   return edges;

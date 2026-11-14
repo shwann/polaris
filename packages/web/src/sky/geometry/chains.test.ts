@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { fixture } from '../testFixture';
 import { updateTasks } from '../updateTasks';
 import { rebuild } from './clusters';
-import { assignSlots, chainEdges, chainsOf, codePrefix, slotOf } from './chains';
+import { assignSlots, CHAIN_PULL, chainsOf, clusterTree, codePrefix, sameChain, slotOf } from './chains';
 import { sample } from '../../../tests/fixtures/sample';
 import type { Task } from '../../domain/types';
 
@@ -34,7 +34,7 @@ it('chains by shared requirement first, then by the code prefix', () => {
   expect(chains.get('X9')).toEqual({ key: 'req:R9', label: '需求 R9' });
 });
 
-it('strings each chain separately, never joins chains and draws nothing for a lone star', () => {
+it('links the whole cluster into one tree, chain mates first, joining strings at their nearest ends', () => {
   const { s, star } = fixture();
   const stars = [
     star('A1', 0, 0, 'waiting'),
@@ -45,9 +45,25 @@ it('strings each chain separately, never joins chains and draws nothing for a lo
     star('C1', 50, 50, 'waiting'),
   ];
   for (const x of stars) x.chain = x.id === 'C1' ? 'mod:C' : `mod:${x.id[0]}`;
-  const edges = chainEdges(stars, (x) => [x.x, x.y]).map(([a, b]) => `${a.id}-${b.id}`);
-  expect(edges).toEqual(['A1-A2', 'A2-A3', 'B1-B2']);
+  const tree = clusterTree(stars, (x) => [x.x, x.y]);
+  expect(tree.map(([a, b]) => `${a.id}-${b.id}`)).toEqual(['A1-A2', 'A2-A3', 'A3-C1', 'C1-B1', 'B1-B2']);
+  expect(tree.filter(([a, b]) => sameChain(a, b)).map(([a, b]) => `${a.id}-${b.id}`)).toEqual([
+    'A1-A2',
+    'A2-A3',
+    'B1-B2',
+  ]);
+  expect(clusterTree([stars[0]!], (x) => [x.x, x.y])).toEqual([]);
   expect(s.stars.size).toBe(6);
+});
+
+it('prefers a chain mate over a slightly nearer stranger', () => {
+  const { star } = fixture();
+  const [a, b, c] = [star('A1', 0, 0, 'risk'), star('A2', 0, 10, 'risk'), star('Z1', 9, 0, 'risk')];
+  a.chain = b.chain = 'req:R1';
+  const edges = clusterTree([a, b, c], (x) => [x.x, x.y]).map(([p, q]) => [p.id, q.id].sort().join('-'));
+  expect(10 * CHAIN_PULL).toBeLessThan(9);
+  expect(edges).toContain('A1-A2');
+  expect(edges).toHaveLength(2);
 });
 
 it('gives each chain neighbouring slots from the same set of places', () => {
@@ -96,5 +112,8 @@ it('marks only overdue 等你 stars late and keeps chain data on the stars after
     ['dependency', false],
   ]);
   expect(s.stars.get('P1')!.chainLabel).toBe('需求 R1 对账');
-  expect(s.trees.get('waiting')!.map(([a, b]) => [a.id, b.id].sort().join('-'))).toEqual(['P1-P2']);
+  // The whole 等待中 cluster is one tree; the two stars of requirement R1 are linked directly.
+  const edges = s.trees.get('waiting')!.map(([a, b]) => [a.id, b.id].sort().join('-'));
+  expect(edges).toHaveLength(3);
+  expect(edges).toContain('P1-P2');
 });

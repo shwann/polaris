@@ -1,21 +1,26 @@
 .clock {
   font-family: var(--display);
   font-weight: 600;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-display);
   line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--ink-2);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-shadow: 0 0 22px rgba(46, 230, 255, 0.45);
   font-variant-numeric: tabular-nums;
 }
 .date {
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.16em;
   color: var(--ink-3);
 }
 .live {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  font-family: var(--mono);
   font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
   color: var(--ink-3);
 }
 .live i {

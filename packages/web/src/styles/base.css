@@ -118,9 +118,36 @@ html.sky body {
 .hud {
   position: relative;
   background: var(--glass);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  clip-path: polygon(
+    var(--cut) 0,
+    100% 0,
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    0 100%,
+    0 var(--cut)
+  );
   isolation: isolate;
+}
+.hud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--edge-c, var(--edge-hi)),
+    var(--edge) 30%,
+    var(--edge) 70%,
+    var(--edge-c, var(--edge-hi))
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  clip-path: inherit;
 }
 .hud::after {
   content: '';
@@ -128,12 +155,11 @@ html.sky body {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s;
   background: radial-gradient(
     320px circle at var(--mx, -400px) var(--my, -400px),
-    rgba(46, 230, 255, 0.08),
+    rgba(46, 230, 255, 0.12),
     transparent 70%
   );
 }
@@ -144,6 +170,9 @@ html.sky body {
   .boot {
     animation: boot 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     animation-delay: calc(var(--d, 0) * 90ms);
+  }
+  .hud[data-scan]::before {
+    background-size: 100% 100%;
   }
 }
 

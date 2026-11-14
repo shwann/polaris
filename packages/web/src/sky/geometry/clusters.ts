@@ -2,7 +2,7 @@ import { FIG_LANE } from '../../domain/lanes';
 import type { Lane } from '../../domain/types';
 import { fit } from './dipper';
 import { clusterSpacing, DONE_SPACING, separatePoints } from './spacing';
-import { assignSlots, chainEdges } from './chains';
+import { assignSlots, clusterTree } from './chains';
 import type { Point, SkyState, Star } from '../types';
 
 /** How far past the bowl's resting radius the waiting cluster may grow with its count. */
@@ -144,6 +144,6 @@ export function rebuild(state: SkyState) {
   for (const [g, list] of byLane)
     state.trees.set(
       g,
-      chainEdges(list, (s) => state.home(s, 0)),
+      clusterTree(list, (s) => state.home(s, 0)),
     );
 }

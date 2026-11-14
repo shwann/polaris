@@ -21,7 +21,6 @@
   font-size: var(--fs-sm);
   color: var(--c);
   border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
-  border-radius: 4px;
   padding: 0 0.55rem;
   font-variant-numeric: tabular-nums;
 }

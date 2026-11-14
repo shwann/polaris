@@ -44,11 +44,30 @@ it('keeps the zoom-out hint as a second line only while there is room for it', (
   hubAt(s, 6, 400, 300);
   drawHubLabels(s);
   expect(s.hubLabelBoxes![6]).toHaveLength(2);
-  // A bright star right under the hint: the hint gives way, the caption stays.
+  // A bright shipped star right under the hint (shipped stars do not move captions): the hint gives way, the caption stays.
   const [, hint] = s.hubLabelBoxes![6]!;
-  star('crowd', (hint![0] + hint![2]) / 2, (hint![1] + hint![3]) / 2, 'waiting');
+  star('crowd', (hint![0] + hint![2]) / 2, (hint![1] + hint![3]) / 2, 'done');
   drawHubLabels(s);
   expect(s.hubLabelBoxes![6]).toHaveLength(1);
+  registry.dispose();
+});
+
+it('moves a Dipper caption off task stars and keeps it there while it stays clear', () => {
+  const { s, star, registry } = fixture();
+  s.counts.set('release', 9);
+  hubAt(s, 4, 500, 300);
+  drawHubLabels(s);
+  const first = s.hubSides![4];
+  const [x0, y0, x1, y1] = s.hubLabelBoxes![4]![0]!;
+  // REVIEW4 and FIX11 sitting on ε 玉衡's caption push it to another side.
+  const crowd = [star('REVIEW4', (x0 + x1) / 2, (y0 + y1) / 2, 'release'), star('FIX11', x1 - 6, y1, 'release')];
+  drawHubLabels(s);
+  expect(s.hubSides![4]).not.toBe(first);
+  const box = s.hubLabelBoxes![4]![0]!;
+  for (const c of crowd) expect(c.x > box[0] && c.x < box[2] && c.y > box[1] && c.y < box[3]).toBe(false);
+  const moved = s.hubSides![4];
+  drawHubLabels(s);
+  expect(s.hubSides![4]).toBe(moved);
   registry.dispose();
 });
 
