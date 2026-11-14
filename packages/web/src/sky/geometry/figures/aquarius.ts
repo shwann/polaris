@@ -68,3 +68,11 @@ export function moveAquarius(s: SkyState, d: Drag, x: number, y: number, cancel 
     ? [...d.aquarius]
     : [d.aquarius[0] + (x - d.x0) / s.cam.s, d.aquarius[1] + (y - d.y0) / s.cam.s];
 }
+
+/** Springs a released Aquarius drag back home, matching the elastic task-star drag. */
+export function settleAquarius(s: SkyState, dt: number) {
+  const o = s.aquariusOffset;
+  if (!o || s.drag?.aquarius) return;
+  const k = s.reduce.matches ? 0 : Math.exp(-dt / 140);
+  s.aquariusOffset = Math.hypot(o[0], o[1]) * k < 0.05 ? [0, 0] : [o[0] * k, o[1] * k];
+}

@@ -14,7 +14,7 @@ import { segmentHitsBox } from '../hubSide';
 import { boundsOf } from '../cardPlacement';
 import { centre, home, rebuild } from '../clusters';
 import { fit } from '../dipper';
-import { aquarius } from './aquarius';
+import { aquariusLayout } from './aquariusLayout';
 import type { Box } from '../../types';
 
 const viewports = [
@@ -113,17 +113,15 @@ it.each(viewports.flatMap(([w, h]) => [0, 8].map((quiet) => [w, h, quiet] as con
       const others = [...s.stars.values()].filter((star) => star.group === lane);
       expect(intersects(envelope, padded(boundsOf(others.map((star) => [star.x, star.y])))), lane).toBe(false);
     }
-    // Include the release stars, their satellites and the actual Aquarius title drawing position.
+    // Include the whole urn, both waves, the ripple pool and the actual Aquarius label drawing positions.
     const releases = Array.from({ length: 12 }, (_, i) => ({
       version: `.${25 + i}`,
       releasedAt: new Date(1700000000000 + i * 86400000).toISOString(),
       items: [],
     })) as unknown as Release[];
     s.releases = releases;
-    const water = aquarius(releases, w, h);
-    expect(intersects(envelope, padded(boundsOf(water.flatMap((star) => [star.point, ...star.satellites]))))).toBe(
-      false,
-    );
+    const urn = aquariusLayout(releases, w, h);
+    expect(intersects(envelope, padded(boundsOf([...urn.rim, ...urn.waves.flat(), urn.surface])))).toBe(false);
     const releaseLabels: Box[] = [];
     s.ctx.fillText = (text, x, y) => releaseLabels.push(textBox(s.ctx, text, x, y));
     drawReleases(s);

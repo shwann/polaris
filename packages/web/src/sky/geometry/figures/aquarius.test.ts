@@ -1,6 +1,6 @@
 import '../../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { aquariusAt, pickRelease, pickUrn, releaseFigure } from './aquarius';
+import { aquariusAt, pickRelease, pickUrn, releaseFigure, settleAquarius } from './aquarius';
 import { drawReleases } from '../../draw/releases';
 import { attachInput } from '../../input';
 import { fixture, pointer } from '../../testFixture';
@@ -82,6 +82,21 @@ it.each(['version', 'rim'] as const)(
     registry.dispose();
   },
 );
+
+it('springs the urn back home after release, but not while held', () => {
+  const { s, registry } = fixture(true);
+  s.releases = releases(3);
+  s.aquariusOffset = [60, -30];
+  s.drag = { aquarius: [0, 0] } as unknown as typeof s.drag;
+  settleAquarius(s, 16);
+  expect(s.aquariusOffset).toEqual([60, -30]);
+  s.drag = null;
+  settleAquarius(s, 16);
+  expect(Math.abs(s.aquariusOffset[0])).toBeLessThan(60);
+  for (let i = 0; i < 200; i++) settleAquarius(s, 16);
+  expect(s.aquariusOffset).toEqual([0, 0]);
+  registry.dispose();
+});
 
 it('cancels an urn drag without activating a version or retaining displacement', () => {
   const onPickRelease = vi.fn(),
