@@ -78,6 +78,38 @@ test('doctor reports unwritable and non-directory homes portably', async () => {
   expect(byName(await diagnose(file), 'home').writable).toBe(false);
 });
 
+test.each(['', 'seatbelt'])(
+  'doctor includes sandbox database guidance in text and JSON for CODEX_SANDBOX=%j',
+  async (sandbox) => {
+    const home = temp();
+    fs.mkdirSync(join(home, 'polaris.db'));
+    vi.stubEnv('CODEX_SANDBOX', sandbox);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await runDoctor(['--home', home, '--json']);
+    expect(process.exitCode).toBe(1);
+    const database = byName(JSON.parse(String(log.mock.calls.at(-1)![0])), 'database');
+    expect(database.ok).toBe(false);
+    expect(database.detail).toContain('无法打开数据库');
+    expect(database.detail.includes('当前在 Codex 沙箱中')).toBe(Boolean(sandbox));
+    if (sandbox) expect(database.detail).toContain(`writable_roots 加上 ${JSON.stringify(home)}`);
+    await runDoctor(['--home', home]);
+    const text = String(log.mock.calls.at(-1)![0]);
+    expect(text).toContain('数据库检查失败');
+    expect(text.includes('当前在 Codex 沙箱中')).toBe(Boolean(sandbox));
+  },
+);
+
+test('doctor advises writable_roots for an unwritable Codex data home without creating a database', async () => {
+  const home = temp();
+  vi.stubEnv('CODEX_SANDBOX', 'seatbelt');
+  vi.spyOn(fs, 'accessSync').mockImplementation(() => {
+    throw new Error('permission denied');
+  });
+  const result = await diagnose(home);
+  expect(byName(result, 'home').advice).toContain(`writable_roots 加上 ${JSON.stringify(home)}`);
+  expect(fs.readdirSync(home)).toEqual([]);
+});
+
 test('doctor reports missing git/backup via PATH and SQL export still succeeds', async () => {
   const { db, home } = boot();
   vi.stubEnv('PATH', join(home, 'no-executables'));

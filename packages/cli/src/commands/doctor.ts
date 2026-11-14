@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { dataHome } from '../config.js';
 import { readOnly } from '../db/readonly.js';
+import { codexSandboxAdvice } from '../db/openError.js';
 import { runtimeAdvice, sqliteAvailable, supportedNode } from '../runtime.js';
 import { parse, string } from './args.js';
 import { inspectPort } from './doctor-port.js';
@@ -36,6 +37,7 @@ export async function diagnose(home: string, port = 8790) {
   } catch {
     /* Report an inaccessible directory without modifying it. */
   }
+  const homeAdvice = writable ? '' : codexSandboxAdvice(home);
   checks.push({
     name: 'home',
     ok: exists && writable,
@@ -43,7 +45,7 @@ export async function diagnose(home: string, port = 8790) {
     exists,
     writable,
     detail: `数据目录 ${home}（${exists ? '存在' : '不存在'}，${writable ? '可写' : '不可写'}）`,
-    advice: '首次使用请让 Claude 新建系统；不可写时用 POLARIS_HOME 指定可写目录',
+    advice: `首次使用请让助手新建系统；不可写时用 POLARIS_HOME 指定可写目录${homeAdvice ? `。${homeAdvice}` : ''}`,
   });
   const path = join(home, 'polaris.db');
   const databaseExists = existsSync(path);
@@ -54,7 +56,7 @@ export async function diagnose(home: string, port = 8790) {
     exists: databaseExists,
     migrationVersion: null,
     detail: databaseExists ? '数据库尚未检查' : '数据库不存在',
-    advice: '首次使用请让 Claude 新建系统；已有数据请先备份，再运行 check 或更新插件',
+    advice: '首次使用请让助手新建系统；已有数据请先备份，再运行 check 或更新插件',
   };
   if (databaseExists && sqlite) {
     try {

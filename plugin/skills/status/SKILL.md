@@ -5,6 +5,8 @@ disable-model-invocation: true
 allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/polaris.mjs" *)
 ---
 
+**插件根目录回退**：Claude Code 会自动替换 `${CLAUDE_PLUGIN_ROOT}`；Codex 等平台若原样保留它，就用本 `skills/status/SKILL.md` 往上两级的目录作为插件根目录，执行 `node "<插件根>/bin/polaris.mjs"`，不要依赖这个 shell 变量。写入时 `--actor <actor>` 按所在平台填 `claude` 或 `codex`。
+
 运行下面的命令（`$ARGUMENTS` 非空时加 `--system $ARGUMENTS`；为空时先用 `system list --json` 看有几个系统，只有一个就用它，有多个就分系统各看一遍）：
 
 ```bash

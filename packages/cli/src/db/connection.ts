@@ -2,6 +2,7 @@ const { DatabaseSync } = await import('node:sqlite');
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { migrate } from './migrate.js';
+import { databaseOpenError } from './openError.js';
 
 export type Value = string | number | null;
 export type Row = Record<string, Value>;
@@ -13,8 +14,13 @@ export interface Database {
   close(): void;
 }
 export function connect(path: string, initialize = true): Database {
-  mkdirSync(dirname(path), { recursive: true });
-  const native = new DatabaseSync(path);
+  let native: InstanceType<typeof DatabaseSync>;
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    native = new DatabaseSync(path);
+  } catch (error) {
+    throw databaseOpenError(error, path);
+  }
   const db: Database = {
     exec: (sql) => native.exec(sql),
     all: (sql, ...values) => native.prepare(sql).all(...values) as Row[],
