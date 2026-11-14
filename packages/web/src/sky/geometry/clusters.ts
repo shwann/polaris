@@ -30,10 +30,18 @@ export function centre(state: SkyState, g: Lane): [number, number, number] {
         : Math.max(state.unit * (0.05 + 0.016 * Math.sqrt(n)), packed),
     rx = R * 1.25 + 24,
     ry = R * 0.85 + 40;
-  // Scorpius has its own patch outside the bowl, clear of the Dipper and the other two figures.
-  // The board keeps its original waiting-cloud position.
-  if (g === 'waiting' && state.sky && state.ZONE.dip)
-    return [state.w * 0.86, state.h * 0.4, Math.max(R, state.unit * 0.11)];
+  // Anchor Scorpius in the open patch above Megrez–Dubhe, left of Polaris's caption.
+  // Use resting Dipper coordinates so hub motion and camera transforms cannot move the layout.
+  if (g === 'waiting' && state.sky && state.ZONE.dip) {
+    const hubs = fit([0.06 * state.w, 0.1 * state.h, 0.86 * state.w, 0.86 * state.h]),
+      delta = hubs[3]!,
+      pole = hubs[7]!;
+    return [
+      delta[0] + (pole[0] - delta[0]) * 0.38,
+      pole[1] + (delta[1] - pole[1]) * 0.02,
+      Math.max(R, state.unit * 0.11),
+    ];
+  }
   if (g === 'waiting' && state.ZONE.dip && state.bowl)
     return [state.bowl[0]!, state.bowl[1]!, Math.max(Math.min(R, state.bowl[2]! * BOWL_GROWTH), packed)];
   // On the board the clusters keep clear of the header (the small Dipper lives there); they rise into place with the sky view.
