@@ -3,7 +3,7 @@ import { pisces } from './pisces';
 import { sagittarius } from './sagittarius';
 import { scorpius } from './scorpius';
 import { libra } from './libra';
-import { leo } from './leo';
+import { taurus } from './taurus';
 import { aries } from './aries';
 import type { FigureTask, Region } from './types';
 export type { Figure, FigureEdge, FigureNode, FigureTask } from './types';
@@ -17,5 +17,5 @@ export const figureFor = (lane: Lane, tasks: FigureTask[], region: Region) =>
         : lane === 'risk'
           ? libra(tasks, region)
           : lane === 'release'
-            ? leo(tasks, region)
+            ? taurus(tasks, region)
             : aries(tasks, region);
