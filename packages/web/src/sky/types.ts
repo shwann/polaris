@@ -176,6 +176,9 @@ export interface SkyState extends SkyMethods {
   dipHover: number;
   dipSel: number;
   dipIds: (string | { id: string; dash?: boolean })[] | null;
+  /** Dipper star whose task links stay drawn after its card closes (-1: none). */
+  beamSel: number;
+  beamAll: boolean;
   sky: boolean;
   skyK: number;
   smallBox: Box | null;

@@ -75,6 +75,8 @@ export function createState(
     dipHover: -1,
     dipSel: -1,
     dipIds: null,
+    beamSel: -1,
+    beamAll: false,
     sky: false,
     skyK: 0,
     smallBox: null,

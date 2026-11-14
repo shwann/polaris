@@ -43,7 +43,14 @@ export class SkyEngine {
       s.dipSel = u.dip;
       if (s.selected !== u.selected) clearTooltip(s);
       s.selected = u.selected;
-      const g = FIG_LANE[u.dip];
+      // Closing a Dipper card keeps its links drawn; another star or leaving the star chart replaces/clears them.
+      if (u.dip >= 1) {
+        s.beamSel = u.dip;
+        s.beamAll = u.dipAll;
+      }
+      if (!u.sky) s.beamSel = -1;
+      const k = u.dip >= 1 ? u.dip : s.beamSel,
+        g = FIG_LANE[k];
       s.dipIds =
         u.dip === 0
           ? [
@@ -51,7 +58,7 @@ export class SkyEngine {
               ...nextCandidates(v.tasks, v.app?.next).map((t) => ({ id: t.id, dash: true })),
             ]
           : g
-            ? (u.dipAll ? laneTasks(v.tasks, g) : laneTasks(v.tasks, g).slice(0, 8)).map((t) => t.id)
+            ? (s.beamAll ? laneTasks(v.tasks, g) : laneTasks(v.tasks, g).slice(0, 8)).map((t) => t.id)
             : [];
       s.sky = u.sky;
       if (skyChanged) {

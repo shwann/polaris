@@ -2,28 +2,23 @@ import { COL, COL_APP, FIG_LANE } from '../../domain/lanes';
 import { rgba } from '../palette';
 import type { Color, SkyState } from '../types';
 export function drawBeams(s: SkyState, t: number) {
-  if (s.dipSel < 1 || !s.dipIds || !s.dipPos[s.dipSel]) return;
+  // While a card is open its star drives the links; after it closes they stay on the last star, slightly fainter.
+  const sel = s.dipSel >= 1 ? s.dipSel : s.dipSel < 0 ? s.beamSel : -1,
+    open = s.dipSel >= 1;
+  if (sel < 1 || !s.dipIds || !s.dipPos[sel]) return;
   type End = [number, number, Color, number, boolean?];
   const ends: End[] =
-    s.dipSel === 7
+    sel === 7
       ? s.dipPos.slice(0, 7).map(([x, y], k) => [x, y, k ? COL[FIG_LANE[k]!] : COL_APP, 1])
       : s.dipIds.flatMap((item) => {
           const o = typeof item === 'string' ? { id: item, dash: true } : item,
             star = s.stars.get(o.id);
           if (!star) return [];
           const [x, y] = s.at(star.x, star.y, 14);
-          return [
-            [
-              x,
-              y,
-              s.dipSel === 0 ? COL[star.group] || COL.doing : COL[FIG_LANE[s.dipSel]!] || COL.doing,
-              star.alpha,
-              o.dash !== false && (s.dipSel !== 0 || o.dash),
-            ] as End,
-          ];
+          return [[x, y, COL[FIG_LANE[sel]!] || COL.doing, star.alpha, o.dash !== false] as End];
         });
-  const [ox, oy] = s.dipPos[s.dipSel]!,
-    al = Math.min(0.6, 1.8 / Math.sqrt(ends.length + 1)),
+  const [ox, oy] = s.dipPos[sel]!,
+    al = Math.min(0.6, 1.8 / Math.sqrt(ends.length + 1)) * (open ? 1 : 0.7),
     ctx = s.ctx;
   ctx.lineDashOffset = -t / 45;
   ends.forEach(([x, y, c, alpha, dash = true], k) => {
@@ -45,6 +40,7 @@ export function drawBeams(s: SkyState, t: number) {
     ctx.globalAlpha = 1;
   });
   ctx.setLineDash([]);
+  if (!open) return;
   ctx.strokeStyle = rgba([255, 214, 140], 0.7 + 0.2 * Math.sin(t / 300));
   ctx.lineWidth = 1.1;
   ctx.beginPath();
