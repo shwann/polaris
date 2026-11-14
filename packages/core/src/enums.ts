@@ -10,7 +10,7 @@ export type Lane = (typeof LANES)[number];
 export const LANE_LABELS: Record<Lane, string> = {
   planned: '待开工',
   doing: '开发中',
-  waiting: '等你或客户回复',
+  waiting: '等待中',
   release: '已合入、等发版',
   risk: '已知未验证',
   done: '已完成',
@@ -57,6 +57,33 @@ export const REQ_SOURCE_LABELS: Record<ReqSource, string> = {
   review: '评审',
   defect: '缺陷',
 };
+
+/** Who a waiting task is blocked on; NULL on a waiting task (or one with `needs`) means the user. */
+export const WAITING_ON = ['user', 'customer', 'dependency'] as const;
+export type WaitingOn = (typeof WAITING_ON)[number];
+export const WAITING_ON_LABELS: Record<WaitingOn, string> = { user: '等你', customer: '等客户', dependency: '等前置' };
+export const isWaitingOn = (v: unknown): v is WaitingOn =>
+  typeof v === 'string' && (WAITING_ON as readonly string[]).includes(v);
+const WAITING_ON_ALIASES: Record<string, WaitingOn> = { 你: 'user', 客户: 'customer', 前置: 'dependency' };
+/** Reads a CLI value: English key, short Chinese (你/客户/前置) or label (等你…); '' clears. */
+export function parseWaitingOn(input: string): WaitingOn | null {
+  const v = input.trim();
+  if (!v) return null;
+  if (isWaitingOn(v)) return v;
+  const found =
+    WAITING_ON_ALIASES[v] ?? (Object.entries(WAITING_ON_LABELS).find(([, label]) => label === v)?.[0] as WaitingOn);
+  if (!found) throw new Error(`等谁只能是 你|客户|前置（或 user|customer|dependency），收到：${v}`);
+  return found;
+}
+/** Effective category: an explicit value, else 等你 for a waiting task or one with `needs`, else none. */
+export function waitingOnOf(t: {
+  lane: string;
+  needs?: string | null;
+  waitingOn?: string | null;
+}): WaitingOn | undefined {
+  if (t.lane !== 'waiting' && !t.needs?.trim()) return undefined;
+  return isWaitingOn(t.waitingOn) ? t.waitingOn : 'user';
+}
 
 /** A waiting task older than this many days is flagged on the board. */
 export const LATE_DAYS = 3;

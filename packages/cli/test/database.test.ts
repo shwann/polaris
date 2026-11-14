@@ -9,9 +9,9 @@ import { snapshot } from '../src/export/snapshot.js';
 test('migrations initialize once without empty backups and configure the connection', () => {
   const { db, path, home } = fixture();
   expect(db.all("SELECT name FROM sqlite_master WHERE type='table'")).toHaveLength(13);
-  expect(db.all('SELECT version FROM schema_version')).toEqual([{ version: 1 }, { version: 2 }]);
+  expect(db.all('SELECT version FROM schema_version')).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }]);
   migrate(db, path);
-  expect(db.all('SELECT version FROM schema_version')).toHaveLength(2);
+  expect(db.all('SELECT version FROM schema_version')).toHaveLength(3);
   expect(readdirSync(home).filter((p) => p.includes('.before-migration-'))).toEqual([]);
   expect(existsSync(path)).toBe(true);
   expect(db.get('PRAGMA foreign_keys')!.foreign_keys).toBe(1);

@@ -6,6 +6,8 @@ import { newId } from '../audit.js';
 import { reqLinks } from '../repo/tasks.js';
 import { autoAccept } from './reqAutoAccept.js';
 
+const waitingOnMisplaced = '--waiting-on 只用于等待中（--lane waiting）或填了 --needs 的任务';
+
 export function changeTask(
   ctx: Context,
   action: string,
@@ -17,6 +19,7 @@ export function changeTask(
   const { db, at } = ctx;
   const key = id || (typeof patch.code === 'string' ? patch.code : newId());
   if (action === 'add') {
+    if (patch.waiting_on && patch.lane !== 'waiting' && !patch.needs) throw new Error(waitingOnMisplaced);
     insert(db, 'tasks', {
       id: key,
       system_key: required(ctx.config.system, '--system'),
@@ -63,6 +66,11 @@ export function changeTask(
     if (action === 'move') required(typeof patch.lane === 'string' ? patch.lane : undefined, '--lane');
     const lane = patch.lane ?? old.lane;
     patch.waiting_since = lane === 'waiting' ? old.waiting_since || at : null;
+    // 等谁 only means something while the task waits or asks the user for something.
+    if (lane !== 'waiting' && !String(patch.needs !== undefined ? (patch.needs ?? '') : (old.needs ?? '')).trim()) {
+      if (patch.waiting_on) throw new Error(waitingOnMisplaced);
+      if (old.waiting_on !== null && old.waiting_on !== undefined) patch.waiting_on = null;
+    }
     update(db, 'tasks', { id: key }, patch);
   }
   update(db, 'tasks', { id: key }, { updated_at: at });

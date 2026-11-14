@@ -1,4 +1,13 @@
-import type { DispatchEngine, DispatchSpec, Lane, ReqPriority, ReqSource, ReqStatus, StepState } from './enums.js';
+import type {
+  DispatchEngine,
+  DispatchSpec,
+  Lane,
+  ReqPriority,
+  ReqSource,
+  ReqStatus,
+  StepState,
+  WaitingOn,
+} from './enums.js';
 
 /** ISO 8601 timestamp with offset, e.g. 2026-11-11T13:30:00+08:00. */
 export type IsoTime = string;
@@ -81,6 +90,8 @@ export interface Task {
   ref?: string;
   /** First time the task entered the waiting lane; kept while it stays there. */
   waitingSince?: IsoTime;
+  /** Who the task waits on; absent means 等你 when it is waiting or has `needs`. */
+  waitingOn?: WaitingOn;
   shippedIn?: string;
   targetRelease?: string;
   /** Why a shipped task is not yet proven in real use. */

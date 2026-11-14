@@ -1,3 +1,4 @@
+import { isWaitingOn } from '@polaris/core';
 import { transaction } from './db/connection.js';
 import type { Database } from './db/connection.js';
 import type { Config } from './config.js';
@@ -27,6 +28,11 @@ export function executeHttpWrite(
   if (path === '/api/task/move') {
     args = { positionals: ['task', 'move', text('id')], values: { lane: text('lane') } };
     if (body.status !== undefined) args.values.status = text('status');
+    if (body.waitingOn !== undefined) {
+      if (body.waitingOn !== null && !isWaitingOn(body.waitingOn))
+        throw new HttpError(400, '等谁只能是 user、customer、dependency 或 null');
+      args.values['waiting-on'] = body.waitingOn ?? '';
+    }
   } else if (path === '/api/task/progress')
     args = { positionals: ['task', 'update', text('id')], values: { progress: number('progress') } };
   else if (path === '/api/req/move')

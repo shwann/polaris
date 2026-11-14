@@ -6,12 +6,13 @@ req add [ID] --title TEXT [--source 用户] [--priority P1] [--accept TEXT ...]
 req update ID [--title TEXT --body MD --scope TEXT --owner NAME --accept TEXT ... --refs URL ...]
 req check ID --item N [--off]（逐条验收，N 从 1 开始）
 req move ID --status 已确认；req link|unlink ID --task TASK；req list|show [ID]
-task add [ID] --title TEXT [--code CODE --lane planned --status TEXT]
+task add [ID] --title TEXT [--code CODE --lane planned --status TEXT --waiting-on 你|客户|前置]
 task update ID [--progress 50 --detail TEXT --needs TEXT --target-release VERSION --unverified TEXT]
 task update ID [--dispatch engine/model/effort --executor TEXT]（空字符串清除覆盖或执行者）
+task update ID --waiting-on 你|客户|前置（等谁，也收 user|customer|dependency；空字符串清除、回到缺省“等你”；移出等待且无 --needs 时自动清空）
 dispatch set --engine codex|claude --model MODEL --effort EFFORT --note 原话 [--by 用户]
 dispatch show [--task ID] [--history] [--json]（默认当前系统或 beidou，只读）
-task move ID --lane waiting [--status TEXT]；task step ID --seq 1 --name TEXT --state done
+task move ID --lane waiting [--status TEXT --waiting-on 你|客户|前置]；task step ID --seq 1 --name TEXT --state done
 task link ID --req REQ；task list|show [ID]；task delete ID
 release record --version VERSION [--tasks ID,ID ... --build BUILD --ref REF]
 release next --version VERSION [--note TEXT]（只改下一版；--note "" 清空说明，省略则保留）

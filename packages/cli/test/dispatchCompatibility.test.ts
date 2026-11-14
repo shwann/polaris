@@ -26,11 +26,11 @@ function oldDatabase() {
   return { home, path, db };
 }
 
-test('v1 upgrades to v2 with a recoverable pre-migration backup and intact old tasks', () => {
+test('v1 upgrades to the latest version with a recoverable pre-migration backup and intact old tasks', () => {
   const { home, path, db } = oldDatabase();
   try {
     migrate(db, path);
-    expect(db.get('SELECT MAX(version) AS v FROM schema_version')!.v).toBe(2);
+    expect(db.get('SELECT MAX(version) AS v FROM schema_version')!.v).toBe(3);
     expect(snapshot(db).tasks[0]).toMatchObject({ id: 'OLD', title: '旧任务', lane: 'doing' });
     const main = readdirSync(home).find((p) => p.includes('.before-migration-') && !p.endsWith('-wal'))!;
     expect(existsSync(join(home, main))).toBe(true);
