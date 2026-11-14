@@ -84,3 +84,23 @@ export function pickOnBoard(id: string) {
     }
   }, 250);
 }
+
+/** Reveal release history, including a card outside the initial six versions. */
+export function goRelease(version?: string) {
+  if (uiStore.getState().view !== 'tasks') {
+    setView('tasks');
+    requestAnimationFrame(() => goRelease(version));
+    return;
+  }
+  setSky(false);
+  uiStore.setState({ dip: -1, releaseFocus: version ?? null });
+  setTimeout(
+    () =>
+      scrollToNode(
+        document.getElementById(version ? releaseNodeId(version) : 'release-log'),
+        version ? 'center' : 'start',
+      ),
+    250,
+  );
+}
+export const releaseNodeId = (version: string) => 'release-' + encodeURIComponent(version);

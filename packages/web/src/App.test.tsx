@@ -31,7 +31,7 @@ it('keeps numbered section headings in page order across filtering and view swit
   expect(headings().at(-1)).toContain('最近动态');
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'nothing matches' } });
   act(() => vi.advanceTimersByTime(150));
-  expect(headings()).toHaveLength(5);
+  expect(headings()).toHaveLength(6);
   fireEvent.click(screen.getByRole('button', { name: '需求' }));
   expect(headings()).toEqual(['北斗 · 需求概况']);
   fireEvent.click(screen.getByRole('button', { name: '任务' }));

@@ -38,7 +38,7 @@ export function importSnapshot(db: Database, data: Snapshot): void {
       insert(db, 'releases', {
         id: `0000000000000000-import-${s.key}-${String(i).padStart(8, '0')}`,
         system_key: s.key,
-        ...snake(r),
+        ...snake(Object.fromEntries(Object.entries(r).filter(([key]) => !['items', 'stats'].includes(key)))),
       }),
     );
   }

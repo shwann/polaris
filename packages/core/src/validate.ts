@@ -1,5 +1,6 @@
 import { dispatchError, isLane, isWaitingOn, isReqPriority, isReqSource, isReqStatus, isStepState } from './enums.js';
 import type { Requirement, Snapshot, Task } from './types.js';
+import { validateRelease } from './validateRelease.js';
 
 export interface Issue {
   level: 'error' | 'warn';
@@ -56,6 +57,7 @@ export function validateSnapshot(s: Snapshot): Issue[] {
   if (keys.size !== s.systems.length) out.push({ level: 'error', path: 'systems', message: '系统 key 重复' });
   if (!s.systems.length) out.push({ level: 'error', path: 'systems', message: '至少要有一个系统' });
   for (const system of s.systems) {
+    for (const r of system.releases) out.push(...validateRelease(r, `systems/${system.key}/releases/${r.version}`));
     if (!system.dispatch) continue;
     for (const d of [system.dispatch.current, ...system.dispatch.history]) {
       const error = dispatchError(d.engine, d.model, d.effort);

@@ -4,3 +4,4 @@ export * from './validate.js';
 export * from './legacy.js';
 export * from './embed.js';
 export * from './dispatch.js';
+export * from './releases.js';

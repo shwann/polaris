@@ -1,3 +1,4 @@
+import { drawReleases } from './draw/releases';
 import { settleLabelZoom } from './motion/labelZoom';
 import { FIG_LANE as CARD_LANE } from '../domain/lanes';
 import { drawDoneOverview } from './draw/doneOverview';
@@ -80,6 +81,7 @@ export function frame(state: SkyState, t: number) {
   const list = [...state.stars.values()];
   state.physics(t, dt, list);
   state.drawDipper(t);
+  drawReleases(state);
   const live = state.drawClusters(t, list);
   state.drawFlows(t);
   state.drawTraces(t);

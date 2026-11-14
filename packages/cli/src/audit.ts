@@ -107,8 +107,15 @@ export function describe(entity: 'task' | 'req' | 'system', action: string, id: 
     .join('，');
   return `${verbs[action] || action}${name} ${id}${detail ? `：${detail}` : ''}`;
 }
-export const releaseText = (system: string, version: string, tasks: string[]) =>
-  `登记系统 ${system} 发版 ${version}${tasks.length ? `，交付任务 ${tasks.join('、')}` : ''}`;
+export const releaseText = (system: string, version: string, tasks: string[], fields?: Row, remove: string[] = []) =>
+  `${fields ? '编辑' : '登记'}系统 ${system} 发版 ${version}${tasks.length ? `，交付任务 ${tasks.join('、')}` : ''}${remove.length ? `，移除任务 ${remove.join('、')}` : ''}${
+    fields
+      ? `，${Object.entries(fields)
+          .filter(([key]) => key !== 'version')
+          .map(([key, value]) => `${{ tag: '标签', build: '构建号', ...fieldLabels }[key] || key}=${value ?? '清空'}`)
+          .join('，')}`
+      : ''
+  }`;
 export const importText = (tasks: number, events: number) => `导入 ${tasks} 项任务和 ${events} 条动态`;
 export const undoText = (batch: string) => `撤销批次 ${batch}`;
 export function recordEvent(db: Database, at: string, text: string, system?: string): void {

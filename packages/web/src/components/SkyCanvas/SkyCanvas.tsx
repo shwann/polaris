@@ -3,7 +3,7 @@ import { cn } from '../../styles/cn';
 import { useEffect, useRef } from 'react';
 import { SkyEngine } from '../../sky/SkyEngine';
 import { layoutRegistry } from '../../layout/LayoutRegistry';
-import { attachEngine, selectFromSky } from '../../hooks/skyBridge';
+import { attachEngine, selectFromSky, goRelease } from '../../hooks/skyBridge';
 import { openDip } from '../../store/uiStore';
 import { bindTooltip, showTooltip } from './tooltipBridge';
 import { moveStarCard } from '../StarCard/StarCard';
@@ -30,6 +30,7 @@ export function SkyCanvas() {
     });
     const engine = new SkyEngine(canvas.current!, layoutRegistry, {
       onPickStar: selectFromSky,
+      onPickRelease: goRelease,
       onPickDipper: (k) => openDip(k, true),
       onSelectedMove: moveStarCard,
       onTooltip: showTooltip,

@@ -1,3 +1,4 @@
+import { releaseDetails } from '@polaris/core';
 import { hubObstacles } from './geometry/hubObstacles';
 import { placeCard } from './geometry/cardPlacement';
 import { COL, FIG_LANE } from '../domain/lanes';
@@ -31,6 +32,10 @@ export class SkyEngine {
         appVersion: v.appVersion,
         nextRelease: v.nextRelease,
       };
+      s.releases = releaseDetails(
+        v.releases,
+        v.tasks.filter((t) => t.systemKey === v.system.key),
+      );
       s.systems = () => v.systems;
       s.sysSel = v.systemKey;
       s.booted = d.booted;

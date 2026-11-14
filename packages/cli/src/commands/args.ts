@@ -32,6 +32,7 @@ const strings = [
   'item',
   'state',
   'version',
+  'tag',
   'build',
   'released-at',
   'backend',
@@ -73,6 +74,8 @@ export function parse(args: string[]): Parsed {
       accept: { type: 'string', multiple: true },
       refs: { type: 'string', multiple: true },
       tasks: { type: 'string', multiple: true },
+      'add-tasks': { type: 'string', multiple: true },
+      'remove-tasks': { type: 'string', multiple: true },
     },
   });
 }
