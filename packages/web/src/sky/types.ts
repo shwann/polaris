@@ -172,6 +172,8 @@ export interface SkyState extends SkyMethods {
   aquarius?: AquariusBody;
   dipLit: number;
   dipGlow: number;
+  /** Timestamp of the most recent sky entry while the Dipper animation is active. */
+  dipperIntro?: number;
   dipPin: number;
   dipPos: Point[];
   /** Star each Dipper tether is attached to, kept between frames so it does not hop between equal candidates. */

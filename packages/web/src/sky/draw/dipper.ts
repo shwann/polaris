@@ -1,11 +1,52 @@
 import { FIG_LANE as CARD_LANE, COL, DIPPER_LINES, GOLD } from '../../domain/lanes';
 import { rgba } from '../palette';
-import type { SkyState } from '../types';
+import type { Point, SkyState } from '../types';
 import { drawHub } from './hub';
 import { clusterTether, hubDraggable } from '../motion/constellation';
+import { travelingGlow } from './travelingGlow';
 
 /** Sky-view Dipper line: brighter and thicker than any task constellation line (see TASK_LINK_SKY). */
 export const DIPPER_SKY = { width: 2.2, alpha: 0.78, glowWidth: 9, glowAlpha: 0.11 };
+
+const INTRO_PATH = [6, 5, 4, 3, 2, 1, 0];
+const INTRO_TRAVEL = 4000;
+const INTRO_DURATION = 5000;
+
+function drawDipperIntro(s: SkyState, pos: Point[], t: number) {
+  if (s.dipperIntro === undefined) return;
+  const elapsed = t - s.dipperIntro;
+  if (!s.sky || s.reduce.matches || elapsed >= INTRO_DURATION) {
+    s.dipperIntro = undefined;
+    return;
+  }
+  if (elapsed <= 0) return;
+  travelingGlow(
+    s,
+    INTRO_PATH.map((k) => pos[k]!),
+    GOLD,
+    Math.min(1, elapsed / INTRO_TRAVEL),
+    {
+      width: 3,
+      trail: 0.2,
+      opacity: 0.9 * Math.min(1, elapsed / 350, Math.max(0, 1 - (elapsed - INTRO_TRAVEL) / 300)),
+    },
+  );
+  if (elapsed < INTRO_TRAVEL) return;
+  const k = (elapsed - INTRO_TRAVEL) / (INTRO_DURATION - INTRO_TRAVEL),
+    alpha = Math.sin(Math.PI * k) * s.skyK,
+    [x, y] = pos[0]!,
+    r = (24 + k * 9) * s.sz,
+    c = s.ctx;
+  c.save();
+  c.globalAlpha = 0.66 * alpha;
+  c.drawImage(s.tint(GOLD), x - r, y - r, r * 2, r * 2);
+  c.globalAlpha = 1;
+  c.fillStyle = rgba([255, 247, 215], 0.82 * alpha);
+  c.beginPath();
+  c.arc(x, y, 3.2 * s.sz, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+}
 
 export function drawDipper(state: SkyState, t: number) {
   const pos = state.hubs(),
@@ -128,4 +169,5 @@ export function drawDipper(state: SkyState, t: number) {
     }
   }
   pos.forEach(([x, y], k) => drawHub(state, x, y, k, t, lit, small, vis, S0));
+  drawDipperIntro(state, pos, t);
 }

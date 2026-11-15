@@ -5,6 +5,49 @@ import { LayoutRegistry } from '../layout/LayoutRegistry';
 import { uiStore } from '../store/uiStore';
 import { dataStore } from '../store/dataStore';
 import { sample } from '../../tests/fixtures/sample';
+import * as stateModule from './createState';
+import * as glowModule from './draw/travelingGlow';
+
+it('plays the Dipper sweep once per sky entry and skips it with reduced motion', () => {
+  vi.stubGlobal('innerWidth', 1440);
+  vi.stubGlobal('innerHeight', 900);
+  const create = vi.spyOn(stateModule, 'createState'),
+    glow = vi.spyOn(glowModule, 'travelingGlow'),
+    registry = new LayoutRegistry(),
+    engine = new SkyEngine(document.createElement('canvas'), registry, {}),
+    state = create.mock.results[0]!.value as ReturnType<typeof stateModule.createState>;
+  engine.resetView();
+  state.reduce = { matches: false } as MediaQueryList;
+  try {
+    uiStore.setState({ sky: true });
+    const start = state.dipperIntro!;
+    expect(start).toBeDefined();
+    const positions = state.hubs();
+    state.drawDipper(start + 1000);
+    expect(glow.mock.calls.at(-1)?.[1]).toEqual(positions.slice(0, 7).reverse());
+    expect(glow.mock.calls.at(-1)?.[3]).toBe(0.25);
+    expect(state.hubs()).toEqual(positions);
+    uiStore.setState({ hovered: 2 });
+    expect(state.dipperIntro).toBe(start);
+    state.drawDipper(start + 4000);
+    expect(glow.mock.calls.at(-1)?.[3]).toBe(1);
+    state.drawDipper(start + 5000);
+    expect(state.dipperIntro).toBeUndefined();
+    state.drawDipper(start + 6000);
+    expect(glow).toHaveBeenCalledTimes(2);
+    uiStore.setState({ sky: false });
+    uiStore.setState({ sky: true });
+    expect(state.dipperIntro).toBeDefined();
+    uiStore.setState({ sky: false });
+    expect(state.dipperIntro).toBeUndefined();
+    state.reduce = { matches: true } as MediaQueryList;
+    uiStore.setState({ sky: true });
+    expect(state.dipperIntro).toBeUndefined();
+  } finally {
+    engine.destroy();
+    registry.dispose();
+  }
+});
 it.each([
   [1440, 900],
   [1000, 800],

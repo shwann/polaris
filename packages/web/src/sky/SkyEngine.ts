@@ -54,6 +54,7 @@ export class SkyEngine {
       syncBeams(s, u, v.tasks);
       s.sky = u.sky;
       if (skyChanged) {
+        s.dipperIntro = u.sky && !s.reduce.matches ? performance.now() : undefined;
         s.rebuild();
         if (!u.sky) this.resetView();
         else s.ripple(s.w / 2, s.h / 2, COL.doing, 0.5);
