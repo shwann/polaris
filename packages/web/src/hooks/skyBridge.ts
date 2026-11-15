@@ -100,7 +100,7 @@ export function pickOnBoard(id: string) {
   }, 250);
 }
 
-/** Reveal release history, including a card outside the initial six versions. */
+/** Reveal release history, including a card outside the collapsed list. */
 export function goRelease(version?: string) {
   if (uiStore.getState().view !== 'tasks') {
     setView('tasks');

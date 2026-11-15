@@ -31,15 +31,8 @@ it('sorts newest first, marks only the latest online, caps items at eight, falls
   setup();
   render(<ReleaseLog />);
   const cards = screen.getAllByRole('article');
-  expect(cards).toHaveLength(6);
-  expect(cards.map((c) => c.getAttribute('aria-label'))).toEqual([
-    '发布 .39',
-    '发布 .38',
-    '发布 .37',
-    '发布 .36',
-    '发布 .35',
-    '发布 .34',
-  ]);
+  expect(cards).toHaveLength(2);
+  expect(cards.map((c) => c.getAttribute('aria-label'))).toEqual(['发布 .39', '发布 .38']);
   expect(within(cards[0]!).getByText('当前线上')).toBeTruthy();
   expect(screen.getAllByText('当前线上')).toHaveLength(1);
   expect(within(cards[0]!).getByText('功能上线')).toBeTruthy();
@@ -47,14 +40,15 @@ it('sorts newest first, marks only the latest online, caps items at eight, falls
   expect(within(cards[0]!).getByText('+2')).toBeTruthy();
   expect(screen.queryByText('交付项目 8')).toBeNull();
   expect(screen.getByText('先修复读取')).toBeTruthy();
-  expect(screen.getAllByText('（未填写简介）')).toHaveLength(4);
+  expect(screen.queryByText('（未填写简介）')).toBeNull();
   expect(within(cards[0]!).getByText('B39')).toBeTruthy();
   expect(within(cards[0]!).getByText('docs/release-39.md')).toBeTruthy();
-  expect(cards[0]!.getAttribute('style')).not.toBe(cards[5]!.getAttribute('style'));
+  expect(cards[0]!.getAttribute('style')).not.toBe(cards[1]!.getAttribute('style'));
   fireEvent.click(screen.getByRole('button', { name: '展开全部 9 版' }));
   expect(screen.getAllByRole('article')).toHaveLength(9);
+  expect(screen.getAllByText('（未填写简介）')).toHaveLength(7);
   fireEvent.click(screen.getByRole('button', { name: '收起' }));
-  expect(screen.getAllByRole('article')).toHaveLength(6);
+  expect(screen.getAllByRole('article')).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /编辑/ })).toBeNull();
 });
 
@@ -82,11 +76,11 @@ it('exits sky/requirements view, expands an older release and highlights its car
   render(<ReleaseLog />);
   act(() => {
     uiStore.setState({ sky: true, view: 'reqs' });
-    goRelease('.31');
+    goRelease('.37');
     vi.advanceTimersByTime(32);
   });
-  expect(uiStore.getState()).toMatchObject({ sky: false, view: 'tasks', releaseFocus: '.31' });
-  const card = screen.getByRole('article', { name: '发布 .31' });
+  expect(uiStore.getState()).toMatchObject({ sky: false, view: 'tasks', releaseFocus: '.37' });
+  const card = screen.getByRole('article', { name: '发布 .37' });
   card.scrollIntoView = vi.fn();
   act(() => vi.advanceTimersByTime(300));
   expect(card.scrollIntoView).toHaveBeenCalledOnce();

@@ -9,6 +9,8 @@ import { uiStore } from '../../store/uiStore';
 import { SectionHeading } from '../Shared/Shared';
 import { fmt } from '../../domain/time';
 
+const RECENT_RELEASE_COUNT = 2;
+
 export function ReleaseLog() {
   const { view, data, ui } = useBoard();
   const [all, setAll] = useState(false);
@@ -16,7 +18,7 @@ export function ReleaseLog() {
     view.releases,
     view.tasks.filter((t) => t.systemKey === view.system.key),
   ).reverse();
-  const expanded = all || releases.findIndex((r) => r.version === ui.releaseFocus) >= 6;
+  const expanded = all || releases.findIndex((r) => r.version === ui.releaseFocus) >= RECENT_RELEASE_COUNT;
   return (
     <section
       id="release-log"
@@ -29,7 +31,7 @@ export function ReleaseLog() {
         <span>{releases.length} 个版本</span>
       </div>
       <div className={styles.cards}>
-        {(expanded ? releases : releases.slice(0, 6)).map((r, i) => {
+        {(expanded ? releases : releases.slice(0, RECENT_RELEASE_COUNT)).map((r, i) => {
           const summary = releaseSummary(r);
           return (
             <article
@@ -99,7 +101,7 @@ export function ReleaseLog() {
         })}
       </div>
       {!releases.length && <p className={styles.empty}>这个系统还没有发布记录</p>}
-      {releases.length > 6 && (
+      {releases.length > RECENT_RELEASE_COUNT && (
         <button
           className={styles.expand}
           type="button"
