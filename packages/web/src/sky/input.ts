@@ -4,7 +4,7 @@ import { COL, COL_APP } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
 import { hitDoneLabel, zoomDone } from './draw/doneOverview';
 import { pickAt } from './draw/picking';
-import { constrain, rubberOrigin, rubberPoint } from './motion/bounds';
+import { clamp, constrain, rubberOrigin, rubberPoint } from './motion/bounds';
 import { cameraBounds, cameraMoving, launchCamera, stopCamera } from './motion/cameraMotion';
 import { record, velocity } from './motion/inertia';
 import { draggedParticle } from './motion/constellation';
@@ -12,6 +12,7 @@ import { prepareDrag, releaseHeld } from './motion/drag';
 import { stillPointer } from './motion/pause';
 import type { Drag, Point, SkyState } from './types';
 import type { ReleaseDrag } from './geometry/figures/aquarius';
+import { clampZoom } from './camera';
 
 export function attachInput(s: SkyState) {
   const abort = new AbortController(),
@@ -87,13 +88,14 @@ export function attachInput(s: SkyState) {
       if (d.pinch) {
         if (s.pointers.size < 2) return;
         const [a, b] = [...s.pointers.values()] as [Point, Point];
-        const scale = Math.min(5, Math.max(0.5, (d.s0! * Math.hypot(a[0] - b[0], a[1] - b[1])) / d.pinch));
+        const scale = clampZoom((d.s0! * Math.hypot(a[0] - b[0], a[1] - b[1])) / d.pinch);
         s.camT.s = scale;
         const midpoint: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
         [s.camT.x, s.camT.y] = constrain(
           [midpoint[0] - d.anchor![0] * scale, midpoint[1] - d.anchor![1] * scale],
           cameraBounds(s),
         );
+        Object.assign(s.cam, s.camT);
         return;
       }
       const dx = e.clientX - d.x0,
@@ -276,7 +278,10 @@ export function attachInput(s: SkyState) {
       if (s.padMode && !e.ctrlKey) {
         [s.camT.x, s.camT.y] = constrain([s.camT.x - e.deltaX * k, s.camT.y - e.deltaY * k], cameraBounds(s));
         Object.assign(s.cam, s.camT);
-      } else s.zoomTo(e.clientX, e.clientY, s.camT.s * Math.exp(-e.deltaY * k * (e.ctrlKey ? 0.012 : 0.0018)));
+      } else {
+        const step = clamp(-e.deltaY * k * (e.ctrlKey ? 0.009 : 0.00145), -0.24, 0.24);
+        s.zoomTo(e.clientX, e.clientY, s.camT.s * Math.exp(step));
+      }
     },
     { passive: false, signal },
   );

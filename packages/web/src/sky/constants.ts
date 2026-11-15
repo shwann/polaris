@@ -55,3 +55,5 @@ export const anchor = (z: Point, rx: number, ry: number, w: number, h: number): 
 
 // Translation parallax; zoom damping is defined in draw/chartGeometry.
 export const DEPTH = { dust: 0.35, nebula: 0.6, chart: 0.8, stars: 1 } as const;
+export const MIN_ZOOM = 0.35;
+export const MAX_ZOOM = 8;

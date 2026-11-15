@@ -59,7 +59,10 @@ export function advanceCamera(s: SkyState, dt: number) {
     [s.camT.x, s.camT.y] = edge;
     return;
   }
-  if (!outside && !cameraMoving(s)) return;
+  if (!outside && !cameraMoving(s)) {
+    if (s.cam.s === s.camT.s) s.cameraTravelBounds = undefined;
+    return;
+  }
   const next = coast(s.inertia, dt);
   const axis = (position: number, limit: number, i: 0 | 1) => {
     if (position === limit) {

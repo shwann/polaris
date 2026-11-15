@@ -5,7 +5,7 @@ export const TITLE_BAND = 0.4;
 
 /** End the exponential camera tail at subpixel error, then commit all label choices in one frame. */
 export function settleLabelZoom(s: SkyState) {
-  if (!s.sky || s.w <= 560) {
+  if (!s.sky) {
     s.labelLayout = undefined;
     return;
   }
@@ -16,7 +16,15 @@ export function settleLabelZoom(s: SkyState) {
   );
   if (error <= CAMERA_SNAP) Object.assign(s.cam, s.camT);
   // Ambient pointer attraction never comes fully to rest; it must not postpone the zoom commit.
-  const busy = !!s.drag;
+  const previous = s.labelLayout;
+  if (s.w <= 560) {
+    s.labelLayout = undefined;
+    return;
+  }
+  if (error > CAMERA_SNAP || s.drag) {
+    if (previous?.settled) s.labelLayout = { ...previous, settled: false };
+    return;
+  }
   const bar = s.registry.get('skybar');
   const key = [
     s.camT.s,
@@ -33,11 +41,9 @@ export function settleLabelZoom(s: SkyState) {
     bar?.width,
     ...[...s.stars.values()].map((p) => `${p.id}:${p.code}:${p.skyCode}:${p.title}:${p.group}:${p.dead}`),
   ].join('|');
-  const settled = error <= CAMERA_SNAP && !busy;
-  const previous = s.labelLayout;
   s.labelLayout = {
     key,
-    settled,
-    revision: (previous?.revision || 0) + (settled && (!previous?.settled || previous.key !== key) ? 1 : 0),
+    settled: true,
+    revision: (previous?.revision || 0) + (!previous?.settled || previous.key !== key ? 1 : 0),
   };
 }

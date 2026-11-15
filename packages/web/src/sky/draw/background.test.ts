@@ -1,6 +1,6 @@
 import '../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { DEPTH } from '../constants';
+import { DEPTH, MAX_ZOOM, MIN_ZOOM } from '../constants';
 import { fixture } from '../testFixture';
 import { dustCopies } from './dust';
 import {
@@ -96,7 +96,7 @@ it('covers all viewport corners inside the unfaded chart at every soft boundary 
       [2 * w + 7, 2 * h + 7],
     ];
     for (let step = 0; step <= 90; step++) {
-      const scale = 0.5 + step * 0.05,
+      const scale = MIN_ZOOM + (step / 90) * (MAX_ZOOM - MIN_ZOOM),
         bounds = panBounds(homes, w, h, scale);
       for (const x of [rubber(-1e9, bounds[0], bounds[2]), rubber(1e9, bounds[0], bounds[2])])
         for (const y of [rubber(-1e9, bounds[1], bounds[3]), rubber(1e9, bounds[1], bounds[3])])

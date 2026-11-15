@@ -22,7 +22,8 @@ export function frame(state: SkyState, t: number) {
   advanceCamera(state, dt);
   state.paused = pausedGroups(state);
   advanceSpin(state, dt);
-  if (!state.drag && !moving && !cameraMoving(state)) {
+  const zooming = Math.abs(state.cam.s - state.camT.s) > 1e-6;
+  if (!state.drag && !moving && !cameraMoving(state) && !zooming) {
     if (state.px > -1e3 && !state.reduce.matches && !stillPointer(state)) {
       state.tx = (state.px / state.w - 0.5) * -1;
       state.ty = (state.py / state.h - 0.5) * -1;
@@ -33,10 +34,15 @@ export function frame(state: SkyState, t: number) {
   }
   if (state.drag?.moved || moving || cameraMoving(state) || state.reduce.matches) Object.assign(state.cam, state.camT);
   else {
-    const ease = 1 - Math.exp(-dt / 81);
-    state.cam.s += (state.camT.s - state.cam.s) * ease;
-    state.cam.x += (state.camT.x - state.cam.x) * ease;
-    state.cam.y += (state.camT.y - state.cam.y) * ease;
+    const ease = 1 - Math.exp(-dt / 70),
+      current = state.cam.s,
+      target = state.camT.s,
+      scale = zooming ? current * (target / current) ** ease : target;
+    // Translate by the same fraction of the scale change so the focal point stays under the pointer.
+    const travel = zooming ? (scale - current) / (target - current) : ease;
+    state.cam.s = scale;
+    state.cam.x += (state.camT.x - state.cam.x) * travel;
+    state.cam.y += (state.camT.y - state.cam.y) * travel;
   }
   settleLabelZoom(state);
   [state.wpx, state.wpy] = state.px > -1e3 ? state.toWorld(state.px, state.py) : [-1e4, -1e4];

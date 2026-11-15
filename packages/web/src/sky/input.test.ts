@@ -4,6 +4,7 @@ import { attachInput } from './input';
 import { cameraBounds, cameraMoving } from './motion/cameraMotion';
 import { pickAt, pickRadius } from './draw/picking';
 import { callbacks, fixture, pointer } from './testFixture';
+import { MAX_ZOOM, MIN_ZOOM } from './constants';
 
 function input(reduced = false) {
   const events = callbacks(),
@@ -20,6 +21,28 @@ function input(reduced = false) {
 }
 
 describe('pointer input', () => {
+  it('smoothly widens the view and magnifies around the current visible point when retargeted', () => {
+    const { s, dispose } = input();
+    s.zoomTo(500, 400, 0.01);
+    expect(s.camT.s).toBe(MIN_ZOOM);
+    s.frame(16);
+    expect(s.cam.s).toBeGreaterThan(MIN_ZOOM);
+    expect(s.cam.s).toBeLessThan(1);
+
+    const x = 410,
+      y = 360;
+    const anchor = s.toWorld(x, y);
+    s.zoomTo(x, y, 12);
+    expect(s.camT.s).toBe(MAX_ZOOM);
+    for (let t = 32; t <= 960; t += 16) {
+      s.frame(t);
+      const [sx, sy] = s.toScreen(...anchor);
+      expect(sx).toBeCloseTo(x, 5);
+      expect(sy).toBeCloseTo(y, 5);
+    }
+    expect(s.cam.s).toBe(MAX_ZOOM);
+    dispose();
+  });
   it('pans 1:1, freezes both parallax targets and offsets, flings and stops immediately on press', () => {
     const { s, dispose } = input();
     s.mx = 0.2;
@@ -155,8 +178,11 @@ describe('pointer input', () => {
     expect(cameraMoving(s)).toBe(true);
     pointer('pointerdown', 400, 400, 60, 1, true);
     pointer('pointerdown', 600, 400, 61, 2, true);
+    const pinchAnchor = s.toWorld(500, 400);
     pointer('pointermove', 650, 400, 80, 2, true);
     expect(s.camT.s).toBeCloseTo(1.25);
+    expect(s.cam.s).toBeCloseTo(1.25);
+    expect(s.toScreen(...pinchAnchor)).toEqual([525, 400]);
     pointer('pointerup', 650, 400, 81, 2, true);
     pointer('pointermove', 350, 400, 100, 1, true);
     pointer('pointerup', 350, 400, 101, 1, true);

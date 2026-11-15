@@ -1,4 +1,4 @@
-import { DEPTH } from '../constants';
+import { DEPTH, MAX_ZOOM, MIN_ZOOM } from '../constants';
 import { KEEP, SKY_PAN_ROOM, SOFT_PAN } from '../motion/bounds';
 import type { Box } from '../types';
 
@@ -25,7 +25,7 @@ export function chartGeometry(w: number, h: number, dpr: number) {
     let lo = 0,
       hi = length;
     // (a + b*s) / s**k has no interior maximum for these positive a,b.
-    for (const scale of [0.5, 1, 5]) {
+    for (const scale of [MIN_ZOOM, 1, MAX_ZOOM]) {
       const zoom = layerScale(scale, DEPTH.chart),
         centre = (1 - scale) / 2,
         maxPan = length * Math.max(1 - KEEP + scale, centre + SKY_PAN_ROOM) + SOFT_PAN + 7 * scale,
