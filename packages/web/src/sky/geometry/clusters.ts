@@ -46,6 +46,10 @@ export function centre(state: SkyState, g: Lane): [number, number, number] {
   }
   if (g === 'waiting' && state.ZONE.dip && state.bowl)
     return [state.bowl[0]!, state.bowl[1]!, Math.max(Math.min(R, state.bowl[2]! * BOWL_GROWTH), packed)];
+  if (g === 'planned' && state.sky && state.ZONE.dip && state.bowl) {
+    const [x, y, radius] = state.bowl;
+    return [x, y, Math.min(R, radius)];
+  }
   // On the board the clusters keep clear of the header (the small Dipper lives there); they rise into place with the sky view.
   const zy = state.ZONE.dip ? Math.max(z[1]!, 0.36) + (z[1]! - Math.max(z[1]!, 0.36)) * state.skyK : z[1]!;
   const zone: [number, number, number] = [

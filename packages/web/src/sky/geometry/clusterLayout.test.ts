@@ -87,19 +87,33 @@ it.each([19, 30])('places %s waiting code labels in the 1440×900 overview witho
 });
 
 it.each([1, 2])('keeps a %s-star group right beside its own Dipper star', (n) => {
-  const { s, stars, registry } = overview(n, 'planned');
-  const beta = fit([0.06 * 1440, 0.1 * 900, 0.86 * 1440, 0.86 * 900])[1]!;
+  const { s, stars, registry } = overview(n, 'risk');
+  const zeta = fit([0.06 * 1440, 0.1 * 900, 0.86 * 1440, 0.86 * 900])[5]!;
   const limit = s.unit * NEAR_HUB_GAP + clusterSpacing(s.unit) * 1.2;
-  for (const st of stars) expect(gap([st.x, st.y], beta)).toBeLessThanOrEqual(limit);
+  for (const st of stars) expect(gap([st.x, st.y], zeta)).toBeLessThanOrEqual(limit);
   expect(limit).toBeLessThan(s.unit * 0.15);
   registry.dispose();
 });
 
 it('lets a group with more than two stars keep its own zone', () => {
-  const { s, registry } = overview(NEAR_HUB_MAX + 1, 'planned');
-  const beta = fit([0.06 * 1440, 0.1 * 900, 0.86 * 1440, 0.86 * 900])[1]!;
-  const [x, y] = centre(s, 'planned');
-  expect(gap([x, y], beta)).toBeGreaterThan(s.unit * NEAR_HUB_GAP * 2);
+  const { s, registry } = overview(NEAR_HUB_MAX + 1, 'risk');
+  const zeta = fit([0.06 * 1440, 0.1 * 900, 0.86 * 1440, 0.86 * 900])[5]!;
+  const [x, y] = centre(s, 'risk');
+  expect(gap([x, y], zeta)).toBeGreaterThan(s.unit * NEAR_HUB_GAP * 2);
+  registry.dispose();
+});
+
+it.each([1, 2, 4, 30])('keeps all %s planned stars inside the Dipper bowl', (n) => {
+  const { s, stars, registry } = overview(n, 'planned');
+  const bowl = fit([0.06 * s.w, 0.1 * s.h, 0.86 * s.w, 0.86 * s.h]).slice(0, 4);
+  for (const star of stars) {
+    const sides = bowl.map(([ax, ay], i) => {
+      const [bx, by] = bowl[(i + 1) % bowl.length]!;
+      return (bx - ax) * (star.y - ay) - (by - ay) * (star.x - ax);
+    });
+    expect(sides.every((side) => side > 0)).toBe(true);
+  }
+  expect(s.figures.get('planned')?.edges.filter((edge) => edge.bright)).toHaveLength(Math.min(n, 4) - 1);
   registry.dispose();
 });
 

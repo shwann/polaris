@@ -20,7 +20,9 @@ export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
     const [hx, hy] = state.home(s, reduced ? 0 : t);
     s.baseX ??= s.x - s.ox;
     s.baseY ??= s.y - s.oy;
-    const ease = reduced ? 1 : state.drag || cameraMoving(state) ? 0 : 1 - Math.exp(-dt / 348);
+    // Planned stars travel farther to reach the bowl when the chart opens.
+    const travel = s.group === 'planned' && state.bowl && state.figureMotion?.get(s.group) === 'forming' ? 260 : 348;
+    const ease = reduced ? 1 : state.drag || cameraMoving(state) ? 0 : 1 - Math.exp(-dt / travel);
     s.baseX += (hx - s.baseX) * ease;
     s.baseY += (hy - s.baseY) * ease;
   }
