@@ -58,8 +58,16 @@ it('runs the original script and the built React bundle against identical legacy
         n.getAttribute('aria-label')?.replace('等你或客户回复', '等待中'),
       ),
     );
-    // Wide screens lift the waiting group into its own row, so only the set of cards must match.
-    expect(text(b, '#main [data-id]').sort()).toEqual(text(a, '#main [data-id]').sort());
+    // Compare preserved card content separately from the revised step indicators.
+    const taskText = (doc: Document, steps: string) =>
+      Array.from(doc.querySelectorAll('#main [data-id]'), (node) => {
+        const copy = node.cloneNode(true) as HTMLElement;
+        copy.querySelector(steps)?.remove();
+        return copy.textContent?.replace(/\s+/g, ' ').trim();
+      }).sort();
+    expect(taskText(b, '.p-ActiveTask-steps')).toEqual(taskText(a, '.steps'));
+    expect(text(b, '#main [data-id="LOGIN"] .p-ActiveTask-step b')).toEqual(text(a, '#main [data-id="LOGIN"] .step b'));
+    expect(text(b, '#main [data-id="LOGIN"] .p-ActiveTask-state')).toEqual(['已完成', '执行中', '未开始']);
     expect(text(b, '.p-Digest-dg-row')).toEqual(text(a, '.dg-row').map((t) => t.replace('等你或客户回复', '等待中')));
     expect(text(b, '.p-LogPanel-log .p-LogPanel-txt')).toEqual(text(a, '.log .txt'));
   });

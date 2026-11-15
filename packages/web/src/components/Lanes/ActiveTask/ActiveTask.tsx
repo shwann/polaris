@@ -3,7 +3,6 @@ import { EditToggle, TaskEditor, useTaskEdit } from '../../LocalEdit/TaskEditor'
 import styles from './ActiveTask.module.css';
 import sharedStyles from '../../Shared/Shared.module.css';
 import { cn } from '../../../styles/cn';
-import { useEffect, useRef } from 'react';
 import type { Task } from '../../../domain/types';
 import { taskProgress } from '../../../domain/selectors';
 import { fmt } from '../../../domain/time';
@@ -11,21 +10,11 @@ import { locateStar } from '../../../hooks/skyBridge';
 import { Clamp, Count, Needs, RefLine } from '../../Shared/Shared';
 import { TaskExecution } from '../../TaskExecution/TaskExecution';
 
-const words = { done: 'DONE · 完成', doing: 'RUNNING · 进行中', blocked: 'BLOCKED · 受阻', todo: 'QUEUED · 未开始' };
+const stepLabels = { done: '已完成', doing: '执行中', blocked: '受阻', todo: '未开始' };
+const stepMarks = { done: '✓', doing: '◆', blocked: '!', todo: '○' };
 export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean }) {
   const pct = taskProgress(t),
-    meter = useRef<HTMLElement>(null),
     edit = useTaskEdit();
-  useEffect(() => {
-    let second = 0;
-    const first = requestAnimationFrame(() => {
-      second = requestAnimationFrame(() => meter.current?.style.setProperty('--p', pct + '%'));
-    });
-    return () => {
-      cancelAnimationFrame(first);
-      cancelAnimationFrame(second);
-    };
-  }, [pct]);
   return (
     <article
       data-id={t.id}
@@ -47,25 +36,28 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
         </button>
         <EditToggle edit={edit} code={t.code} />
         {pct !== null && (
-          <span className={styles['a-pct']}>
+          <span className={styles['a-pct']} title="任务进度">
             <Count id={'pct:' + t.id} value={pct} />
             <small>%</small>
           </span>
         )}
       </div>
-      {pct !== null && (
-        <div className={styles.meter}>
-          <i ref={meter} />
-        </div>
-      )}
-      {!!t.steps.length && (
-        <div className={styles.steps}>
+      {t.steps.length ? (
+        <ol className={styles.steps} aria-label="执行步骤" role="list">
           {t.steps.map((step, i) => (
-            <div key={i} className={styles.step} data-state={step.state}>
-              <em>{words[step.state]}</em>
+            <li key={i} className={styles.step} data-state={step.state}>
+              <span className={styles.mark} aria-hidden="true">
+                {stepMarks[step.state]}
+              </span>
               <b>{step.name}</b>
-            </div>
+              <span className={styles.state}>{stepLabels[step.state]}</span>
+            </li>
           ))}
+        </ol>
+      ) : (
+        <div className={styles.fallback}>
+          <span>未录入步骤</span>
+          {t.status && <b>{t.status}</b>}
         </div>
       )}
       {t.detail && <Clamp className={styles['a-detail']} id={t.id + ':d'} text={t.detail} />}
