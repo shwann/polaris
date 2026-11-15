@@ -64,6 +64,7 @@ export interface Drag {
   star: Star | null;
   release?: ReleaseDrag;
   samples: Sample[];
+  panBounds?: Box;
   grab: Point;
   dip: number;
   mobileWeights?: Map<Star, number>;
@@ -151,6 +152,7 @@ export interface SkyState extends SkyMethods {
   drag: Drag | null;
   padMode: boolean;
   inertia: Point;
+  cameraTravelBounds?: Box;
   returning: boolean;
   match: Set<string> | null;
   selected: string | null;

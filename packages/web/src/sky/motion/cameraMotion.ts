@@ -1,11 +1,17 @@
 import { aquariusParticles, releaseStars } from '../geometry/figures/aquarius';
 import { measureHubLabels } from '../geometry/hubLabels';
-import type { SkyState } from '../types';
-import { constrain, panBounds } from './bounds';
-import { coast } from './inertia';
+import type { Box, Point, SkyState } from '../types';
+import { constrain, panBounds, skyPanRoom, SOFT_PAN } from './bounds';
+import { coast, LAUNCH_SPEED } from './inertia';
 import { spring } from './spring';
 
-export function cameraBounds(s: SkyState, scale = s.camT.s) {
+export function cameraBounds(s: SkyState, scale = s.camT.s): Box {
+  const room = s.sky ? skyPanRoom(scale) : 0,
+    centreX = (s.w * (1 - scale)) / 2,
+    centreY = (s.h * (1 - scale)) / 2;
+  // At overview size, a viewport-based limit stays still while stars turn and labels move.
+  const explore: Box = [centreX - s.w * room, centreY - s.h * room, centreX + s.w * room, centreY + s.h * room];
+  if (room && scale >= 1 && scale <= 1.2) return explore;
   // Home positions exclude temporary drag offsets, so pulling a star cannot move the boundary.
   const points = [...s.stars.values()]
     .filter((star) => !star.dead)
@@ -30,40 +36,54 @@ export function cameraBounds(s: SkyState, scale = s.camT.s) {
               ] as import('../types').Point[],
           )
       : [];
-  return panBounds([...points, ...hubs, ...labels], s.w, s.h, scale, s.w > 560, bottomInset);
+  const [x0, y0, x1, y1] = panBounds([...points, ...hubs, ...labels], s.w, s.h, scale, s.w > 560, bottomInset);
+  if (!room) return [x0, y0, x1, y1];
+  return [Math.min(x0, explore[0]), Math.min(y0, explore[1]), Math.max(x1, explore[2]), Math.max(y1, explore[3])];
 }
 
 export function stopCamera(s: SkyState) {
   s.inertia = [0, 0];
   s.returning = false;
+  s.cameraTravelBounds = undefined;
 }
 
 export const cameraMoving = (s: SkyState) => s.returning || s.inertia.some((v) => v !== 0);
 
 export function advanceCamera(s: SkyState, dt: number) {
   if (!s.sky || s.drag) return;
-  const edge = constrain([s.camT.x, s.camT.y], cameraBounds(s));
+  const bounds = s.cameraTravelBounds ?? cameraBounds(s);
+  const edge = constrain([s.camT.x, s.camT.y], bounds);
   const outside = edge[0] !== s.camT.x || edge[1] !== s.camT.y;
   if (s.reduce.matches) {
     stopCamera(s);
     [s.camT.x, s.camT.y] = edge;
     return;
   }
-  if (outside || s.returning) {
-    s.returning = true;
-    const x = spring(s.camT.x, s.inertia[0], edge[0], dt, 18, 1);
-    const y = spring(s.camT.y, s.inertia[1], edge[1], dt, 18, 1);
-    s.camT.x = x.x;
-    s.camT.y = y.x;
-    s.inertia = [x.v, y.v];
-    if (Math.hypot(x.x - edge[0], y.x - edge[1]) < 0.25 && Math.hypot(x.v, y.v) < 4) {
-      [s.camT.x, s.camT.y] = edge;
-      stopCamera(s);
+  if (!outside && !cameraMoving(s)) return;
+  const next = coast(s.inertia, dt);
+  const axis = (position: number, limit: number, i: 0 | 1) => {
+    if (position === limit) {
+      const x = position + next.delta[i];
+      return { x: Math.max(bounds[i] - SOFT_PAN, Math.min(bounds[i + 2]! + SOFT_PAN, x)), v: next.velocity[i] };
     }
-  } else if (cameraMoving(s)) {
-    const next = coast(s.inertia, dt);
-    s.camT.x += next.delta[0];
-    s.camT.y += next.delta[1];
-    s.inertia = next.velocity;
-  }
+    const { x, v } = spring(position, s.inertia[i], limit, dt, 14, 1);
+    if ((x - limit) * (position - limit) <= 0 || (Math.abs(x - limit) < 0.25 && Math.abs(v) < 4)) {
+      return { x: limit, v: 0 };
+    }
+    return { x: Math.max(limit - SOFT_PAN, Math.min(limit + SOFT_PAN, x)), v };
+  };
+  const x = axis(s.camT.x, edge[0], 0),
+    y = axis(s.camT.y, edge[1], 1);
+  [s.camT.x, s.camT.y] = [x.x, y.x];
+  s.inertia = [x.v, y.v];
+  const [left, top, right, bottom] = bounds;
+  s.returning = x.x < left || x.x > right || y.x < top || y.x > bottom;
+  if (!cameraMoving(s)) stopCamera(s);
+}
+
+export function launchCamera(s: SkyState, direction: Point) {
+  const speed = Math.hypot(...direction);
+  if (speed <= LAUNCH_SPEED) return;
+  const gain = Math.min(0.85, 1800 / speed);
+  s.inertia = [direction[0] * gain, direction[1] * gain];
 }

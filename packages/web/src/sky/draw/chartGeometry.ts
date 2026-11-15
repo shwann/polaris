@@ -1,5 +1,5 @@
 import { DEPTH } from '../constants';
-import { KEEP } from '../motion/bounds';
+import { KEEP, SKY_PAN_ROOM, SOFT_PAN } from '../motion/bounds';
 import type { Box } from '../types';
 
 export const ZOOM_POWER = { chart: 0.35, nebula: 0.25, dust: 0.15, stars: 1 } as const;
@@ -7,7 +7,6 @@ export const CHART_PIXELS = 16 * 1024 * 1024;
 export const BOARD_PIXELS = 8 * 1024 * 1024;
 export const CHART_SIDE = 8192;
 export const CHART_FADE = 64;
-export const SOFT_PAN = 140;
 
 /** Bound both backing-store area and sides, even for extreme aspect ratios. */
 export function rasterSize(width: number, height: number, resolution: number, pixels: number) {
@@ -26,10 +25,11 @@ export function chartGeometry(w: number, h: number, dpr: number) {
     let lo = 0,
       hi = length;
     // (a + b*s) / s**k has no interior maximum for these positive a,b.
-    for (const scale of [0.5, 5]) {
+    for (const scale of [0.5, 1, 5]) {
       const zoom = layerScale(scale, DEPTH.chart),
-        maxPan = length * (1 - KEEP + scale) + SOFT_PAN + 7 * scale,
-        minPan = length * (KEEP - 2 * scale) - SOFT_PAN - 7 * scale;
+        centre = (1 - scale) / 2,
+        maxPan = length * Math.max(1 - KEEP + scale, centre + SKY_PAN_ROOM) + SOFT_PAN + 7 * scale,
+        minPan = length * Math.min(KEEP - 2 * scale, centre - SKY_PAN_ROOM) - SOFT_PAN - 7 * scale;
       lo = Math.min(lo, (-maxPan * DEPTH.chart) / zoom - 3);
       hi = Math.max(hi, (length - minPan * DEPTH.chart) / zoom + 3);
     }

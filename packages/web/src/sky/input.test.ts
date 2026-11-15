@@ -55,6 +55,22 @@ describe('pointer input', () => {
     expect(cameraMoving(s)).toBe(false);
     dispose();
   });
+  it('lets the overview travel past half the viewport and keeps a regrab at the edge continuous', () => {
+    const { s, dispose } = input();
+    const edge = cameraBounds(s)[2];
+    expect(edge).toBeGreaterThan(s.w / 2);
+    pointer('pointerdown', 100, 400, 0);
+    pointer('pointermove', 650, 400, 100);
+    expect(s.cam.x).toBe(550);
+    pointer('pointermove', 100 + edge + 240, 400, 200);
+    pointer('pointerup', 100 + edge + 240, 400, 300);
+    const before = s.cam.x;
+    pointer('pointerdown', 500, 400, 320);
+    pointer('pointermove', 490, 400, 340);
+    expect(s.cam.x).toBeLessThan(before);
+    expect(before - s.cam.x).toBeLessThan(10);
+    dispose();
+  });
   it('keeps a movement below 5px a click, and does not open a dragged star', () => {
     const { s, star, events, dispose } = input();
     star('a', 400, 400);

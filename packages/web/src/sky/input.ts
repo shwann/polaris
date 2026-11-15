@@ -4,13 +4,13 @@ import { COL, COL_APP } from '../domain/lanes';
 import { setInput, uiStore } from '../store/uiStore';
 import { hitDoneLabel, zoomDone } from './draw/doneOverview';
 import { pickAt } from './draw/picking';
-import { constrain, rubberPoint } from './motion/bounds';
-import { cameraBounds, cameraMoving, stopCamera } from './motion/cameraMotion';
-import { LAUNCH_SPEED, record, velocity } from './motion/inertia';
+import { constrain, rubberOrigin, rubberPoint } from './motion/bounds';
+import { cameraBounds, cameraMoving, launchCamera, stopCamera } from './motion/cameraMotion';
+import { record, velocity } from './motion/inertia';
 import { draggedParticle } from './motion/constellation';
 import { prepareDrag, releaseHeld } from './motion/drag';
 import { stillPointer } from './motion/pause';
-import type { Point, SkyState } from './types';
+import type { Drag, Point, SkyState } from './types';
 import type { ReleaseDrag } from './geometry/figures/aquarius';
 
 export function attachInput(s: SkyState) {
@@ -59,6 +59,18 @@ export function attachInput(s: SkyState) {
   let touchDoubleAt = -Infinity;
   let releaseDragAt = -Infinity;
   let lastTap: { x: number; y: number; t: number } | null = null;
+  const pan = (d: Drag, e: PointerEvent) => {
+    if (!d.panBounds) {
+      d.panBounds = cameraBounds(s);
+      d.samples = [{ x: d.cx, y: d.cy, t: d.samples[0]!.t }];
+      [d.cx, d.cy] = rubberOrigin([d.cx, d.cy], d.panBounds);
+    }
+    const target: Point = [d.cx + e.clientX - d.x0, d.cy + e.clientY - d.y0];
+    const [x, y] = s.reduce.matches ? constrain(target, d.panBounds) : rubberPoint(target, d.panBounds);
+    [s.camT.x, s.camT.y] = [x, y];
+    Object.assign(s.cam, s.camT);
+    d.samples = record(d.samples, { x, y, t: e.timeStamp });
+  };
   window.addEventListener(
     'pointermove',
     (e) => {
@@ -86,17 +98,14 @@ export function attachInput(s: SkyState) {
       }
       const dx = e.clientX - d.x0,
         dy = e.clientY - d.y0;
-      if (!d.moved && Math.hypot(dx, dy) >= 5 && (s.sky || d.star || (s.w > 560 && d.dip >= 0))) d.moved = true;
-      if (d.moved) {
+      if (!d.moved && Math.hypot(dx, dy) >= 5 && (s.sky || d.star || (s.w > 560 && d.dip >= 0))) {
+        d.moved = true;
         clearTooltip(s);
         s.tooltipSettling = s.w > 560;
       }
-      d.samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
       if (d.moved && !draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
-        [s.camT.x, s.camT.y] = rubberPoint([d.cx + dx, d.cy + dy], cameraBounds(s));
-        // Direct manipulation must not wait for the next interpolated camera frame.
-        Object.assign(s.cam, s.camT);
-      }
+        pan(d, e);
+      } else d.samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
     },
     { passive: true, signal },
   );
@@ -183,8 +192,7 @@ export function attachInput(s: SkyState) {
       s.px = e.clientX;
       s.py = e.clientY;
       if (!draggedParticle(s, d) && (d.dip < 0 || s.w <= 560)) {
-        [s.camT.x, s.camT.y] = rubberPoint([d.cx + e.clientX - d.x0, d.cy + e.clientY - d.y0], cameraBounds(s));
-        Object.assign(s.cam, s.camT);
+        pan(d, e);
       }
     }
     if (!d) return;
@@ -197,10 +205,10 @@ export function attachInput(s: SkyState) {
       return;
     }
     s.drag = null;
-    if (d.moved && s.sky && !s.reduce.matches && e.type !== 'pointercancel') {
-      const samples = record(d.samples, { x: e.clientX, y: e.clientY, t: e.timeStamp });
-      const v = velocity(samples, e.timeStamp);
-      if (Math.hypot(...v) > LAUNCH_SPEED) s.inertia = v;
+    if (d.panBounds && s.sky && !s.reduce.matches && e.type !== 'pointercancel') {
+      launchCamera(s, velocity(d.samples, e.timeStamp));
+      const [x, y] = constrain([s.cam.x, s.cam.y], d.panBounds);
+      if (cameraMoving(s) || s.cam.x !== x || s.cam.y !== y) s.cameraTravelBounds = d.panBounds;
     }
     if (d.moved || e.type === 'pointercancel') return;
     if (e.pointerType === 'touch') {

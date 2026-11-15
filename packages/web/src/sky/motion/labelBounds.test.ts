@@ -5,7 +5,7 @@ import { hubs, hubHomes } from '../layout';
 import { measureHubLabels } from '../geometry/hubLabels';
 import { advanceCamera, cameraBounds } from './cameraMotion';
 
-it.each([0.5, 0.8, 1])(
+it.each([0.5, 0.65, 0.8])(
   'contains freshly measured hub captions with 24px margins and toolbar clearance at %s',
   (scale) => {
     const { s, registry } = fixture();
