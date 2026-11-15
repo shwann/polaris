@@ -47,7 +47,7 @@ export function ActiveTask({ task: t, changed }: { task: Task; changed: boolean 
           {t.steps.map((step, i) => (
             <li key={i} className={styles.step} data-state={step.state}>
               <span className={styles.mark} aria-hidden="true">
-                {stepMarks[step.state]}
+                <span>{stepMarks[step.state]}</span>
               </span>
               <b>{step.name}</b>
               <span className={styles.state}>{stepLabels[step.state]}</span>

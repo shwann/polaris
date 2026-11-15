@@ -99,6 +99,16 @@
 .step[data-state='doing'] .mark {
   box-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 55%, transparent);
 }
+@media (prefers-reduced-motion: no-preference) {
+  .step[data-state='doing'] .mark > span {
+    animation: step-spin 9s linear infinite;
+  }
+}
+@keyframes step-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
 .step[data-state='blocked'] {
   --step-color: var(--coral);
 }
