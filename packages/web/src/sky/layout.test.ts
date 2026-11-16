@@ -3,7 +3,7 @@ import { it, expect } from 'vitest';
 import { LayoutRegistry } from '../layout/LayoutRegistry';
 import type { LayoutKey } from '../layout/LayoutRegistry';
 import { createState } from './createState';
-import { measureHeader } from './layout';
+import { measureHeader, taskLayerTop } from './layout';
 it('reproduces the legacy header gap and mask and hides the small Dipper without enough room', () => {
   const registry = new LayoutRegistry();
   const add = (key: LayoutKey, x: number, y: number, w: number, h: number) => {
@@ -26,6 +26,12 @@ it('reproduces the legacy header gap and mask and hides the small Dipper without
   const canvas = document.createElement('canvas'),
     s = createState(canvas, canvas.getContext('2d')!, registry, {});
   measureHeader(s);
+  s.h = 900;
+  expect(taskLayerTop(s)).toBe(280);
+  s.skyK = 0.5;
+  expect(taskLayerTop(s)).toBe(140);
+  s.skyK = 1;
+  expect(taskLayerTop(s)).toBe(0);
   expect(s.veilY).toBe(440);
   expect(s.smallBox).toEqual([595.2, 32, 1042, 204]);
   expect(s.smallPole?.[0]).toBeCloseTo(475.2, 8);

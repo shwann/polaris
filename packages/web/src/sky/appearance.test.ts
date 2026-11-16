@@ -21,7 +21,12 @@ it('hides only the sky-mode board while preserving the board defaults and measur
   expect(hidden.some((r) => hasDeclaration(r, 'visibility', 'hidden'))).toBe(true);
   expect(hidden.some((r) => hasDeclaration(r, 'display', 'none'))).toBe(false);
   expect(
-    hidden.some((r) => r.nodes.some((d) => d.prop === 'transition' && /visibility 0s (?:0?\.6s|600ms)/.test(d.value))),
+    hidden.some((r) =>
+      r.nodes.some(
+        (d) =>
+          d.prop === 'transition' && /opacity var\(--board-fade\).*visibility 0s var\(--board-fade\)/.test(d.value),
+      ),
+    ),
   ).toBe(true);
   page.document.documentElement.classList.remove('sky');
   expect(matchingRules(wrap, css)).toEqual(before);

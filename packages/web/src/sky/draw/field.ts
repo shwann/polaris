@@ -150,12 +150,11 @@ export function drawChart(state: SkyState) {
   };
   // Release superseded backing stores before allocating replacements on resize.
   if (state.chart) state.chart.width = state.chart.height = 0;
-  if (state.boardChart) state.boardChart.width = state.boardChart.height = 0;
   if (state.chartCore) state.chartCore.width = state.chartCore.height = 0;
   state.chart = make(geometry.box, geometry.width, geometry.height, true);
-  // Preserve the exact original viewport raster for the board/header baseline.
+  // Preserve the native-resolution detail of the original viewport as part of the same chart in both views.
   const board = rasterSize(Math.round(state.w * state.dpr), Math.round(state.h * state.dpr), 1, BOARD_PIXELS);
-  state.boardChart = make([0, 0, state.w, state.h], board.width, board.height, false);
+  const viewport = make([0, 0, state.w, state.h], board.width, board.height, false);
   // A complementary soft cutout retains original fine stars/text at native resolution.
   const core = (state.chartCore = document.createElement('canvas'));
   core.width = board.width;
@@ -183,6 +182,7 @@ export function drawChart(state: SkyState) {
   atlas.drawImage(core, 0, 0, state.w, state.h);
   atlas.globalCompositeOperation = 'source-over';
   g.globalCompositeOperation = 'source-in';
-  g.drawImage(state.boardChart, 0, 0, state.w, state.h);
+  g.drawImage(viewport, 0, 0, state.w, state.h);
+  viewport.width = viewport.height = 0;
   g.globalCompositeOperation = 'source-over';
 }

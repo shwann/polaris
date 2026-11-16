@@ -40,7 +40,7 @@ export function Dashboard() {
       <DipCard />
       <WriteNotice />
       <div id="sr" className={styles.sr} aria-live="polite" />
-      <div className={styles.wrap}>
+      <div className={styles.wrap} inert={ui.sky}>
         <Header />
         {ui.view === 'tasks' && (
           <>

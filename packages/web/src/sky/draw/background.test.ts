@@ -41,7 +41,6 @@ it('reuses all chart rasters and three cloud sprites through zooming and panning
   s.drawChart();
   s.drawNebula(100);
   const chart = s.chart,
-    board = s.boardChart,
     core = s.chartCore,
     sprites = [...s.tints.entries()].filter(([key]) => key.startsWith('nebula:'));
   expect(sprites).toHaveLength(3);
@@ -52,7 +51,6 @@ it('reuses all chart rasters and three cloud sprites through zooming and panning
   }
   expect(build).not.toHaveBeenCalled();
   expect(s.chart).toBe(chart);
-  expect(s.boardChart).toBe(board);
   expect(s.chartCore).toBe(core);
   for (const [key, canvas] of sprites) expect(s.tints.get(key)).toBe(canvas);
   registry.dispose();
@@ -139,18 +137,23 @@ it('caps raster area, resolution and sides, including ultrawide and high-DPI scr
     }
 });
 
-it('uses the original board raster and crops the sky atlas to the visible region', () => {
+it('draws the same visible chart layers before, during and after the overview transition', () => {
   const { s, registry } = fixture();
   s.drawChart();
-  s.skyK = 0;
-  drawBackgroundChart(s);
-  expect(s.ctx.drawImage).toHaveBeenLastCalledWith(s.boardChart, 0, 0, s.w, s.h);
-  s.skyK = 1;
-  drawBackgroundChart(s);
-  const calls = vi.mocked(s.ctx.drawImage).mock.calls;
-  const args = calls[calls.length - 2]!;
-  expect(args[0]).toBe(s.chart);
-  expect(calls.at(-1)![0]).toBe(s.chartCore);
-  expect(args.slice(5)).toEqual([0, 0, s.w, s.h]);
+  const draw = vi.mocked(s.ctx.drawImage);
+  const at = (skyK: number) => {
+    draw.mockClear();
+    s.skyK = skyK;
+    drawBackgroundChart(s);
+    return draw.mock.calls.slice();
+  };
+  const board = at(0);
+  expect(board.map((call) => call[0])).toEqual([s.chart, s.chartCore]);
+  expect(board[0]!.slice(5)).toEqual([0, 0, s.w, s.h]);
+  for (const k of [0.001, 0.5, 1, 0]) expect(at(k)).toEqual(board);
+  Object.assign(s.cam, { s: 1.5, x: -100, y: -40 });
+  const panned = at(1);
+  expect(panned.map((call) => call[0])).toEqual([s.chart, s.chartCore]);
+  expect(panned[0]!.slice(1, 5)).not.toEqual(board[0]!.slice(1, 5));
   registry.dispose();
 });

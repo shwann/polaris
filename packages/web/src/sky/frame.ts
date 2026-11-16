@@ -11,6 +11,16 @@ import type { SkyState } from './types';
 import { advanceSpin } from './geometry/clusters';
 import { pausedGroups, stillPointer } from './motion/pause';
 import { paintHubLabels } from './draw/labels';
+import { taskLayerTop } from './layout';
+
+function clipTaskLayer(state: SkyState, top: number) {
+  if (!top) return;
+  const [x, y] = state.toWorld(0, top);
+  state.ctx.save();
+  state.ctx.beginPath();
+  state.ctx.rect(x, y, state.w / state.cam.s, (state.h - top) / state.cam.s);
+  state.ctx.clip();
+}
 
 export function frame(state: SkyState, t: number) {
   const dt = Math.max(0, state.last ? t - state.last : 16);
@@ -87,15 +97,20 @@ export function frame(state: SkyState, t: number) {
   const list = [...state.stars.values()];
   state.physics(t, dt, list);
   state.drawDipper(t);
+  const taskTop = taskLayerTop(state);
+  clipTaskLayer(state, taskTop);
   drawReleases(state);
   const live = state.drawClusters(t, list);
   state.drawFlows(t);
   state.drawTraces(t);
+  if (taskTop) state.ctx.restore();
   if (!state.sky || state.w <= 560) state.drawHubLabels();
+  clipTaskLayer(state, taskTop);
   state.drawPicking(t, list);
   state.drawBeams(t);
   if (!state.sky || state.w <= 560) state.drawStars(t, list);
   state.drawSignals(t, live);
+  if (taskTop) state.ctx.restore();
   state.drawEffects(t, dt);
   if (state.sky && state.w > 560) {
     state.ctx.setTransform(
@@ -108,7 +123,9 @@ export function frame(state: SkyState, t: number) {
     );
     state.lwk = state.sz;
     state.drawHubLabels();
+    clipTaskLayer(state, taskTop);
     state.drawStars(t, list);
+    if (taskTop) state.ctx.restore();
     paintHubLabels(state);
     state.ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
     state.lwk = 1;

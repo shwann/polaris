@@ -25,6 +25,16 @@ html:global(.sky) .skybar {
   transform: translate(-50%, 0);
   pointer-events: auto;
 }
+@media (prefers-reduced-motion: no-preference) {
+  html:global(.sky) .skybar {
+    transition-delay: 0.28s;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skybar {
+    transition: none;
+  }
+}
 .skybar b {
   color: var(--cyan);
   font-family: var(--mono);

@@ -67,7 +67,7 @@ export function physics(state: SkyState, t: number, dt: number, list: Star[]) {
   }
   constellation(state, list, dt, t);
   for (const s of list) {
-    const veil = state.ZONE.dip && state.skyK < 0.5 && state.veilY > 0 && s.y < state.veilY - scrollY ? 0.18 : 1;
+    const veil = state.ZONE.dip && state.veilY > 0 && s.y < state.veilY - scrollY ? 0.18 + 0.82 * state.skyK : 1;
     s.alpha +=
       ((s.dead ? 0 : (state.match && !state.match.has(s.id) ? 0.14 : 1) * veil) - s.alpha) * (1 - Math.exp(-dt / 259));
     s.flare *= Math.exp(-dt / 632);

@@ -19,7 +19,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
     const R = state.unit * (st.group === 'done' ? 0.035 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
       a =
         (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) *
-        (state.sky ? 1.5 : 1) *
+        (1 + 0.5 * state.skyK) *
         (lit ? 1.8 : 1) *
         st.alpha *
         (st.figureRole ? 0.35 : 1);
@@ -32,7 +32,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       [x, y] = state.at(cx0, cy0, 14),
       Rc = R0 * (1.1 + 0.06 * Math.sin(t / 3000));
     state.ctx.globalAlpha =
-      (state.sky ? 0.32 : 0.22) *
+      (0.22 + 0.1 * state.skyK) *
       (state.figures.has('done') ? 0.5 : 1) *
       (state.litGroup === 'done' || (state.hover && state.hover.group === 'done') ? 1.6 : 1);
     state.ctx.drawImage(state.tint(COL.done), x - Rc, y - Rc, Rc * 2, Rc * 2);
@@ -43,7 +43,7 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
   const live: [Star, Star][] = [];
   for (const [g, edges] of state.trees) {
     if (state.figures.has(g)) {
-      drawFigure(state, g);
+      drawFigure(state, g, state.skyK);
       continue;
     }
     const fade = state.linkFade(g);
@@ -56,7 +56,11 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
       const strong = sameChain(a, b),
         on = lit || (!!chain && strong && a.chain === chain),
         base =
-          0.5 * (state.sky ? TASK_LINK_SKY : 1) * (on ? (chain ? 2 : 1.6) : 1) * (strong ? CHAIN_LINK.alpha : 1) * fade;
+          0.5 *
+          (1 + (TASK_LINK_SKY - 1) * state.skyK) *
+          (on ? (chain ? 2 : 1.6) : 1) *
+          (strong ? CHAIN_LINK.alpha : 1) *
+          fade;
       const [ax, ay] = state.at(a.x, a.y, 14),
         [bx, by] = state.at(b.x, b.y, 14),
         L = Math.hypot(bx - ax, by - ay);

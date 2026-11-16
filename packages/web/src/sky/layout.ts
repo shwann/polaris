@@ -11,18 +11,19 @@ export function measureHeader(s: SkyState) {
     sr = r.get('status'),
     pr = r.get('watch'),
     tabs = r.get('tabs'),
-    fig = r.get('figures');
-  if (!cov || !c || !rw || !sr || !pr || !tabs || !fig) {
+    fig = r.get('figures'),
+    Y = scrollY;
+  s.headerBottom = tabs ? tabs.bottom + Y : 0;
+  s.veilY = fig ? fig.bottom + 20 + Y : -1;
+  if (!cov || !c || !rw || !sr || !pr || !tabs) {
     s.smallBox = null;
     return;
   }
   let tr = 0;
   for (const k of ['kicker', 'en', 'zh', 'motto', 'ticker'] as const) tr = Math.max(tr, r.get(k)?.right || 0);
-  const Y = scrollY,
-    top = Math.max(6, cov.top - 18) + 10,
+  const top = Math.max(6, cov.top - 18) + 10,
     right = Math.min(c.left, sr.left, pr.left) - 24,
     bottom = tabs.top - 10;
-  s.veilY = fig.bottom + 20 + Y;
   if (right - tr < 300 || bottom - top < 110) {
     s.smallBox = null;
     return;
@@ -34,6 +35,11 @@ export function measureHeader(s: SkyState) {
   s.smallBox = [px + Math.min(120, bw * 0.17), top + 14 + Y, right - 54, bottom - 26 + Y];
   s.smallPole = [px, py + Y];
 }
+/** Reveal more of the task layer as the masthead gives way to the sky. */
+export function taskLayerTop(s: SkyState) {
+  return Math.min(s.h, Math.max(0, (s.headerBottom - scrollY) * (1 - s.skyK)));
+}
+
 export function hubs(s: SkyState): Point[] {
   return hubHomes(s).map(([x, y], i) => {
     const p = s.sky && s.w > 560 && !s.reduce.matches ? s.hubParticles[i] : undefined;

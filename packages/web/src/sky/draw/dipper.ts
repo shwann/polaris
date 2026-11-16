@@ -60,30 +60,19 @@ export function drawDipper(state: SkyState, t: number) {
             : state.dipHover;
   state.dipPos = pos;
   state.dipGlow += ((lit >= 0 ? 1 : 0) - state.dipGlow) * 0.08;
-  // On the board (wide screens) the small header Dipper is drawn crisp and bright with solid lines; decorations
-  // shrink with it (S). In the sky view it returns to the full-size, dashed, animated figure.
+  // The two line styles crossfade as the stars move from the header to the sky positions.
   const small = !!state.ZONE.dip && state.skyK < 0.5,
     vis = state.sky || !!state.ZONE.dip,
-    S0 = state.sz * (state.ZONE.dip ? 0.55 + 0.45 * state.skyK : 1);
+    S0 = state.sz * (state.ZONE.dip ? 0.55 + 0.45 * state.skyK : 1),
+    board = 1 - state.skyK,
+    sky = state.skyK;
   // The Dipper's figure, star to star, with light creeping along it; the pointer line runs from Dubhe to Polaris.
   // In the sky view the Dipper is the brightest figure on the chart, a step above every task constellation.
   state.ctx.lineCap = 'round';
-  state.ctx.lineWidth = small ? 4 : state.sky ? DIPPER_SKY.glowWidth : 6;
-  state.ctx.strokeStyle = rgba(GOLD, small ? 0.025 + 0.04 * state.dipGlow : state.sky ? DIPPER_SKY.glowAlpha : 0.025);
-  state.ctx.beginPath();
-  for (const [a, b] of DIPPER_LINES) {
-    state.ctx.moveTo(...pos[a]!);
-    state.ctx.lineTo(...pos[b]!);
-  }
-  state.ctx.stroke();
-  state.ctx.lineCap = 'butt';
-  state.ctx.setLineDash(small ? [] : state.sky ? [7, 4] : [4, 6]);
-  state.ctx.lineDashOffset = state.reduce.matches ? 0 : -t / 120;
-  state.ctx.lineWidth = small ? 1.1 : state.sky ? DIPPER_SKY.width : 1.3;
-  // Quiet by default on the board; a hovered or clicked figure card lifts the whole figure and lights its star's edges.
+  state.ctx.lineWidth = (state.ZONE.dip ? 4 : 6) * board + DIPPER_SKY.glowWidth * sky;
   state.ctx.strokeStyle = rgba(
     GOLD,
-    (small ? 0.14 + 0.14 * state.dipGlow : state.sky ? DIPPER_SKY.alpha : 0.14) + (small ? 0 : state.dipGlow * 0.15),
+    (0.025 + (state.ZONE.dip ? 0.04 * state.dipGlow : 0)) * board + DIPPER_SKY.glowAlpha * sky,
   );
   state.ctx.beginPath();
   for (const [a, b] of DIPPER_LINES) {
@@ -91,9 +80,24 @@ export function drawDipper(state: SkyState, t: number) {
     state.ctx.lineTo(...pos[b]!);
   }
   state.ctx.stroke();
-  if (small && lit >= 0 && lit < 7) {
+  state.ctx.lineCap = 'butt';
+  state.ctx.lineDashOffset = state.reduce.matches ? 0 : -t / 120;
+  if (board > 0) {
+    state.ctx.setLineDash(state.ZONE.dip ? [] : [4, 6]);
+    state.ctx.lineWidth = state.ZONE.dip ? 1.1 : 1.3;
+    state.ctx.strokeStyle = rgba(GOLD, (0.14 + (state.ZONE.dip ? 0.14 : 0.15) * state.dipGlow) * board);
+    state.ctx.stroke();
+  }
+  if (sky > 0) {
+    state.ctx.setLineDash([7, 4]);
+    state.ctx.lineWidth = DIPPER_SKY.width;
+    state.ctx.strokeStyle = rgba(GOLD, (DIPPER_SKY.alpha + state.dipGlow * 0.15) * sky);
+    state.ctx.stroke();
+  }
+  if (state.ZONE.dip && board > 0 && lit >= 0 && lit < 7) {
+    state.ctx.setLineDash([]);
     state.ctx.lineWidth = 1.6;
-    state.ctx.strokeStyle = rgba(state.OWN(lit), 0.85 * state.dipGlow);
+    state.ctx.strokeStyle = rgba(state.OWN(lit), 0.85 * state.dipGlow * board);
     state.ctx.beginPath();
     for (const [a, b] of DIPPER_LINES)
       if (a === lit || b === lit) {

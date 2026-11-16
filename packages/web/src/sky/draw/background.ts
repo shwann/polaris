@@ -20,13 +20,9 @@ export function tileOrigins(view: Box, w: number, h: number, margin = 0): Point[
 }
 
 export function drawBackgroundChart(s: SkyState) {
-  if (!s.chart || !s.boardChart) return;
+  if (!s.chart) return;
   const dx = s.mx * 3,
     dy = s.my * 3;
-  if (s.skyK === 0) {
-    s.ctx.drawImage(s.boardChart, dx, dy, s.w, s.h);
-    return;
-  }
   const view = backgroundView(s, DEPTH.chart),
     box = s.chartBox,
     x = Math.max(box[0], view[0] - dx),

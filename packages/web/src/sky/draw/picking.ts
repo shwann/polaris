@@ -1,5 +1,6 @@
 import { pickAquarius } from '../geometry/figures/aquarius';
 import { COL } from '../../domain/lanes';
+import { taskLayerTop } from '../layout';
 import { rgba } from '../palette';
 import type { SkyState, Star } from '../types';
 
@@ -10,13 +11,17 @@ export function pickAt(state: SkyState, X: number, Y: number) {
   let star: Star | null = null,
     dip = -1,
     best = pickRadius(state.cam.s);
-  for (const s of state.stars.values()) {
-    if (s.dead || s.alpha < 0.02) continue;
-    const [x, y] = state.toScreen(...state.at(s.x, s.y, 14));
-    const distance = Math.hypot(X - x, Y - y);
-    if (distance < best) {
-      best = distance;
-      star = s;
+  const top = taskLayerTop(state);
+  if (Y >= top) {
+    for (const s of state.stars.values()) {
+      if (s.dead || s.alpha < 0.02) continue;
+      const [x, y] = state.toScreen(...state.at(s.x, s.y, 14));
+      if (y < top) continue;
+      const distance = Math.hypot(X - x, Y - y);
+      if (distance < best) {
+        best = distance;
+        star = s;
+      }
     }
   }
   let anchorRadius = star ? Math.min(best, 12) : pickRadius(state.cam.s);

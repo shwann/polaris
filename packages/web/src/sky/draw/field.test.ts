@@ -52,8 +52,8 @@ it('preserves v42 board chart geometry, styles, dark lane and centre mask at all
     const rounded = (calls: unknown[][]) =>
       calls.map((call) => call.map((v) => (typeof v === 'number' ? Math.round(v * 1e8) / 1e8 : v)));
     expect(rounded(contexts[1]!.calls)).toEqual(rounded(old.calls));
-    expect(s.boardChart!.width).toBe(Math.round(w * dpr));
-    expect(s.boardChart!.height).toBe(900 * dpr);
+    expect(s.chartCore!.width).toBe(Math.round(w * dpr));
+    expect(s.chartCore!.height).toBe(900 * dpr);
     expect(contexts[1]!.transforms[0]).toEqual(['setTransform', dpr, 0, 0, dpr, 0, 0]);
     const sky = contexts[0]!.calls;
     expect(sky).toContainEqual(['set', 'globalCompositeOperation', 'destination-out']);

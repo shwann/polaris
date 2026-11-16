@@ -30,24 +30,20 @@ export interface HubLabel {
 function drawHeaderName(state: SkyState, k: number, x: number, y: number) {
   const me = k === state.dipLit || (state.dipLit < 0 && k === state.dipPin) || k === state.dipSel;
   if (state.skyK < 0.98 && k === 7 && state.smallBox) {
-    // Polaris's name under its emblem, and the system's name under the Dipper.
+    // Match the captions under Polaris and the Dipper.
     const Sp = state.sz * (0.55 + 0.45 * state.skyK) * 2.3;
+    state.ctx.save();
     state.ctx.globalAlpha = 1 - state.skyK;
     state.ctx.textAlign = 'center';
-    state.ctx.font = `600 15px "Noto Sans SC", sans-serif`;
-    state.ctx.fillStyle = rgba(GOLD, 0.8);
-    state.ctx.fillText('北辰', x, y + 26 * Sp + 4);
-    // The chosen system's constellation name sits just under the bowl's bottom edge (Phecda–Merak).
+    state.ctx.font = '400 11px "Noto Sans SC", sans-serif';
+    state.ctx.fillStyle = 'rgba(166, 185, 210, 0.62)';
+    state.ctx.shadowColor = 'transparent';
+    state.ctx.fillText('北极星', x, y + 26 * Sp + 4);
+    // Use the midpoint of the bowl's bottom edge (Phecda–Merak).
     const [gx, gy] = state.dipPos[2]!,
-      [bx3, by3] = state.dipPos[1]!,
-      cs = state.systems().find((x) => x.key === state.sysSel) || state.systems()[0]!;
-    state.ctx.fillStyle = rgba([46, 230, 255], 0.9);
-    state.ctx.fillText(
-      state.sysSel === 'all' ? '全部系统' : cs.constellation || '北斗',
-      (gx + bx3) / 2,
-      Math.max(gy, by3) + 26,
-    );
-    state.ctx.globalAlpha = 1;
+      [bx, by] = state.dipPos[1]!;
+    state.ctx.fillText('北斗七星', (gx + bx) / 2, Math.max(gy, by) + 26);
+    state.ctx.restore();
   } else if (state.skyK < 0.98 && k !== 7) {
     const [dx, dy, al] = SMALL_LABEL[k]!;
     state.ctx.globalAlpha = 1 - state.skyK;

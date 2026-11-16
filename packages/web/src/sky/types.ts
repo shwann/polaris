@@ -206,6 +206,7 @@ export interface SkyState extends SkyMethods {
   smallBox: Box | null;
   smallPole: Point | null;
   bowl: Triple | null;
+  headerBottom: number;
   veilY: number;
   unvN: number;
   litGroup: Lane | null;
@@ -224,7 +225,6 @@ export interface SkyState extends SkyMethods {
   pulses: { a: Star; b: Star; t0: number; dur: number }[];
   packets: { a: Lane; b: Lane; t0: number; dur: number }[];
   chart: HTMLCanvasElement | null;
-  boardChart: HTMLCanvasElement | null;
   chartCore: HTMLCanvasElement | null;
   chartBox: Box;
   layoutScale: number;

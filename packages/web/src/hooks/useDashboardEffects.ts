@@ -18,7 +18,7 @@ export function useDashboardEffects() {
     document.addEventListener('pointermove', move, { passive: true });
     let old = uiStore.getState();
     const off = uiStore.subscribe((next) => {
-      if (next.sky && !old.sky) document.getElementById('skyback')?.focus();
+      if (next.sky && !old.sky) document.getElementById('skyback')?.focus({ preventScroll: true });
       if (
         ((old.selected && !next.selected) ||
           (old.selectedRelease && !next.selectedRelease) ||

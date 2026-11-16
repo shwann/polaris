@@ -7,7 +7,7 @@ import { SCORPIUS_SWING_PERIOD } from '../geometry/scorpiusSwing';
 import { travelingGlow } from './travelingGlow';
 
 /** All endpoints are resolved from the simulated stars, never from cached template coordinates. */
-export function drawFigure(s: SkyState, lane: Lane) {
+export function drawFigure(s: SkyState, lane: Lane, opacity = 1) {
   const figure = s.figures.get(lane);
   if (!figure) return;
   const stars = figure.nodes.map((n) => s.stars.get(n.id)!);
@@ -17,6 +17,7 @@ export function drawFigure(s: SkyState, lane: Lane) {
   const detail = lane === 'done' ? Math.max(0, Math.min(1, (s.cam.s - 1.2) / 1.2)) : 1;
   const c = s.ctx;
   c.save();
+  c.globalAlpha *= opacity;
   c.lineCap = 'round';
   for (const edge of figure.edges) {
     const a = stars[edge.a]!,
