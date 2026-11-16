@@ -59,7 +59,7 @@ export function drawDoneOverview(s: SkyState) {
   s.ctx.fillStyle = rgba(COL.done, 1);
   s.ctx.shadowColor = 'rgba(4,10,20,.95)';
   s.ctx.shadowBlur = 5;
-  outlinedText(s.ctx, label.text, label.left, label.top, 1, label.alpha * 0.95);
+  outlinedText(s.ctx, label.text, label.left, label.top, 1, label.alpha * 0.95 * s.skyK);
   s.ctx.restore();
 }
 

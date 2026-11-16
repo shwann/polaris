@@ -15,8 +15,9 @@ export const chainLit = (state: SkyState, s: Star) =>
   !!s.chain && !!state.hover && state.hover !== s && state.hover.group === s.group && state.hover.chain === s.chain;
 
 export function drawStars(state: SkyState, t: number, list: Star[]) {
-  const labels = [],
-    live = list.filter((s) => !s.dead && s.alpha > 0.02),
+  const detail = state.skyK,
+    labels = [],
+    live = detail ? list.filter((s) => !s.dead && s.alpha > 0.02) : [],
     gaps = new Map(nearestGaps(live.map((s) => state.at(s.x, s.y, 14))).map((g, i) => [live[i]!, g]));
   // Stars: halo, core, diffraction spikes on bright ones, a slow orbit ring on active work, a throb on overdue asks.
   for (const s of list) {
@@ -40,40 +41,46 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       a0 =
         dim * (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * (quiet && !mate ? QUIET_WAIT.alpha : 1) * s.alpha;
     // In a dense cluster a halo stops at its nearest neighbour instead of piling onto it.
-    const hr =
-      Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) *
-      (old ? OLD_DONE.size : 1) *
-      (quiet ? QUIET_WAIT.halo : 1);
-    state.ctx.globalAlpha = Math.min(
-      1,
-      ((s.group === 'done' ? (old ? 0.12 : 0.45) : quiet ? 0.3 : 0.5) +
-        throb * 0.4 +
-        s.flare * 0.9 +
-        (held ? 0.65 : state.hover === s ? 0.4 : mate ? 0.3 : 0)) *
-        s.alpha *
-        dim,
-    );
-    state.ctx.drawImage(state.tint(c), x - hr, y - hr, hr * 2, hr * 2);
-    state.ctx.globalAlpha = 1;
-    if ((r >= 2.2 * q && !quiet) || state.hover === s) {
-      const L = r * (3.2 + s.flare * 4 + (state.hover === s ? 3 : 0)) * tw;
-      state.ctx.strokeStyle = rgba(c, 0.55 * a0);
-      state.ctx.lineWidth = 0.7;
-      state.ctx.beginPath();
-      state.ctx.moveTo(x - L, y);
-      state.ctx.lineTo(x + L, y);
-      state.ctx.moveTo(x, y - L);
-      state.ctx.lineTo(x, y + L);
-      state.ctx.stroke();
+    if (detail > 0) {
+      const hr =
+        Math.min(haloRadius(state, s, t), Math.max(gaps.get(s) ?? Infinity, r * 3)) *
+        (old ? OLD_DONE.size : 1) *
+        (quiet ? QUIET_WAIT.halo : 1);
+      state.ctx.globalAlpha = Math.min(
+        1,
+        ((s.group === 'done' ? (old ? 0.12 : 0.45) : quiet ? 0.3 : 0.5) +
+          throb * 0.4 +
+          s.flare * 0.9 +
+          (held ? 0.65 : state.hover === s ? 0.4 : mate ? 0.3 : 0)) *
+          s.alpha *
+          dim,
+      );
+      state.ctx.globalAlpha *= detail;
+      state.ctx.drawImage(state.tint(c), x - hr, y - hr, hr * 2, hr * 2);
+      state.ctx.globalAlpha = 1;
+      if ((r >= 2.2 * q && !quiet) || state.hover === s) {
+        const L = r * (3.2 + s.flare * 4 + (state.hover === s ? 3 : 0)) * tw;
+        state.ctx.strokeStyle = rgba(c, 0.55 * a0 * detail);
+        state.ctx.lineWidth = 0.7;
+        state.ctx.beginPath();
+        state.ctx.moveTo(x - L, y);
+        state.ctx.lineTo(x + L, y);
+        state.ctx.moveTo(x, y - L);
+        state.ctx.lineTo(x, y + L);
+        state.ctx.stroke();
+      }
     }
-    state.ctx.fillStyle = rgba([255, 255, 255], 0.85 * a0 * tw);
+    const coreAlpha = Math.min(1, a0 * tw * (1.16 - 0.16 * detail));
+    state.ctx.fillStyle = rgba([255, 255, 255], 0.85 * coreAlpha);
     state.ctx.beginPath();
     state.ctx.arc(x, y, r * 0.55, 0, 6.2832);
     state.ctx.fill();
-    state.ctx.fillStyle = rgba(c, a0 * tw * 0.9);
+    state.ctx.fillStyle = rgba(c, 0.9 * coreAlpha);
     state.ctx.beginPath();
-    state.ctx.arc(x, y, r + s.flare * 1.5, 0, 6.2832);
+    state.ctx.arc(x, y, r + s.flare * 1.5 * detail, 0, 6.2832);
     state.ctx.fill();
+    if (!detail) continue;
+    state.ctx.globalAlpha = detail;
     if (s.group === 'doing') {
       state.ctx.strokeStyle = rgba(c, 0.5 * s.alpha);
       state.ctx.lineWidth = 0.8;
@@ -138,6 +145,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         state.ctx.stroke();
       }
     }
+    state.ctx.globalAlpha = 1;
     // Codes show once there is room for them: wide screens at full view, phones and the shipped cluster when zoomed in.
     const [sx, sy] = state.toScreen(x, y);
     const visible = sx >= 0 && sx <= state.w && sy >= 0 && sy <= state.h;
@@ -148,10 +156,9 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       visible &&
       (state.hover === s ||
         (state.w > 560 && state.selected === s.id) ||
-        (state.sky && roomy && named) ||
+        (roomy && named) ||
         (((state.hover && state.hover.group === s.group) || state.litGroup === s.group) && roomy) ||
         chainLit(state, s) ||
-        (state.sky && r >= 2.9 * q && roomy && named) ||
         (state.match && state.match.has(s.id)))
     )
       labels.push({
@@ -168,7 +175,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         gap: r + 6 * q,
         y: y - r - 3 * q,
         c,
-        a: (state.hover === s || chainLit(state, s) ? 1 : state.sky ? 0.7 : 0.5) * (quiet ? 0.75 : 1) * s.alpha,
+        a: (state.hover === s || mate ? 1 : 0.7) * (quiet ? 0.75 : 1) * s.alpha * detail,
         pri:
           state.hover === s
             ? 99
@@ -177,6 +184,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
               : r / q + (state.match?.has(s.id) ? 5 : 0),
       });
   }
+  if (!detail) return;
   if (state.w > 560) {
     drawStarLabels(state, [...labels, ...aquariusLabels(state)]);
     return;

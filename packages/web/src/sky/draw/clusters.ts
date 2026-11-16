@@ -10,40 +10,44 @@ export const TASK_LINK_SKY = 1.4;
 export const CHAIN_LINK = { alpha: 1.45, core: 1.7, glow: 8.5 };
 
 export function drawClusters(state: SkyState, t: number, list: Star[]) {
-  // Constellation bodies: a soft cloud in the lane's colour follows each figure, breathing slowly.
-  state.ctx.globalCompositeOperation = 'lighter';
-  for (const st of list) {
-    const c = COL[st.group]! || COL.planned,
-      lit = (state.hover && state.hover.group === st.group) || state.litGroup === st.group,
-      [x, y] = state.at(st.x, st.y, 14);
-    const R = state.unit * (st.group === 'done' ? 0.035 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
-      a =
-        (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) *
-        (1 + 0.5 * state.skyK) *
-        (lit ? 1.8 : 1) *
-        st.alpha *
-        (st.figureRole ? 0.35 : 1);
-    state.ctx.globalAlpha = a;
-    state.ctx.drawImage(state.tint(c), x - R, y - R, R * 2, R * 2);
+  const detail = state.skyK;
+  // The board shows the outline and star cores; the coloured clouds come in with the sky.
+  if (detail > 0) {
+    state.ctx.globalCompositeOperation = 'lighter';
+    for (const st of list) {
+      const c = COL[st.group]! || COL.planned,
+        lit = (state.hover && state.hover.group === st.group) || state.litGroup === st.group,
+        [x, y] = state.at(st.x, st.y, 14);
+      const R = state.unit * (st.group === 'done' ? 0.035 : 0.075) * (1 + 0.12 * Math.sin(t / 2600 + st.ph)),
+        a =
+          (st.group === 'done' ? (st.recent ? 0.08 : 0.04) : 0.11) *
+          (1.5 * detail) *
+          (lit ? 1.8 : 1) *
+          st.alpha *
+          (st.figureRole ? 0.35 : 1);
+      state.ctx.globalAlpha = a;
+      state.ctx.drawImage(state.tint(c), x - R, y - R, R * 2, R * 2);
+    }
+    // The shipped cluster gets a bright core, like a globular cluster.
+    if (state.laneCount('done')) {
+      const [cx0, cy0, R0] = state.centre('done'),
+        [x, y] = state.at(cx0, cy0, 14),
+        Rc = R0 * (1.1 + 0.06 * Math.sin(t / 3000));
+      state.ctx.globalAlpha =
+        0.32 *
+        detail *
+        (state.figures.has('done') ? 0.5 : 1) *
+        (state.litGroup === 'done' || (state.hover && state.hover.group === 'done') ? 1.6 : 1);
+      state.ctx.drawImage(state.tint(COL.done), x - Rc, y - Rc, Rc * 2, Rc * 2);
+    }
+    state.ctx.globalAlpha = 1;
+    state.ctx.globalCompositeOperation = 'source-over';
   }
-  // The shipped cluster gets a bright core, like a globular cluster.
-  if (state.laneCount('done')) {
-    const [cx0, cy0, R0] = state.centre('done'),
-      [x, y] = state.at(cx0, cy0, 14),
-      Rc = R0 * (1.1 + 0.06 * Math.sin(t / 3000));
-    state.ctx.globalAlpha =
-      (0.22 + 0.1 * state.skyK) *
-      (state.figures.has('done') ? 0.5 : 1) *
-      (state.litGroup === 'done' || (state.hover && state.hover.group === 'done') ? 1.6 : 1);
-    state.ctx.drawImage(state.tint(COL.done), x - Rc, y - Rc, Rc * 2, Rc * 2);
-  }
-  state.ctx.globalAlpha = 1;
-  state.ctx.globalCompositeOperation = 'source-over';
   // Constellation figures as neon tubes: a wide soft glow under a bright core; lines stop short of each star.
   const live: [Star, Star][] = [];
   for (const [g, edges] of state.trees) {
     if (state.figures.has(g)) {
-      drawFigure(state, g, state.skyK);
+      drawFigure(state, g, detail);
       continue;
     }
     const fade = state.linkFade(g);
@@ -83,11 +87,13 @@ export function drawClusters(state: SkyState, t: number, list: Star[]) {
         x1 = bx - ux * gap,
         y1 = by - uy * gap;
       state.ctx.lineCap = 'round';
+      const core = on ? (strong ? 2 : 1.6) : strong ? CHAIN_LINK.core : 1.2;
       for (const [opacity, width] of [
-        [0.1, on ? 9 : strong ? CHAIN_LINK.glow : 7],
-        [0.22, strong ? 3.6 : 3],
-        [0.75, on ? (strong ? 2 : 1.6) : strong ? CHAIN_LINK.core : 1.2],
+        [0.1 * detail, on ? 9 : strong ? CHAIN_LINK.glow : 7],
+        [0.22 * detail, strong ? 3.6 : 3],
+        [0.9 - 0.15 * detail, 1.2 + (core - 1.2) * detail],
       ]) {
+        if (!opacity) continue;
         state.ctx.strokeStyle = rgba(color, opacity! * base * al * brightness);
         state.ctx.lineWidth = width! * thin;
         state.ctx.beginPath();

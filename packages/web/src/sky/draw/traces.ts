@@ -4,7 +4,7 @@ import { rgba } from '../palette';
 import type { SkyState } from '../types';
 
 export function drawTraces(state: SkyState, t: number) {
-  if (state.reduce.matches) return;
+  if (state.reduce.matches || !state.skyK) return;
   for (const [g, edges] of state.trees) {
     if (state.figures.has(g)) continue;
     if (!edges.length || state.linkFade(g) < 0.5) continue;
@@ -13,7 +13,7 @@ export function drawTraces(state: SkyState, t: number) {
       run = 2400;
     if (local > run + 700) continue;
     const prog = Math.min(1, local / run) * edges.length,
-      fade = local > run ? 1 - (local - run) / 700 : 1,
+      fade = (local > run ? 1 - (local - run) / 700 : 1) * state.skyK,
       c = COL[g]! || COL.planned;
     state.ctx.lineWidth = 1.4;
     edges.forEach(([a, b], i) => {

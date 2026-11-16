@@ -5,7 +5,7 @@ import type { SkyState, Star } from '../types';
 
 export function drawSignals(state: SkyState, t: number, live: [Star, Star][]) {
   // Signal pulses along live figure lines.
-  if (!state.reduce.matches && live.length && t - state.lastPulse > 550 && state.pulses.length < 7) {
+  if (state.skyK && !state.reduce.matches && live.length && t - state.lastPulse > 550 && state.pulses.length < 7) {
     state.lastPulse = t;
     const [a, b] = live[Math.floor(Math.random() * live.length)]!;
     state.pulses.push(
@@ -15,7 +15,12 @@ export function drawSignals(state: SkyState, t: number, live: [Star, Star][]) {
     );
   }
   state.pulses = state.pulses.filter(
-    (q) => !state.figures.has(q.a.group) && t - q.t0 < q.dur && state.stars.has(q.a.id) && state.stars.has(q.b.id),
+    (q) =>
+      !!state.skyK &&
+      !state.figures.has(q.a.group) &&
+      t - q.t0 < q.dur &&
+      state.stars.has(q.a.id) &&
+      state.stars.has(q.b.id),
   );
   for (const q of state.pulses) {
     const k = Math.max(0, t - q.t0) / q.dur,
@@ -28,7 +33,7 @@ export function drawSignals(state: SkyState, t: number, live: [Star, Star][]) {
       k0 = Math.max(0, e - 0.16),
       x0 = ax + (bx - ax) * k0,
       y0 = ay + (by - ay) * k0,
-      fade = Math.sin(Math.PI * k);
+      fade = Math.sin(Math.PI * k) * state.skyK;
     const gr = state.ctx.createLinearGradient(x0, y0, x, y);
     gr.addColorStop(0, rgba(c, 0));
     gr.addColorStop(1, rgba(c, 0.9 * fade));

@@ -55,6 +55,34 @@ it.each([0, 0.3])('keeps every task title line and outline at the same fade fact
   expect(calls.map((c) => c.alpha)).toEqual(alpha ? [alpha, alpha, alpha * 0.85, alpha * 0.85] : []);
   registry.dispose();
 });
+it('keeps the task core visible on the board and fades in its label and halo with the chart', () => {
+  const { s, star, registry } = fixture(true);
+  const task = star('DASH1', 330, 440);
+  s.hover = task;
+  const ink = inkContext(s.ctx),
+    halos: number[] = [],
+    drawCore = vi.mocked(s.ctx.fill);
+  s.tint = () => s.cvs;
+  s.ctx.drawImage = vi.fn(() => {
+    halos.push(s.ctx.globalAlpha);
+  });
+
+  s.sky = false;
+  s.skyK = 0;
+  s.drawStars(0, [task]);
+  expect(drawCore).toHaveBeenCalledTimes(2);
+  expect(ink).toHaveLength(0);
+  expect(halos).toHaveLength(0);
+
+  s.sky = true;
+  s.skyK = 0.4;
+  s.drawStars(0, [task]);
+  expect(ink.map((call) => call.alpha)).toEqual([0.4, 0.4]);
+  expect(halos).toHaveLength(1);
+  expect(halos[0]).toBeCloseTo(0.36);
+  expect(s.ctx.globalAlpha).toBe(1);
+  registry.dispose();
+});
 it('multiplies the full Dipper label fade by its parent transition alpha', () => {
   const { s, registry } = fixture(),
     calls = inkContext(s.ctx);

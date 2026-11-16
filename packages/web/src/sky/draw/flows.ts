@@ -29,11 +29,16 @@ export function arcPoint(
 }
 
 export function drawFlows(state: SkyState, t: number) {
+  const detail = state.skyK;
+  if (!detail) {
+    state.packets = [];
+    return;
+  }
   const list = state.arcs();
   state.ctx.setLineDash([1, 7]);
   state.ctx.lineWidth = 0.8;
   for (const [a, b] of list) {
-    state.ctx.strokeStyle = rgba(COL[a]!, state.sky ? 0.22 : 0.11);
+    state.ctx.strokeStyle = rgba(COL[a]!, 0.22 * detail);
     state.ctx.beginPath();
     for (let k = 0; k <= 1.001; k += 0.05) {
       const [x, y] = state.arcPoint(a, b, k);
@@ -52,7 +57,7 @@ export function drawFlows(state: SkyState, t: number) {
   for (const q of state.packets) {
     const k = Math.max(0, t - q.t0) / q.dur,
       e = k * k * (3 - 2 * k),
-      fade = Math.sin(Math.PI * k),
+      fade = Math.sin(Math.PI * k) * detail,
       ca = COL[q.a]!,
       cb = COL[q.b]!;
     const c = ca.map((v, i) => Math.round(v + (cb[i]! - v) * e));

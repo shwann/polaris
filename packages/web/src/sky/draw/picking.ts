@@ -43,12 +43,12 @@ export function drawPicking(state: SkyState, _t: number, list: Star[]) {
   state.hoverRelease = aquarius && !('item' in aquarius) ? aquarius : null;
   state.hover = aquarius ? null : state.drag?.star || hit.star;
   state.dipHover = aquarius ? -1 : hit.dip;
-  if (state.px < -1e3 || state.drag?.moved) return;
+  if (!state.skyK || state.px < -1e3 || state.drag?.moved) return;
   for (const s of list) {
     const [x, y] = state.at(s.x, s.y, 14),
       d = Math.hypot(x - state.wpx, y - state.wpy) * state.cam.s;
     if (d >= 170) continue;
-    state.ctx.strokeStyle = rgba(COL[s.group]! || COL.planned, 0.3 * (1 - d / 170) * s.alpha);
+    state.ctx.strokeStyle = rgba(COL[s.group]! || COL.planned, 0.3 * (1 - d / 170) * s.alpha * state.skyK);
     state.ctx.lineWidth = 0.6;
     state.ctx.beginPath();
     state.ctx.moveTo(state.wpx, state.wpy);
