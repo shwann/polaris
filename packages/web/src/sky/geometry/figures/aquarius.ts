@@ -4,6 +4,7 @@ import { softBody, type Particle, type SoftBody } from '../../motion/softbody';
 import { MIN_SEPARATION } from '../../motion/separation';
 import type { ReturnTiming } from '../../motion/returnTiming';
 import { aquariusJar, aquariusPoint, chronological } from './aquariusJar';
+import { aquariusDrops, type AquariusStyle, type DropsShape } from './aquariusDrops';
 
 export interface ReleaseStar {
   release: Release;
@@ -17,6 +18,9 @@ export interface AquariusStar extends ReleaseStar {
 export type JarStar = ReturnType<typeof aquariusJar>['nodes'][number] & { particle: Particle };
 export interface AquariusBody {
   system: string;
+  style: AquariusStyle;
+  /** Present only in the drops style: which item nodes form each release's drop. */
+  drops?: DropsShape;
   releases: Release[];
   w: number;
   h: number;
@@ -104,22 +108,28 @@ export function releaseStars(s: SkyState): AquariusStar[] {
   if (
     !previous ||
     previous.system !== s.sysSel ||
+    previous.style !== (s.aquariusStyle ?? 'jar') ||
     previous.releases !== s.releases ||
     previous.w !== s.w ||
     previous.h !== s.h
   ) {
-    const retained = previous?.system === s.sysSel ? previous : undefined;
+    const style = s.aquariusStyle ?? 'jar';
+    const retained = previous?.system === s.sysSel && previous.style === style ? previous : undefined;
     const at = (point: Point, p: Particle = { ox: 0, oy: 0, vx: 0, vy: 0 }) => {
       [p.baseX, p.baseY] = point;
       // Dense real records must not repel one another out of their resting silhouette.
 
       return p;
     };
-    const stars = aquarius(s.releases, s.w, s.h).map((star) => ({
+    const drops = style === 'drops' ? aquariusDrops(s.releases, s.w, s.h) : undefined;
+    const stars = (drops?.stars ?? aquarius(s.releases, s.w, s.h)).map((star) => ({
       ...star,
       particle: at(star.point, retained?.stars.find((node) => node.release.version === star.release.version)?.particle),
     }));
-    const layout = aquariusJar(s.releases, s.w, s.h);
+    // The drops style reuses the jar slot for its item nodes, so picking, selection and beams work unchanged.
+    const layout = drops
+      ? { nodes: drops.nodes, edges: drops.edges, poly: [] as Point[], rim: 0, mouth: 0 }
+      : aquariusJar(s.releases, s.w, s.h);
     const jar = {
       ...layout,
       nodes: layout.nodes.map((node) => ({
@@ -135,6 +145,16 @@ export function releaseStars(s: SkyState): AquariusStar[] {
       particles.every((p, i) => p === aquariusParticles(retained)[i]);
     s.aquarius = {
       system: s.sysSel,
+      style,
+      drops: drops && {
+        members: drops.members,
+        far: drops.far,
+        normal: drops.normal,
+        folded: drops.folded,
+        foldedItems: drops.foldedItems,
+        caption: drops.caption,
+        note: drops.note,
+      },
       releases: s.releases,
       w: s.w,
       h: s.h,

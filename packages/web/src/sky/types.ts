@@ -1,5 +1,6 @@
 import type { Figure, FigureNode, FigureTask } from './geometry/figures';
 import type { AquariusBody, JarStar, ReleaseDrag, ReleaseStar } from './geometry/figures/aquarius';
+import type { AquariusStyle } from './geometry/figures/aquariusDrops';
 import type { Release, WaitingOn } from '@polaris/core';
 import type { Particle, SoftBody } from './motion/softbody';
 import type { FigureReturn } from './motion/figureReturn';
@@ -125,6 +126,8 @@ export interface SkyState extends SkyMethods {
   /** Cluster spin clock in ms; advances slower when zoomed in. */
   spinT?: number;
   aquariusFlowT?: number;
+  /** How the release history is drawn; undefined keeps the original jar. */
+  aquariusStyle?: AquariusStyle;
   scorpiusSwing?: number;
   cvs: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;

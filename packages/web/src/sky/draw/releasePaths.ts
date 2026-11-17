@@ -1,3 +1,4 @@
+import type { AquariusBody } from '../geometry/figures/aquarius';
 import type { Point } from '../types';
 
 /** Sample a smooth centreline before offsetting its normals into two parallel banks. */
@@ -51,3 +52,17 @@ export function releaseCaption(points: Point[], i: number, scale: number) {
     align: nx > 0 ? ('left' as const) : ('right' as const),
   };
 }
+
+/** Version caption beside its release star, on the side away from the arc so it never sits inside a drop. */
+export function dropCaption(body: AquariusBody, points: Point[], i: number, scale: number) {
+  const p = points[i]!,
+    [nx, ny] = body.drops!.normal[i] ?? [0, -1];
+  return {
+    point: [p[0] + nx * 13 * scale, p[1] + ny * 13 * scale + (ny < -0.5 ? 0 : 4 * scale)] as Point,
+    align: nx < -0.2 ? ('right' as const) : ('left' as const),
+  };
+}
+
+/** The caption the active style paints for release i, shared by the painter, label queue and obstacles. */
+export const versionCaption = (body: AquariusBody, points: Point[], i: number, scale: number) =>
+  body.drops ? dropCaption(body, points, i, scale) : releaseCaption(points, i, scale);

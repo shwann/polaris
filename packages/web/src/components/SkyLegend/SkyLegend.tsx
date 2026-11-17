@@ -4,6 +4,7 @@ import { COL, COL_APP, LANES } from '../../domain/lanes';
 import { LATE_DAYS, RECENT_DAYS } from '../../domain/time';
 import type { Lane } from '../../domain/types';
 import { useUI } from '../../hooks/useBoard';
+import { setAquariusStyle } from '../../store/uiStore';
 import { useLayout } from '../../hooks/useLayout';
 
 /** localStorage key; '0' means the reader folded the legend away. */
@@ -97,7 +98,23 @@ export function SkyLegend() {
             <Icon>
               <path d="M2 3 L12 7 L5 11 L16 15" fill="none" stroke="currentColor" strokeDasharray="3 2" />
             </Icon>
-            <span className={styles.name}>水瓶 ♒︎ · 发布记录：瓶里是交付，水流里一颗星一个版本</span>
+            <span className={styles.name}>
+              {ui.aquariusStyle === 'jar'
+                ? '水瓶 ♒︎ · 发布记录：瓶里是交付，水流里一颗星一个版本'
+                : '水瓶 ♒︎ · 发布记录：一滴一个版本，滴尖是版本，滴身是交付'}
+            </span>
+            <span className={styles.styles} role="group" aria-label="水瓶样式">
+              <button
+                type="button"
+                aria-pressed={ui.aquariusStyle === 'drops'}
+                onClick={() => setAquariusStyle('drops')}
+              >
+                水滴
+              </button>
+              <button type="button" aria-pressed={ui.aquariusStyle === 'jar'} onClick={() => setAquariusStyle('jar')}>
+                瓶子
+              </button>
+            </span>
           </li>
           {LANES.map((lane) => (
             <li key={lane.key} className={styles.row} style={{ color: rgb(lane.key) }}>

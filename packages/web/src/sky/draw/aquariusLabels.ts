@@ -2,7 +2,7 @@ import { RELEASE_TAG_LABELS } from '@polaris/core';
 import { COL_APP } from '../../domain/lanes';
 import type { SkyState } from '../types';
 import type { Label } from './starLabels';
-import { releaseCaption } from './releasePaths';
+import { versionCaption } from './releasePaths';
 
 /** Delivered items share the completed-task zoom threshold; overview versions retain their original captions. */
 export const aquariusLabelZoom = (s: SkyState) => s.sky && s.cam.s > 2.2 && s.unit * s.cam.s > 640;
@@ -24,7 +24,7 @@ export function aquariusLabels(s: SkyState): Label[] {
   const labels: Label[] = body.stars.flatMap((n, i) => {
     const p = points[i]!;
     if (!visible(p)) return [];
-    const caption = releaseCaption(points, i, s.sz);
+    const caption = versionCaption(body, points, i, s.sz);
     return [
       {
         id: releaseLabelId(n.release.version),

@@ -1,7 +1,8 @@
 import { jarOutline } from '../geometry/figures/aquarius';
 import { aquariusFrame } from '../geometry/figures/aquariusJar';
 import type { Box, Point, SkyState } from '../types';
-import { releaseCaption, waterBanks } from './releasePaths';
+import { versionCaption, waterBanks } from './releasePaths';
+import { AQUARIUS_TITLE, dropPaths } from './aquariusDrops';
 import type { Halo } from './labelObstacles';
 
 export interface Segment {
@@ -39,15 +40,21 @@ export function aquariusObstacles(s: SkyState) {
   if (!body || !body.stars.length) return { boxes, segments, halos };
   const at = (p: Point) => s.at(...p, 14),
     points = body.stars.map((n) => at(n.point)),
-    frame = aquariusFrame(s.w, s.h),
-    mouth = at(body.jar.nodes[body.jar.mouth]?.point ?? body.stars[0]!.point);
+    frame = aquariusFrame(s.w, s.h);
   const line = (points: Point[], close = false) => {
     for (let i = 1; i < points.length; i++) segments.push({ a: points[i - 1]!, b: points[i]!, padding: 1.5 * s.sz });
     if (close && points.length) segments.push({ a: points.at(-1)!, b: points[0]!, padding: 1.5 * s.sz });
   };
-  line(jarOutline(body).map(at), true);
-  line([mouth, points[0]!]);
-  for (const bank of waterBanks([mouth, ...points], Math.max(5, frame.w * 0.018))) line(bank);
+  if (body.drops) {
+    const paths = dropPaths(s, body);
+    line(paths.link);
+    for (const part of [...paths.chain, ...paths.outlines]) line(part.points);
+  } else {
+    const mouth = at(body.jar.nodes[body.jar.mouth]?.point ?? body.stars[0]!.point);
+    line(jarOutline(body).map(at), true);
+    line([mouth, points[0]!]);
+    for (const bank of waterBanks([mouth, ...points], Math.max(5, frame.w * 0.018))) line(bank);
+  }
   const ctx = s.ctx;
   ctx.save();
   // The fixed overview captions are obstacles; zoomed captions join the shared label queue instead.
@@ -55,10 +62,11 @@ export function aquariusObstacles(s: SkyState) {
     const size = Math.max(12, s.unit * 0.009) * s.sz;
     ctx.font = `500 ${size}px "JetBrains Mono", monospace`;
     body.stars.forEach((n, i) => {
+      if (body.drops && i < body.drops.folded) return;
       const {
           point: [x, y],
           align,
-        } = releaseCaption(points, i, s.sz),
+        } = versionCaption(body, points, i, s.sz),
         width = ctx.measureText(n.release.version).width;
       boxes.push([
         x - (align === 'right' ? width : 0) - 2 * s.sz,
@@ -70,9 +78,15 @@ export function aquariusObstacles(s: SkyState) {
   }
   const size = Math.max(12, s.unit * 0.01) * s.sz;
   ctx.font = `500 ${size}px "Noto Sans SC", sans-serif`;
-  const width = ctx.measureText('水瓶 ♒︎ · 发布记录').width,
-    [x, y] = at([frame.x + frame.w * 0.24, frame.y + frame.h + 23 * s.sz]);
-  boxes.push([x - width / 2 - 2 * s.sz, y - size - 2 * s.sz, x + width / 2 + 2 * s.sz, y + size * 0.3]);
+  const width = ctx.measureText(AQUARIUS_TITLE).width;
+  if (body.drops) {
+    const [x, y] = at(body.drops.caption.point),
+      left = body.drops.caption.align === 'left' ? x : x - width;
+    boxes.push([left - 2 * s.sz, y - size - 2 * s.sz, left + width + 2 * s.sz, y + size * 0.3]);
+  } else {
+    const [x, y] = at([frame.x + frame.w * 0.24, frame.y + frame.h + 23 * s.sz]);
+    boxes.push([x - width / 2 - 2 * s.sz, y - size - 2 * s.sz, x + width / 2 + 2 * s.sz, y + size * 0.3]);
+  }
   ctx.restore();
   for (const n of body.jar.nodes) halos.push({ id: `aquarius-item:${n.id}`, point: at(n.point), radius: 4 * s.sz });
   for (const n of body.stars)

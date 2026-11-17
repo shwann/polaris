@@ -76,7 +76,12 @@ export function moveAquarius(s: SkyState, dt: number, time?: number) {
   });
   const jar = aquarius.jar;
   for (const edge of jar.edges) edges.push({ a: jar.nodes[edge.a]!.particle, b: jar.nodes[edge.b]!.particle });
-  if (jar.nodes.length && stars.length) edges.push({ a: jar.nodes[jar.mouth]!.particle, b: stars[0]!.particle });
+  if (aquarius.drops) {
+    // Each drop hangs from its own release star; the star chain above carries the arc between drops.
+    aquarius.drops.members.forEach((ids, i) => {
+      for (const id of ids) edges.push({ a: stars[i]!.particle, b: jar.nodes[id]!.particle });
+    });
+  } else if (jar.nodes.length && stars.length) edges.push({ a: jar.nodes[jar.mouth]!.particle, b: stars[0]!.particle });
   if (s.reduce.matches) {
     particles.forEach(resetParticle);
     if (particle && point) [particle.ox, particle.oy] = point;

@@ -43,6 +43,7 @@ export class SkyEngine {
       updateTasks(s, v.tasks, new Map((d.snapshot?.requirements ?? []).map((r) => [r.id, r.title])));
       s.match = filtering(u) ? new Set(searchTasks(v.tasks, u).map((t) => t.id)) : null;
       s.padMode = u.input === 'pad';
+      s.aquariusStyle = u.aquariusStyle;
       s.dipLit = u.hovered;
       s.cardGroup = u.hovered >= 0 ? FIG_LANE[u.hovered] || null : null;
       s.dipPin = u.pinned;

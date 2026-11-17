@@ -66,3 +66,27 @@
     display: none;
   }
 }
+.styles {
+  display: inline-flex;
+  justify-self: start;
+  border: 1px solid rgba(255, 241, 184, 0.35);
+}
+.styles button {
+  padding: 0 0.45rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.styles button[aria-pressed='true'] {
+  background: rgba(255, 241, 184, 0.16);
+  opacity: 1;
+}
+.styles button:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}

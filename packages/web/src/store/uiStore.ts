@@ -2,6 +2,7 @@ import { createStore } from 'zustand/vanilla';
 import { readPreference, writePreference } from './persist';
 import type { RequirementFilter } from '../domain/requirements';
 import type { Filter } from '../domain/types';
+import type { AquariusStyle } from '../sky/geometry/figures/aquariusDrops';
 export interface UIState extends Filter {
   system: string;
   view: 'tasks' | 'reqs';
@@ -12,6 +13,8 @@ export interface UIState extends Filter {
   input: 'pad' | 'mouse';
   inputChosen: boolean;
   projection: boolean;
+  /** Release history on the star chart: the drop string (default) or the original jar. */
+  aquariusStyle: AquariusStyle;
   selected: string | null;
   selectedRelease: string | null;
   deliveryVersion: string | null;
@@ -34,6 +37,7 @@ export const uiStore = createStore<UIState>(() => ({
   input: readPreference('board-input') === 'pad' ? 'pad' : 'mouse',
   inputChosen: !!readPreference('board-input'),
   projection: !!readPreference('board-proj'),
+  aquariusStyle: readPreference('sky-aquarius') === 'jar' ? 'jar' : 'drops',
   selected: null,
   selectedRelease: null,
   deliveryVersion: null,
@@ -53,6 +57,10 @@ export const setInput = (input: 'pad' | 'mouse', save = true) => {
 export const setProjection = (projection: boolean) => {
   writePreference('board-proj', projection ? '1' : '');
   uiStore.setState({ projection });
+};
+export const setAquariusStyle = (aquariusStyle: AquariusStyle) => {
+  writePreference('sky-aquarius', aquariusStyle);
+  uiStore.setState({ aquariusStyle });
 };
 export const setSky = (sky: boolean) =>
   uiStore.setState({ sky, ...(!sky ? { selected: null, selectedRelease: null, deliveryVersion: null, dip: -1 } : {}) });

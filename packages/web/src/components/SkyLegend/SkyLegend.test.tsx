@@ -1,6 +1,6 @@
 import '../../../tests/support';
 import { afterEach, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { SkyLegend, LEGEND_KEY, legendName } from './SkyLegend';
 import { LANES } from '../../domain/lanes';
 import { uiStore } from '../../store/uiStore';
@@ -53,4 +53,18 @@ it('stays out of the board view', () => {
   uiStore.setState({ sky: false });
   const { container } = render(<SkyLegend />);
   expect((container.querySelector('#skylegend') as HTMLElement).hidden).toBe(true);
+});
+
+it('switches the Aquarius style between drops and the original jar, and remembers it', () => {
+  uiStore.setState({ sky: true, aquariusStyle: 'drops' });
+  render(<SkyLegend />);
+  const group = screen.getByRole('group', { name: '水瓶样式' });
+  expect(screen.getByText(/一滴一个版本/)).toBeTruthy();
+  fireEvent.click(within(group).getByRole('button', { name: '瓶子' }));
+  expect(uiStore.getState().aquariusStyle).toBe('jar');
+  expect(localStorage.getItem('sky-aquarius')).toBe('jar');
+  expect(screen.getByText(/瓶里是交付/)).toBeTruthy();
+  fireEvent.click(within(group).getByRole('button', { name: '水滴' }));
+  expect(uiStore.getState().aquariusStyle).toBe('drops');
+  expect(localStorage.getItem('sky-aquarius')).toBe('drops');
 });

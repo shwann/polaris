@@ -10,6 +10,7 @@ import type { Particle } from '../motion/softbody';
 import { travelingGlow } from './travelingGlow';
 import { SPIN_STOP } from '../geometry/clusters';
 import { waterImpact } from './waterImpact';
+import { drawDrops } from './aquariusDrops';
 
 import { releaseCaption, waterBanks } from './releasePaths';
 export { releaseCaption, waterBanks } from './releasePaths';
@@ -19,6 +20,7 @@ export function drawReleases(s: SkyState) {
   const stars = releaseStars(s),
     body = s.aquarius;
   if (!stars.length || !body) return;
+  if (body.drops) return drawDrops(s, body);
   const c = s.ctx,
     jar = body.jar,
     lit = highlightedItems(s),
