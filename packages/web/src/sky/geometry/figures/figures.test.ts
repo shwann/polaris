@@ -102,7 +102,33 @@ it('uses progress for the arrow tip and fills optional slots in order', () => {
     );
   expect(bowPoint(0.5)).toEqual([0.67, 0.33]);
   expect(f.edges.filter((e) => e.control)).toHaveLength(4);
-  expect(f.edges.find((e) => e.a === 12)?.end).toEqual([1, 2, 0.5]);
+  expect(f.edges.every((edge) => edge.end === undefined)).toBe(true);
+});
+it('draws a whole arrow and a nocked string with four tasks, then adds the grip in place', () => {
+  const input = tasks(4);
+  const four = sagittarius(input, [0, 0, 100]);
+  const five = sagittarius([...input, { id: 'grip', progress: -1 }], [0, 0, 100]);
+  const segments = (f: Figure) => f.edges.map((edge) => [f.nodes[edge.a]!.slot, f.nodes[edge.b]!.slot]);
+  expect(segments(four)).toEqual([
+    ['A', 'tail'],
+    ['tail', 'B'],
+    ['tail', 'tip'],
+    ['A', 'B'],
+  ]);
+  expect(four.edges.filter((edge) => edge.control)).toHaveLength(1);
+  expect(five.nodes.slice(0, 4)).toEqual(four.nodes);
+  expect(segments(five)).toEqual([
+    ['A', 'tail'],
+    ['tail', 'B'],
+    ['C', 'tip'],
+    ['tail', 'C'],
+    ['A', 'C'],
+    ['C', 'B'],
+  ]);
+  const [tip, , , tail, grip] = five.nodes.map((node) => node.point);
+  const dx = tip![0] - tail![0],
+    dy = tip![1] - tail![1];
+  expect((grip![0] - tail![0]) * dy - (grip![1] - tail![1]) * dx).toBeCloseTo(0);
 });
 it('puts the latest completion at the knot, shares both fish equally and prioritizes recent rims', () => {
   const input = tasks(69).map((t, i) => ({ ...t, recent: i >= 30 })),
