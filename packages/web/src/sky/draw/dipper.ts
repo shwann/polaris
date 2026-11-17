@@ -127,7 +127,7 @@ export function drawDipper(state: SkyState, t: number) {
       if (!hit) continue;
       const end = hit.end;
       const c = COL[g]! || COL.planned,
-        a = Math.min(1, 0.55 * state.skyK * (k === lit ? 1.5 : 1));
+        a = Math.min(1, (g === 'planned' ? 0.24 : 0.55) * state.skyK * (k === lit ? 1.5 : 1));
       state.ctx.strokeStyle = rgba(c, a);
       state.ctx.beginPath();
       state.ctx.moveTo(...pos[k]!);

@@ -103,7 +103,7 @@ it('lets a group with more than two stars keep its own zone', () => {
   registry.dispose();
 });
 
-it.each([1, 2, 4, 30])('keeps all %s planned stars inside the Dipper bowl', (n) => {
+it.each([1, 2, 4, 8, 30])('keeps all %s planned stars inside the Dipper bowl', (n) => {
   const { s, stars, registry } = overview(n, 'planned');
   const bowl = fit([0.06 * s.w, 0.1 * s.h, 0.86 * s.w, 0.86 * s.h]).slice(0, 4);
   for (const star of stars) {
@@ -113,7 +113,9 @@ it.each([1, 2, 4, 30])('keeps all %s planned stars inside the Dipper bowl', (n) 
     });
     expect(sides.every((side) => side > 0)).toBe(true);
   }
-  expect(s.figures.get('planned')?.edges.filter((edge) => edge.bright)).toHaveLength(Math.min(n, 4) - 1);
+  expect(s.figures.get('planned')?.nodes.filter((node) => node.bright)).toHaveLength(
+    n < 8 ? Math.min(n, 4) : Math.min(n, 14),
+  );
   registry.dispose();
 });
 

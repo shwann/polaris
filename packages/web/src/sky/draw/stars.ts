@@ -25,7 +25,10 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
       old = s.group === 'done' && !s.recent,
       quiet = quietWait(s),
       mate = chainLit(state, s);
-    const c = COL[s.group]! || COL.planned,
+    const aries = s.group === 'planned' ? s.figureRole : undefined,
+      ariesExtra = aries && !aries.bright,
+      ariesEngaged = held || mate || state.hover === s || state.selected === s.id || state.match?.has(s.id),
+      c = COL[s.group],
       [x, y] = state.at(s.x, s.y, 14),
       r =
         (MAG[s.group]! || 1.7) *
@@ -35,9 +38,16 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         (old ? OLD_DONE.size : 1) *
         (quiet ? QUIET_WAIT.size : 1),
       q = state.sz;
-    const tw = quiet ? 0.85 : 0.75 + 0.25 * Math.sin((t / 1000) * s.f + s.ph),
+    const wave = Math.sin((t / 1000) * s.f + s.ph),
+      tw = quiet ? 0.85 : 0.75 + 0.25 * wave,
       throb = s.late ? 0.5 + 0.5 * Math.sin(t / 420 + s.ph) : 0,
-      dim = s.figureRole && !s.figureRole.bright && !mate && state.hover !== s ? 0.5 : 1,
+      dim = ariesExtra
+        ? ariesEngaged
+          ? 1
+          : 0.3
+        : s.figureRole && !s.figureRole.bright && !mate && state.hover !== s
+          ? 0.5
+          : 1,
       a0 =
         dim * (s.group === 'done' ? (old ? OLD_DONE.alpha : 1) : 1) * (quiet && !mate ? QUIET_WAIT.alpha : 1) * s.alpha;
     // In a dense cluster a halo stops at its nearest neighbour instead of piling onto it.
@@ -154,6 +164,7 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
     if (
       s.code &&
       visible &&
+      (!ariesExtra || ariesEngaged || state.cam.s >= 2.4) &&
       (state.hover === s ||
         (state.w > 560 && state.selected === s.id) ||
         (roomy && named) ||
@@ -175,7 +186,11 @@ export function drawStars(state: SkyState, t: number, list: Star[]) {
         gap: r + 6 * q,
         y: y - r - 3 * q,
         c,
-        a: (state.hover === s || mate ? 1 : 0.7) * (quiet ? 0.75 : 1) * s.alpha * detail,
+        a:
+          (state.hover === s || mate ? 1 : 0.7) *
+          (quiet ? 0.75 : ariesExtra && !ariesEngaged ? 0.5 : 1) *
+          s.alpha *
+          detail,
         pri:
           state.hover === s
             ? 99

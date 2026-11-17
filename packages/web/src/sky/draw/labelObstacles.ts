@@ -1,6 +1,7 @@
 import { MAG } from '../../domain/lanes';
 import type { Box, Point, SkyState, Star } from '../types';
 import { aquariusObstacles, hitsSegment, type Segment } from './aquariusObstacles';
+import { localPoint } from './figures';
 
 export interface Halo {
   id: string;
@@ -20,9 +21,10 @@ export function labelFits(box: Box, boxes: Box[], halos: Halo[], segments: Segme
     !segments.some((line) => hitsSegment(box, line))
   );
 }
-export const figureSize = (star: Star) =>
-  (star.figureRole?.size ?? 1) *
-  (star.figureRole && !star.figureRole.bright && (star.figureRole.size ?? 1) <= 1 ? 0.65 : 1);
+export function figureSize(star: Star) {
+  const size = star.figureRole?.size ?? 1;
+  return star.figureRole && !star.figureRole.bright && size <= 1 ? size * 0.65 : size;
+}
 export function haloRadius(s: SkyState, star: Star, t: number) {
   const held = s.drag?.star === star,
     r = (MAG[star.group] || 1.7) * s.sz * figureSize(star) * (held ? 1.25 : 1),
@@ -76,17 +78,47 @@ export const HUB_STAR_KEEP = 11;
  */
 export function labelObstacles(s: SkyState, withDone = true) {
   const m = HUB_MARGIN * s.sz;
-  const aquarius = aquariusObstacles(s);
+  const { boxes, halos, segments } = aquariusObstacles(s);
+  const aries = s.figures.get('planned');
+  if (aries) {
+    const paths = [
+      ...aries.edges.filter((edge) => edge.bright),
+      ...(aries.arcs ?? []).map((arc) => ({ a: arc.from, b: arc.at, ...arc })),
+    ];
+    for (const edge of paths) {
+      const a = s.stars.get(aries.nodes[edge.a]!.id),
+        b = s.stars.get(aries.nodes[edge.b]!.id);
+      if (!a || !b || a.dead || b.dead || Math.min(a.alpha, b.alpha) < 0.1) continue;
+      const p = s.at(a.x, a.y, 14),
+        q = s.at(b.x, b.y, 14);
+      const start = edge.start ? localPoint(p, q, edge.start) : p;
+      const end = 'from' in edge ? localPoint(p, q, edge.end) : q;
+      const control = edge.control ? localPoint(p, q, edge.control) : null;
+      let previous = start;
+      for (let i = 1; i <= 12; i++) {
+        const t = i / 12,
+          u = 1 - t;
+        const next: Point = control
+          ? [
+              u * u * start[0] + 2 * u * t * control[0] + t * t * end[0],
+              u * u * start[1] + 2 * u * t * control[1] + t * t * end[1],
+            ]
+          : [start[0] + t * (end[0] - start[0]), start[1] + t * (end[1] - start[1])];
+        segments.push({ a: previous, b: next, padding: 2 * s.sz });
+        previous = next;
+      }
+    }
+  }
   return {
-    segments: aquarius.segments,
+    segments,
     boxes: [
-      ...aquarius.boxes,
+      ...boxes,
       ...(s.hubLabelBoxes || []).flatMap((b) => b || []).map((b): Box => [b[0] - m, b[1] - m, b[2] + m, b[3] + m]),
       ...domBoxes(s),
       ...(withDone && s.sky && s.doneLabelBox ? [s.doneLabelBox] : []),
     ],
     halos: [
-      ...aquarius.halos,
+      ...halos,
       ...starHalos(s),
       ...(s.sky ? s.dipPos : []).map((point, k) => ({ id: `hub-${k}`, point, radius: HUB_STAR_KEEP * s.sz })),
     ],

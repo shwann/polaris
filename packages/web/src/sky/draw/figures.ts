@@ -36,9 +36,10 @@ export function drawFigure(s: SkyState, lane: Lane, opacity = 1) {
     }
     c.setLineDash(edge.bright ? [4 * s.sz, 3 * s.sz] : [2 * s.sz, 3 * s.sz]);
     c.lineWidth = edge.bright ? (on ? 1.5 : 1.35) : 0.8;
+    const alpha = lane === 'planned' ? (edge.bright ? 0.65 : 0.13) : edge.bright ? 0.9 : 0.32;
     c.strokeStyle = rgba(
       COL[lane],
-      Math.min(1, (edge.bright ? 0.9 : 0.32) * (edge.alpha ?? 1) * (on ? 1.45 : 1)) * fade * Math.min(a.alpha, b.alpha),
+      Math.min(1, alpha * (edge.alpha ?? 1) * (on ? 1.45 : 1)) * fade * Math.min(a.alpha, b.alpha),
     );
     c.beginPath();
     c.moveTo(...p);
@@ -54,9 +55,9 @@ export function drawFigure(s: SkyState, lane: Lane, opacity = 1) {
     const p = points[arc.from]!,
       q = points[arc.at]!,
       on = lit || (!!chain && a.chain === chain && b.chain === chain);
-    c.setLineDash([2 * s.sz, 3 * s.sz]);
-    c.lineWidth = 0.8;
-    c.strokeStyle = rgba(COL[lane], 0.32 * (on ? 1.45 : 1) * Math.min(a.alpha, b.alpha));
+    c.setLineDash(lane === 'planned' ? [4 * s.sz, 3 * s.sz] : [2 * s.sz, 3 * s.sz]);
+    c.lineWidth = lane === 'planned' ? (on ? 1.5 : 1.35) : 0.8;
+    c.strokeStyle = rgba(COL[lane], (lane === 'planned' ? 0.65 : 0.32) * (on ? 1.45 : 1) * Math.min(a.alpha, b.alpha));
     c.beginPath();
     c.moveTo(...localPoint(p, q, arc.start));
     c.quadraticCurveTo(...localPoint(p, q, arc.control), ...localPoint(p, q, arc.end));

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { figureFor } from './index';
 import { LIBRA_OMIT, LIBRA_SLOTS, libra } from './libra';
 import { TAURUS_OMIT, TAURUS_SLOTS, taurus } from './taurus';
-import { ARIES_OMIT, ARIES_SLOTS, aries } from './aries';
+import { ARIES_OMIT, ARIES_SLOTS, ARIES_SIMPLE_OMIT, ARIES_SIMPLE_SLOTS, aries } from './aries';
 import { localPoint } from '../../draw/figures';
 import type { FigureTask } from './types';
 
@@ -20,14 +20,17 @@ for (const [lane, slots, omit] of [
   it(`${lane} preserves the omission order at every partial count and the template's proportions`, () => {
     for (let n = 1; n <= slots.length; n++) {
       const f = figureFor(lane, tasks(n), [10, 20, 100]);
-      const missing = new Set(omit.slice(0, slots.length - n));
-      const active = slots.filter(([name]) => !missing.has(name));
-      expect(f.nodes.map((node) => node.slot)).toEqual(active.map(([name]) => name));
+      const simple = lane === 'planned' && n < 8;
+      const currentSlots = simple ? ARIES_SIMPLE_SLOTS : slots;
+      const currentOmit = simple ? ARIES_SIMPLE_OMIT : omit;
+      const missing = new Set(currentOmit.slice(0, Math.max(0, currentSlots.length - n)));
+      const active = currentSlots.filter(([name]) => !missing.has(name));
+      expect(f.nodes.slice(0, active.length).map((node) => node.slot)).toEqual(active.map(([name]) => name));
       if (n === 1) {
         expect(f.nodes[0]!.point).toEqual([10, 20]);
         expect(f.edges).toEqual([]);
       } else
-        f.nodes.forEach((node, i) => {
+        f.nodes.slice(0, active.length).forEach((node, i) => {
           expect(node.point[0]).toBeCloseTo(10 + (active[i]![1] - 0.5) * 170);
           expect(node.point[1]).toBeCloseTo(20 + (active[i]![2] - 0.5) * 170);
         });
@@ -69,7 +72,7 @@ it('uses waitingSince for the Libra pivot and falls back to updatedAt', () => {
   delete input[2]!.waitingSince;
   expect(libra(input, [0, 0, 100]).nodes[0]!.id).toBe('task-3');
 });
-it('uses creation time for Hamal and falls back to updatedAt', () => {
+it('uses creation time for the Aries forehead and falls back to updatedAt', () => {
   const input = tasks(4);
   input[2]!.createdAt = '2000-01-01';
   input[3]!.updatedAt = '2001-01-01';
@@ -162,4 +165,22 @@ it('puts the earliest updatedAt task at the Taurus muzzle regardless of creation
   input[7]!.updatedAt = '2000-01-01';
   const f = taurus(input.reverse(), [0, 0, 100]);
   expect(f.nodes.find((node) => node.main)).toMatchObject({ id: 'task-7', slot: 'muzzle', bright: true });
+});
+
+it.each([0, 1, 4, 7, 8, 9, 10, 12, 14, 16, 30])('keeps all %i Aries tasks connected as the line becomes a ram', (n) => {
+  const f = aries(tasks(n), [0, 0, 100]);
+  expect(new Set(f.nodes.map((node) => node.id)).size).toBe(n);
+  expect(f.arcs ?? []).toEqual([]);
+  expect(f.edges.every((edge) => !edge.control && !edge.start && !edge.end)).toBe(true);
+  const reached = new Set(n ? [0] : []);
+  for (let pass = 0; pass < n; pass++)
+    for (const edge of f.edges) {
+      if (reached.has(edge.a)) reached.add(edge.b);
+      if (reached.has(edge.b)) reached.add(edge.a);
+    }
+  expect(reached.size).toBe(n);
+  for (const edge of f.edges)
+    expect([...(edge.control ?? []), ...f.nodes[edge.a]!.point, ...f.nodes[edge.b]!.point].every(Number.isFinite)).toBe(
+      true,
+    );
 });
