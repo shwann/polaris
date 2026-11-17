@@ -1,6 +1,6 @@
 import '../../../../tests/support';
 import { expect, it, vi } from 'vitest';
-import { aquarius, releaseStars, highlightedItems, aquariusParticles, pickAquarius } from './aquarius';
+import { aquarius, releaseStars, highlightedItems, aquariusParticles, pickAquarius, jarOutline } from './aquarius';
 import { aquariusJar } from './aquariusJar';
 import { waterBanks } from '../../draw/releases';
 import { drawPicking } from '../../draw/picking';
@@ -43,7 +43,7 @@ it('draws two smooth banks around every release with the same centreline and no 
 });
 
 it.each([0, 1, 5, 16, 46, 100])(
-  'fills %s delivered records deterministically with a complete fixed outline and a connected graph',
+  'fills %s delivered records deterministically with an occupied-node outline and a connected graph',
   (count) => {
     const input = releases(1);
     input[0]!.items = Array.from({ length: count }, (_, i) => ({
@@ -61,6 +61,13 @@ it.each([0, 1, 5, 16, 46, 100])(
     expect(jar.nodes.map((n) => [n.id, n.point])).toEqual(shuffled.nodes.map((n) => [n.id, n.point]));
     expect(jar.edges).toEqual(shuffled.edges);
     expect(jar.nodes).toHaveLength(count);
+    const { s, registry } = fixture();
+    Object.assign(s, { w: 2000, h: 1250, releases: input });
+    releaseStars(s);
+    const outline = jarOutline(s.aquarius!);
+    expect(outline).toEqual(s.aquarius!.jar.nodes.slice(0, jar.rim).map((node) => node.point));
+    registry.dispose();
+
     expect(jar.rim).toBe(Math.min(22, count));
     expect(jar.nodes.filter((n) => !n.bright)).toHaveLength(Math.max(0, count - 22));
     expect(jar.poly).toEqual(aquariusJar([], 2000, 1250).poly);

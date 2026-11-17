@@ -40,7 +40,7 @@ export function aquariusObstacles(s: SkyState) {
   const at = (p: Point) => s.at(...p, 14),
     points = body.stars.map((n) => at(n.point)),
     frame = aquariusFrame(s.w, s.h),
-    mouth = at(body.jar.nodes[body.jar.mouth]?.point ?? body.jar.poly[1]!);
+    mouth = at(body.jar.nodes[body.jar.mouth]?.point ?? body.stars[0]!.point);
   const line = (points: Point[], close = false) => {
     for (let i = 1; i < points.length; i++) segments.push({ a: points[i - 1]!, b: points[i]!, padding: 1.5 * s.sz });
     if (close && points.length) segments.push({ a: points.at(-1)!, b: points[0]!, padding: 1.5 * s.sz });

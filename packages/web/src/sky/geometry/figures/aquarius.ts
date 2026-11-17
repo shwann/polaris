@@ -193,26 +193,7 @@ export function highlightedItems(s: SkyState) {
   );
 }
 
-/** Corner bends are path vertices, never decorative stars; interpolate their displacement between real rim nodes. */
+/** Only live delivered-item nodes define the visible bottle boundary. */
 export function jarOutline(body: AquariusBody): Point[] {
-  const { poly, nodes, rim } = body.jar;
-  if (!rim) return poly;
-  const lengths = [0];
-  for (let i = 0; i < poly.length; i++)
-    lengths.push(
-      lengths[i]! +
-        Math.hypot(poly[i]![0] - poly[(i + 1) % poly.length]![0], poly[i]![1] - poly[(i + 1) % poly.length]![1]),
-    );
-  const total = lengths.at(-1)!;
-  const corners = poly.map((point, i) => {
-    const t = (lengths[i]! / total) * rim,
-      a = Math.floor(t),
-      k = t - a,
-      p = nodes[a % rim]!.particle,
-      q = nodes[(a + 1) % rim]!.particle;
-    return { t, point: [point[0] + p.ox * (1 - k) + q.ox * k, point[1] + p.oy * (1 - k) + q.oy * k] as Point };
-  });
-  return [...corners, ...nodes.slice(0, rim).map((node, i) => ({ t: i, point: node.point }))]
-    .sort((a, b) => a.t - b.t)
-    .map((p) => p.point);
+  return body.jar.nodes.slice(0, body.jar.rim).map((node) => node.point);
 }

@@ -37,7 +37,7 @@ export function drawReleases(s: SkyState) {
     c.stroke();
   };
   const at = (p: Point) => s.at(...p, 14);
-  const mouth = jar.nodes[jar.mouth]?.point ?? jar.poly[1]!;
+  const mouth = jar.nodes[jar.mouth]?.point ?? stars[0]!.point;
   path([s.hubs()[0]!, at(mouth)], 0.2);
   for (const edge of jar.edges) {
     if (edge.bright) continue;

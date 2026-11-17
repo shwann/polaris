@@ -12,7 +12,7 @@ it('splashes only when the pour arrives and sends successive waves outward', () 
     vi.mocked(s.ctx.moveTo).mockClear();
     vi.mocked(s.ctx.closePath).mockClear();
     drawReleases(s);
-    return vi.mocked(s.ctx.closePath).mock.calls.length - 1; // The jar outline is closed too.
+    return vi.mocked(s.ctx.closePath).mock.calls.length; // No delivered items, so no bottle outline.
   };
   s.aquariusFlowT = 4600;
   expect(waves()).toBe(0);

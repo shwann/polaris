@@ -1,7 +1,8 @@
+import { outlineSlots } from './outlineSlots';
 import type { Release } from '@polaris/core';
 import type { Point } from '../../types';
 import { addEdge, connect, distance, emptyFigure, randomFor, timestamp } from './common';
-import { delaunay, inPoly, resample } from './triangulate';
+import { delaunay, inPoly } from './triangulate';
 
 // Fixed silhouette: tilted mouth, narrow neck, broad shoulders and a small foot.
 export const JAR: Point[] = [
@@ -55,7 +56,7 @@ export function aquariusJar(releases: Release[], w: number, h: number) {
     rim = Math.min(count, 22),
     f = emptyFigure();
   const poly = JAR.map((p) => aquariusPoint(p, w, h));
-  const points = resample(poly, rim),
+  const points = outlineSlots(poly, rim, [1, 10, 14, 6, 0, 11, 16, 8, 18, 3, 2, 9, 12, 19, 4, 7, 15, 17, 5, 13]),
     rnd = randomFor(delivered.map((d) => d.item.id));
   const frame = aquariusFrame(w, h);
   let attempts = 0;
