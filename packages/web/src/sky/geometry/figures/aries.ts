@@ -58,7 +58,7 @@ export function aries(tasks: FigureTask[], region: Region) {
         [0.64, 0.72],
       ],
     );
-  return template(
+  const figure = template(
     sorted,
     region,
     ARIES_SLOTS,
@@ -75,4 +75,13 @@ export function aries(tasks: FigureTask[], region: Region) {
       [0.56, 0.65],
     ],
   );
+  // Bow the outer segments gently between their two task stars.
+  for (const edge of figure.edges) {
+    const from = figure.nodes[edge.a]!.slot;
+    const to = figure.nodes[edge.b]!.slot;
+    if (!/^(crown|outer|curl)[LR]$/.test(to)) continue;
+    const bend = from.startsWith('crown') && to.startsWith('curl') ? 0.24 : 0.16;
+    edge.control = [0, to.endsWith('L') ? bend : -bend];
+  }
+  return figure;
 }

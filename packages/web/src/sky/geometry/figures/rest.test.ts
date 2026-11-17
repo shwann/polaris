@@ -171,7 +171,14 @@ it.each([0, 1, 4, 7, 8, 9, 10, 12, 14, 16, 30])('keeps all %i Aries tasks connec
   const f = aries(tasks(n), [0, 0, 100]);
   expect(new Set(f.nodes.map((node) => node.id)).size).toBe(n);
   expect(f.arcs ?? []).toEqual([]);
-  expect(f.edges.every((edge) => !edge.control && !edge.start && !edge.end)).toBe(true);
+  expect(f.edges.every((edge) => !edge.start && !edge.end)).toBe(true);
+  const curved = f.edges.filter((edge) => edge.control);
+  expect(curved).toHaveLength(n < 8 ? 0 : Math.min(n, 10) - 4);
+  for (const edge of curved) {
+    expect(edge.bright).toBe(true);
+    expect(f.nodes[edge.a]!.bright && f.nodes[edge.b]!.bright).toBe(true);
+    expect(f.nodes[edge.b]!.slot).toMatch(/^(crown|outer|curl)[LR]$/);
+  }
   const reached = new Set(n ? [0] : []);
   for (let pass = 0; pass < n; pass++)
     for (const edge of f.edges) {
