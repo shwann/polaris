@@ -37,8 +37,8 @@
   --fs-stat: max(22px, 1.6rem);
   --fs-display: max(36px, 2.6rem);
   --fs-title: max(12px, clamp(2rem, 3.4vw, 3.4rem));
-  --fs-title-en: max(12px, calc(0.5 * clamp(2rem, 3.4vw, 3.4rem)));
-  --fs-title-zh: max(12px, calc(1.7 * clamp(2rem, 3.4vw, 3.4rem)));
+  --fs-title-en: max(12px, calc(0.42 * clamp(2rem, 3.4vw, 3.4rem)));
+  --fs-title-zh: max(12px, calc(1.18 * clamp(2rem, 3.4vw, 3.4rem)));
   --fs-motto: max(12px, calc(0.3 * clamp(2rem, 3.4vw, 3.4rem)));
   --line: rgba(120, 170, 230, 0.16);
   --radius: 8px;
