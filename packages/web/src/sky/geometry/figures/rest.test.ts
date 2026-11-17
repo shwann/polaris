@@ -17,8 +17,9 @@ for (const [lane, slots, omit] of [
   ['release', TAURUS_SLOTS, TAURUS_OMIT],
   ['planned', ARIES_SLOTS, ARIES_OMIT],
 ] as const) {
-  it(`${lane} preserves the omission order at every partial count and the template's proportions`, () => {
+  it(`${lane} preserves the standard template's omission order and proportions`, () => {
     for (let n = 1; n <= slots.length; n++) {
+      if ((lane === 'risk' && n === 2) || (lane === 'release' && n === 4)) continue;
       const f = figureFor(lane, tasks(n), [10, 20, 100]);
       const simple = lane === 'planned' && n < 8;
       const currentSlots = simple ? ARIES_SIMPLE_SLOTS : slots;
@@ -93,7 +94,7 @@ it('draws two downward curved Libra rims of width .16 without creating stars or 
   for (const n of [0, 1, 2, 3, 4, 8]) {
     const f = libra(tasks(n), [0, 0, 100]);
     expect(f.nodes).toHaveLength(n);
-    expect(f.arcs ?? []).toHaveLength(n < 2 ? 0 : n === 2 ? 1 : 2);
+    expect(f.arcs ?? []).toHaveLength(n < 2 ? 0 : 2);
     for (const arc of f.arcs ?? []) {
       const from = f.nodes[arc.from]!.point,
         pan = f.nodes[arc.at]!.point,
@@ -106,6 +107,37 @@ it('draws two downward curved Libra rims of width .16 without creating stars or 
       expect(end[1]).toBeCloseTo(start[1]);
     }
   }
+});
+it('uses the two Libra tasks for both pans and connects them with a level beam', () => {
+  const f = libra(tasks(2), [0, 0, 100]);
+  expect(f.nodes.map(({ id, slot }) => [id, slot])).toEqual([
+    ['task-0', 'panL'],
+    ['task-1', 'panR'],
+  ]);
+  const [left, right] = f.nodes;
+  expect(left!.point[0]).toBeLessThan(right!.point[0]);
+  expect(left!.point[1]).toBeCloseTo(right!.point[1]);
+  expect(f.edges).toEqual([{ a: 0, b: 1, bright: true }]);
+  expect(f.arcs?.map(({ from, at }) => [from, at])).toEqual([
+    [1, 0],
+    [0, 1],
+  ]);
+});
+it('closes the four-task Taurus outline through both horn tips, forehead and muzzle', () => {
+  const f = taurus(tasks(4), [0, 0, 100]);
+  expect(f.nodes.map(({ id, slot }) => [id, slot])).toEqual([
+    ['task-0', 'muzzle'],
+    ['task-1', 'tipL'],
+    ['task-2', 'tipR'],
+    ['task-3', 'forehead'],
+  ]);
+  expect(f.edges.map(({ a, b }) => [f.nodes[a]!.slot, f.nodes[b]!.slot])).toEqual([
+    ['tipL', 'forehead'],
+    ['forehead', 'tipR'],
+    ['tipL', 'muzzle'],
+    ['muzzle', 'tipR'],
+  ]);
+  expect(f.edges.every(({ control, start, end }) => !!control && !start && !end)).toBe(true);
 });
 it('preserves exactly the Taurus horns, brow and face paths at nine stars', () => {
   const f = taurus(tasks(9), [0, 0, 100]);
@@ -141,6 +173,7 @@ it('omits Taurus cheeks before horn joints, horn tips and brows, preserving the 
   let remaining = ['muzzle', 'browL', 'browR', 'hornL', 'hornR', 'tipL', 'tipR', 'cheekL', 'cheekR'];
   for (const slot of omit) {
     remaining = remaining.filter((name) => name !== slot);
+    if (remaining.length === 4) continue;
     expect(taurus(tasks(remaining.length), [0, 0, 100]).nodes.map((node) => node.slot)).toEqual(remaining);
   }
 });

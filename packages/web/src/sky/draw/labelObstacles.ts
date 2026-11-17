@@ -81,30 +81,28 @@ export function labelObstacles(s: SkyState, withDone = true) {
   const { boxes, halos, segments } = aquariusObstacles(s);
   const aries = s.figures.get('planned');
   if (aries) {
-    const paths = [
-      ...aries.edges.filter((edge) => edge.bright),
-      ...(aries.arcs ?? []).map((arc) => ({ a: arc.from, b: arc.at, ...arc })),
-    ];
-    for (const edge of paths) {
+    for (const edge of aries.edges) {
+      if (!edge.bright) continue;
       const a = s.stars.get(aries.nodes[edge.a]!.id),
         b = s.stars.get(aries.nodes[edge.b]!.id);
       if (!a || !b || a.dead || b.dead || Math.min(a.alpha, b.alpha) < 0.1) continue;
       const p = s.at(a.x, a.y, 14),
-        q = s.at(b.x, b.y, 14);
-      const start = edge.start ? localPoint(p, q, edge.start) : p;
-      const end = 'from' in edge ? localPoint(p, q, edge.end) : q;
-      const control = edge.control ? localPoint(p, q, edge.control) : null;
-      let previous = start;
+        q = s.at(b.x, b.y, 14),
+        padding = 2 * s.sz;
+      if (!edge.control) {
+        segments.push({ a: p, b: q, padding });
+        continue;
+      }
+      const control = localPoint(p, q, edge.control);
+      let previous = p;
       for (let i = 1; i <= 12; i++) {
         const t = i / 12,
           u = 1 - t;
-        const next: Point = control
-          ? [
-              u * u * start[0] + 2 * u * t * control[0] + t * t * end[0],
-              u * u * start[1] + 2 * u * t * control[1] + t * t * end[1],
-            ]
-          : [start[0] + t * (end[0] - start[0]), start[1] + t * (end[1] - start[1])];
-        segments.push({ a: previous, b: next, padding: 2 * s.sz });
+        const next: Point = [
+          u * u * p[0] + 2 * u * t * control[0] + t * t * q[0],
+          u * u * p[1] + 2 * u * t * control[1] + t * t * q[1],
+        ];
+        segments.push({ a: previous, b: next, padding });
         previous = next;
       }
     }

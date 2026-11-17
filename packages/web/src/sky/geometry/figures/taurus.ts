@@ -14,17 +14,30 @@ export const TAURUS_SLOTS = [
 ] as const satisfies readonly Slot[];
 export const TAURUS_OMIT = ['cheekR', 'cheekL', 'hornR', 'hornL', 'tipR', 'tipL', 'browR', 'browL'];
 
+const FOUR_TASK_SLOTS = [
+  TAURUS_SLOTS[0],
+  ['tipL', 0.08, 0.13],
+  ['tipR', 0.92, 0.13],
+  ['forehead', 0.5, 0.48],
+] as const satisfies readonly Slot[];
+
 export function taurus(tasks: FigureTask[], region: Region) {
   // Tasks expose no merge timestamp; updatedAt is the available proxy for entry into release.
-  return template(
+  const fourTasks = tasks.length === FOUR_TASK_SLOTS.length;
+  const f = template(
     oldestFirst(tasks, (task) => task.updatedAt),
     region,
-    TAURUS_SLOTS,
+    fourTasks ? FOUR_TASK_SLOTS : TAURUS_SLOTS,
     TAURUS_OMIT,
-    [
-      ['tipL', 'hornL', 'browL', 'browR', 'hornR', 'tipR'],
-      ['browL', 'cheekL', 'muzzle', 'cheekR', 'browR'],
-    ],
+    fourTasks
+      ? [
+          ['tipL', 'forehead', 'tipR'],
+          ['tipL', 'muzzle', 'tipR'],
+        ]
+      : [
+          ['tipL', 'hornL', 'browL', 'browR', 'hornR', 'tipR'],
+          ['browL', 'cheekL', 'muzzle', 'cheekR', 'browR'],
+        ],
     [
       [0.2, 0.42],
       [0.8, 0.42],
@@ -32,4 +45,13 @@ export function taurus(tasks: FigureTask[], region: Region) {
       [0.58, 0.5],
     ],
   );
+  if (fourTasks) {
+    // Both curves follow real stars as the figure moves; the lower face stays quieter than the horns.
+    for (const edge of f.edges) {
+      const face = edge.a === 0 || edge.b === 0;
+      edge.control = [0, face ? 0.2 : 0.24];
+      if (face) edge.alpha = 0.62;
+    }
+  }
+  return f;
 }

@@ -11,16 +11,14 @@ export const LIBRA_SLOTS = [
 export const LIBRA_OMIT = ['base', 'panR', 'panL'];
 
 export function libra(tasks: FigureTask[], region: Region) {
+  const sorted = oldestFirst(tasks, (task) => task.waitingSince || task.updatedAt);
+  const twoPans = sorted.length === 2;
   const f = template(
-    oldestFirst(tasks, (task) => task.waitingSince || task.updatedAt),
-    region,
-    LIBRA_SLOTS,
+    sorted,
+    twoPans ? [region[0], region[1] - 0.72 * region[2], region[2]] : region,
+    twoPans ? LIBRA_SLOTS.slice(1, 3) : LIBRA_SLOTS,
     LIBRA_OMIT,
-    [
-      ['pivot', 'panL'],
-      ['pivot', 'panR'],
-      ['pivot', 'base'],
-    ],
+    [['pivot', 'panL'], ['pivot', 'panR'], ['pivot', 'base'], ...(twoPans ? [['panL', 'panR']] : [])],
     [
       [0.5, 0.42],
       [0.5, 0.64],
@@ -28,21 +26,21 @@ export function libra(tasks: FigureTask[], region: Region) {
       [0.65, 0.3],
     ],
   );
-  const pivot = f.nodes[0];
-  if (!pivot) return f;
-  // Pan rims are decorative curves, never extra tasks. Their basis follows the live pivot and pan.
+  // With two tasks the rims follow the beam between the real pan stars.
   const scale = 1.7 * region[2];
   f.arcs = f.nodes.flatMap((node, at) => {
     if (node.slot !== 'panL' && node.slot !== 'panR') return [];
+    const from = twoPans ? 1 - at : 0;
     const [x, y] = node.point,
-      basis = (px: number, py: number) => curve(pivot.point, node.point, [px, py]);
+      rim = y + (twoPans ? 0.13 : 0.035) * scale,
+      basis = (px: number, py: number) => curve(f.nodes[from]!.point, node.point, [px, py]);
     return [
       {
-        from: 0,
+        from,
         at,
-        start: basis(x - 0.08 * scale, y + 0.035 * scale),
-        control: basis(x, y + 0.15 * scale),
-        end: basis(x + 0.08 * scale, y + 0.035 * scale),
+        start: basis(x - 0.08 * scale, rim),
+        control: basis(x, rim + 0.115 * scale),
+        end: basis(x + 0.08 * scale, rim),
       },
     ];
   });
