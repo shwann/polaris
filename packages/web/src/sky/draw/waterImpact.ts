@@ -3,11 +3,22 @@ import { rgba } from '../palette';
 import type { Point, SkyState } from '../types';
 
 /** A small splash at the impact point, followed by concentric waves on the water surface. */
-export function waterImpact(s: SkyState, [x, y]: Point, time: number, reach: number) {
-  if (time < 0 || time >= 2200) return;
+export function waterImpact(s: SkyState, [x, y]: Point, time: number, reach: number, fall = 0) {
+  if (time < 0 || time >= fall + 2200) return;
   const c = s.ctx;
   c.save();
   c.setLineDash([]);
+  // With a fall duration, the impact point is the water surface below the stream.
+  if (time < fall) {
+    const k = time / fall;
+    c.fillStyle = rgba(COL_APP, 0.85 * s.skyK);
+    c.beginPath();
+    c.ellipse(x, y - 60 * s.sz * (1 - k * k), 2.4 * s.sz, 4.3 * s.sz, 0, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+    return;
+  }
+  time -= fall;
   for (const delay of [0, 240, 480]) {
     const k = (time - delay) / 1700;
     if (k < 0 || k >= 1) continue;

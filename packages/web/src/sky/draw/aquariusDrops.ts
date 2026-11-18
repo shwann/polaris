@@ -8,6 +8,8 @@ import type { Point, SkyState } from '../types';
 import { aquariusLabelZoom } from './aquariusLabels';
 import { travelingGlow } from './travelingGlow';
 import { dropCaption } from './releasePaths';
+import { aquariusFrame } from '../geometry/figures/aquariusJar';
+import { waterImpact } from './waterImpact';
 
 export const AQUARIUS_TITLE = '水瓶 ♒︎ · 发布记录';
 
@@ -18,12 +20,11 @@ export function dropPaths(s: SkyState, body: AquariusBody) {
     stars = body.stars.map((n) => at(n.point)),
     nodes = body.jar.nodes.map((n) => at(n.point)),
     n = stars.length;
-  const exit = (i: number) => (d.far[i] !== null && d.far[i] !== undefined ? nodes[d.far[i]!]! : stars[i]!);
-  const link: Point[] = n ? [s.hubs()[0]!, stars[n - 1]!] : [];
-  // Newest to oldest: each link leaves a drop at its lowest corner and reaches the next release star.
-  const chain: { version: string; points: Point[] }[] = [];
-  for (let i = n - 1; i > 0; i--)
-    chain.push({ version: body.stars[i]!.release.version, points: [exit(i), stars[i - 1]!] });
+  const exit = (i: number) => nodes[d.far[i]!] ?? stars[i]!;
+  const link: Point[] = n ? [s.hubs()[0]!, stars[0]!] : [];
+  // Oldest to newest: each link leaves a drop at its lowest corner and reaches the next release star.
+  const chain: { points: Point[] }[] = [];
+  for (let i = 0; i < n - 1; i++) chain.push({ points: [exit(i), stars[i + 1]!] });
   const outlines = d.members.map((ids, i) => {
     const tip = stars[i]!,
       points = ids.map((id) => nodes[id]!);
@@ -32,8 +33,10 @@ export function dropPaths(s: SkyState, body: AquariusBody) {
       points: points.length > 1 ? [tip, ...points, tip] : points.length ? [tip, points[0]!] : [],
     };
   });
-  const flow: Point[] = [...link];
-  for (let i = n - 1; i > 0; i--) flow.push(exit(i), stars[i - 1]!);
+  const flow = link.concat(
+    chain.flatMap((segment) => segment.points),
+    n ? [exit(n - 1)] : [],
+  );
   return { link, chain, outlines, flow, stars, nodes };
 }
 
@@ -76,6 +79,8 @@ export function drawDrops(s: SkyState, body: AquariusBody) {
       pour = 4800;
     if (phase > 0 && phase < pour)
       travelingGlow(s, flow, COL_APP, phase / pour, { width: 2.6, trail: 0.3, opacity: Math.min(0.8, phase / 550) });
+    const [x, y] = flow.at(-1)!;
+    waterImpact(s, [x, y + 60 * s.sz], phase - pour, aquariusFrame(s.w, s.h).w * 0.16, 900);
   }
   const returning = body.returning;
   const returnGlow = (p: Particle) => {
@@ -117,7 +122,7 @@ export function drawDrops(s: SkyState, body: AquariusBody) {
       p,
       star.radius + glow,
       Math.max(glow * 0.95, star.alpha * (hovering && !on ? 0.35 : 1)),
-      folded ? 0 : ((on ? 30 : i === stars.length - 1 ? 26 : 16) + 10 * glow) * s.sz,
+      folded ? 0 : ((on ? 30 : i === stars.length - 1 ? 28 : 16) + 10 * glow) * s.sz,
     );
     if (on) {
       c.setLineDash([]);

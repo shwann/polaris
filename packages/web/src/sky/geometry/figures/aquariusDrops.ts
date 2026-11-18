@@ -16,11 +16,11 @@ export interface DropNode {
 export interface DropsShape {
   /** Per chronological release: its delivered-item node indices in outline order (the tip is the release star). */
   members: number[][];
-  /** Per release: the node farthest down its drop, where the chain leaves for the next older release. */
+  /** Per release: the node farthest down its drop, where the chain leaves for the next newer release. */
   far: (number | null)[];
   /** Per release: unit vector away from the arc's centre, used for its version caption. */
   normal: Point[];
-  /** Oldest releases drawn as bare stars at the arc's tail because no drop fits there. */
+  /** Oldest releases drawn as bare stars at the arc's start to leave room for newer drops. */
   folded: number;
   foldedItems: number;
   caption: { point: Point; align: 'left' | 'right' };
@@ -39,7 +39,7 @@ const ARC: Point[] = [
   [0.125, -0.41],
   [0.653, -0.483],
   [1.006, -0.025],
-  [0.926, 1.133],
+  [0.926, 0.92], // Leave space below the last drop for its fall and water surface.
 ];
 
 const add = (a: Point, b: Point): Point => [a[0] + b[0], a[1] + b[1]];
@@ -92,24 +92,24 @@ const sortedItems = (release: Release) =>
 
 /**
  * Each release is a drop: the release star is the tip and its delivered items are the drop's corners, so every corner is
- * real data. Drops hang along an arc poured from Dubhe, newest nearest the Dipper; a release with one item is a star with
+ * real data. Drops hang along an arc poured from Dubhe, oldest nearest the Dipper; a release with one item is a star with
  * a tail and one with none is a lone star.
  */
 export function aquariusDrops(releases: Release[], w: number, h: number): DropsLayout {
   const chrono = chronological(releases),
     n = chrono.length,
-    newest = [...chrono].reverse(),
     frame = aquariusFrame(w, h),
     k = Math.max(0.6, Math.min(1.5, frame.w / 352)),
     g = arc(w, h),
     dropLen = (m: number) => (m ? (13 + 8 * Math.sqrt(m)) * k : 0),
     foldGap = 7 * k;
   const need = (keep: number) =>
-    newest.slice(0, keep).reduce((sum, r) => sum + dropLen(r.items?.length ?? 0) + 12 * k, 0) +
+    chrono.slice(-keep).reduce((sum, r) => sum + dropLen(r.items?.length ?? 0) + 12 * k, 0) +
     (n > keep ? 14 * k + (n - keep) * foldGap : 0);
   let keep = Math.min(MAX_DROPS, n);
   while (keep > 1 && need(keep) > g.total) keep--;
-  const sumL = newest.slice(0, keep).reduce((sum, r) => sum + dropLen(r.items?.length ?? 0), 0),
+  const folded = n - keep;
+  const sumL = chrono.slice(-keep).reduce((sum, r) => sum + dropLen(r.items?.length ?? 0), 0),
     foldLen = n > keep ? 14 * k + (n - keep) * foldGap : 0,
     gap = Math.max(12 * k, Math.min(30 * k, (g.total - sumL - foldLen) / Math.max(1, keep)));
 
@@ -123,18 +123,15 @@ export function aquariusDrops(releases: Release[], w: number, h: number): DropsL
     const progress = n === 1 ? 1 : index / (n - 1);
     return { radius: index === n - 1 ? 4.6 : 2.1 + progress * 1.3, alpha: 0.38 + progress * 0.62 };
   };
-  let s = 0,
+  let s = foldLen,
     end: Point = g.at(0),
     foldedItems = 0;
-  newest.forEach((release, rank) => {
-    const index = n - 1 - rank;
-    if (rank >= keep) {
-      const point = g.at(s + (rank === keep ? 6 * k : foldGap));
-      s += rank === keep ? 6 * k : foldGap;
+  chrono.forEach((release, index) => {
+    if (index < folded) {
+      const point = g.at(index * foldGap);
       stars[index] = { release, point, radius: 1.5, alpha: 0.45 };
-      normal[index] = mul(perp(g.tangent(s)), -1);
+      normal[index] = mul(perp(g.tangent(index * foldGap)), -1);
       foldedItems += release.items?.length ?? 0;
-      end = point;
       return;
     }
     const items = sortedItems(release),
@@ -172,7 +169,6 @@ export function aquariusDrops(releases: Release[], w: number, h: number): DropsL
     end = farthest >= 0 ? nodes[farthest]!.point : tip;
     s += L + gap;
   });
-  const folded = n - keep;
   const caption: DropsShape['caption'] =
     n <= 3
       ? { point: aquariusPoint([0.239, -0.208], w, h), align: 'left' }
@@ -187,6 +183,6 @@ export function aquariusDrops(releases: Release[], w: number, h: number): DropsL
     folded,
     foldedItems,
     caption,
-    note: folded ? add(end, [-14 * k, 4 * k]) : undefined,
+    note: folded ? add(stars[folded - 1]!.point, [-14 * k, 4 * k]) : undefined,
   };
 }

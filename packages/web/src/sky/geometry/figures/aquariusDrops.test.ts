@@ -5,6 +5,7 @@ import { aquariusDrops, MAX_DROPS } from './aquariusDrops';
 import { highlightedItems, pickAquarius, releaseStars } from './aquarius';
 import { aquariusFrame } from './aquariusJar';
 import { drawReleases } from '../../draw/releases';
+import { dropPaths } from '../../draw/aquariusDrops';
 import { aquariusObstacles } from '../../draw/aquariusObstacles';
 import { fixture } from '../../testFixture';
 import { constellation } from '../../motion/constellation';
@@ -38,11 +39,11 @@ it('turns every release into a drop whose corners are exactly its delivered item
   });
   // Outline edges never join two different releases.
   for (const e of layout.edges) expect(layout.nodes[e.a]!.release).toBe(layout.nodes[e.b]!.release);
-  // The newest release is the brightest star and sits nearest the Dipper end of the arc.
+  // The newest release is the brightest star and sits lowest on the arc.
   const newest = layout.stars.at(-1)!,
     oldest = layout.stars[0]!;
   expect(newest.radius).toBeGreaterThan(oldest.radius);
-  expect(newest.point[1]).toBeLessThan(oldest.point[1]);
+  expect(newest.point[1]).toBeGreaterThan(oldest.point[1]);
 });
 
 it('simplifies naturally: lone star, star with a tail, then a drop', () => {
@@ -57,16 +58,17 @@ it('simplifies naturally: lone star, star with a tail, then a drop', () => {
   // A short history stays a short arc beside Dubhe instead of stretching over the whole frame.
   const few = aquariusDrops(releases([1, 1, 5]), W, H),
     full = aquariusDrops(releases(COUNTS), W, H);
-  expect(few.stars[0]!.point[1]).toBeLessThan(full.stars[0]!.point[1]);
+  expect(few.stars.at(-1)!.point[1]).toBeLessThan(full.stars.at(-1)!.point[1]);
 });
 
-it('folds the oldest releases into bare tail stars once the arc is full, keeping everything on screen', () => {
+it('folds the oldest releases into bare starting stars once the arc is full, keeping everything on screen', () => {
   const counts = Array.from({ length: 30 }, (_, i) => (i % 7) + 1),
     layout = aquariusDrops(releases(counts), W, H);
   expect(layout.folded).toBeGreaterThanOrEqual(30 - MAX_DROPS);
   expect(layout.foldedItems).toBe(counts.slice(0, layout.folded).reduce((a, b) => a + b, 0));
   expect(layout.nodes.every((n) => layout.stars.findIndex((s) => s.release === n.release) >= layout.folded)).toBe(true);
   expect(layout.note).toBeDefined();
+  expect(layout.stars[layout.folded - 1]!.point[1]).toBeLessThan(layout.stars.at(-1)!.point[1]);
   for (const { point } of [...layout.stars, ...layout.nodes]) {
     expect(point[0]).toBeGreaterThan(0);
     expect(point[0]).toBeLessThan(W);
@@ -95,6 +97,12 @@ it('switches the live body between jar and drops, sharing picking and selection'
   expect(body.style).toBe('drops');
   expect(body.jar.rim).toBe(0);
   expect(body.jar.nodes).toHaveLength(46);
+  const paths = dropPaths(s, body);
+  expect(paths.link.at(-1)).toEqual(s.at(...body.stars[0]!.point, 14));
+  expect(paths.chain.map((segment) => segment.points.at(-1))).toEqual(
+    body.stars.slice(1).map((node) => s.at(...node.point, 14)),
+  );
+  expect(paths.flow.at(-1)).toEqual(s.at(...body.jar.nodes[body.drops!.far.at(-1)!]!.point, 14));
   const star = body.stars[8]!,
     point = s.toScreen(...s.at(...star.point, 14));
   expect(pickAquarius(s, ...point)?.star).toBe(star);
