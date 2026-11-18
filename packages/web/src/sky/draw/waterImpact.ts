@@ -4,7 +4,7 @@ import type { Point, SkyState } from '../types';
 
 /** A small splash at the impact point, followed by concentric waves on the water surface. */
 export function waterImpact(s: SkyState, [x, y]: Point, time: number, reach: number, fall = 0) {
-  if (time < 0 || time >= fall + 2200) return;
+  if (time < 0 || time >= fall + 3800) return;
   const c = s.ctx;
   c.save();
   c.setLineDash([]);
@@ -19,17 +19,17 @@ export function waterImpact(s: SkyState, [x, y]: Point, time: number, reach: num
     return;
   }
   time -= fall;
-  for (const delay of [0, 240, 480]) {
-    const k = (time - delay) / 1700;
+  for (const delay of [0, 380, 760]) {
+    const k = (time - delay) / 3000;
     if (k < 0 || k >= 1) continue;
-    const radius = reach * (0.1 + 0.9 * k ** 0.8),
-      alpha = (1 - k) ** 1.5 * s.skyK;
-    c.lineWidth = 1.1 + 0.9 * (1 - k);
-    c.strokeStyle = rgba(COL_APP, 0.85 * alpha);
+    const radius = reach * (0.1 + 0.9 * k ** 1.1),
+      alpha = (1 - k) ** 0.9 * s.skyK;
+    c.lineWidth = 1.6 + 1.4 * (1 - k);
+    c.strokeStyle = rgba(COL_APP, 0.95 * alpha);
     c.beginPath();
     for (let i = 0; i <= 40; i++) {
       const angle = (i / 40) * 2 * Math.PI;
-      const crest = radius * (1 + 0.05 * (1 - k) * Math.sin(angle * 5 - k * 12));
+      const crest = radius * (1 + 0.07 * (1 - k) * Math.sin(angle * 5 - k * 12));
       const px = x + Math.cos(angle) * crest;
       const py = y + Math.sin(angle) * crest * 0.33;
       if (i === 0) c.moveTo(px, py);

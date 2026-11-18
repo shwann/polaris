@@ -75,7 +75,7 @@ export function drawDrops(s: SkyState, body: AquariusBody) {
     !s.deliveryVersion &&
     s.cam.s < SPIN_STOP
   ) {
-    const phase = (s.aquariusFlowT ?? 0) % 9000,
+    const phase = (s.aquariusFlowT ?? 0) % 10000,
       pour = 4800;
     if (phase > 0 && phase < pour)
       travelingGlow(s, flow, COL_APP, phase / pour, { width: 2.6, trail: 0.3, opacity: Math.min(0.8, phase / 550) });

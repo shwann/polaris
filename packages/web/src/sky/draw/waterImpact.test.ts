@@ -26,6 +26,12 @@ it('drops toward the water before impact, then sends ripples out from the landin
   waterImpact(s, [400, 360], 1800, 60, 900);
   expect(closed).toHaveBeenCalledTimes(3);
   expect(move.mock.calls[0]![0]).toBeGreaterThan(406);
+  closed.mockClear();
+  waterImpact(s, [400, 360], 3800, 60, 900);
+  expect(closed).toHaveBeenCalledTimes(3);
+  closed.mockClear();
+  waterImpact(s, [400, 360], 4700, 60, 900);
+  expect(closed).not.toHaveBeenCalled();
   registry.dispose();
 });
 
@@ -47,7 +53,7 @@ it('splashes only when the pour arrives and sends successive waves outward', () 
     const starts = vi.mocked(s.ctx.moveTo).mock.calls.slice(-3);
     return starts[0]![0] - last.point[0];
   };
-  expect(front(5700)).toBeGreaterThan(front(5350));
+  expect(front(6000)).toBeGreaterThan(front(5650));
   s.hoverRelease = last;
   expect(waves()).toBe(0);
   registry.dispose();
