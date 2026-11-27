@@ -9,7 +9,7 @@ export function Figures() {
   return (
     <div id="figures" className={styles.figures} ref={useLayout('figures')} data-sky-block>
       {figures(view).map((f, index) => (
-        <FigureCard key={f.label} figure={f} index={index} booted={data.booted} model={view.app?.model} />
+        <FigureCard key={f.label} figure={f} index={index} booted={data.booted} />
       ))}
     </div>
   );

@@ -1,6 +1,6 @@
 import type { BoardView, Figure, Task } from './types';
 import { FLOW, laneInfo } from './lanes';
-import { ageText, since, fmt } from './time';
+import { ageText, since, fmt, dayKey } from './time';
 import { completion, nextCandidates, unverified, byOrder, needsMe, waitCounts } from './selectors';
 export function waitNote(tasks: Task[], now = Date.now()) {
   const w = tasks.filter((t) => t.lane === 'waiting' && needsMe(t));
@@ -14,17 +14,6 @@ export function releaseNote(v: BoardView) {
     .filter((t) => t.lane !== 'release')
     .map((t) => t.code);
   return [n ? `${n} 项已合入` : '暂无已合入', held.length ? `${held.join('、')} 待处理` : ''].filter(Boolean);
-}
-export function appLine(v: BoardView) {
-  const a = v.app;
-  if (!a) return v.appNote ? [v.appNote] : [];
-  const n = unverified(v.tasks).length;
-  return [
-    a.backend && `后端 ${a.backend}`,
-    a.skill && `Skill ${(a.skill.match(/\d+/) || [a.skill])[0]}`,
-    a.model && a.model.split('-')[0],
-    n ? `待实证 ${n}` : '',
-  ].filter((s): s is string => !!s);
 }
 /** 概况卡副标题 for the waiting card: who else it waits on, or the lateness note when only 等你 is left. */
 export function waitFigureNote(tasks: Task[], now = Date.now()): string[] {
@@ -48,8 +37,24 @@ export function figures(v: BoardView, now = Date.now()): Figure[] {
   ];
   const labels = ['待开工', '开发中', '等你', '等发版', '已知未验证', '已完成'];
   const tags = ['QUEUED', 'ACTIVE', 'NEEDS YOU', 'RELEASE', 'RISK', 'SHIPPED'];
+  // Desktop releases can store the full build in either field, or only the short version in older records.
+  const desktopBuild = /^\d+\.\d+\.\d+(?:-[\w.]+)?\.\d{8}(\.\d+)$/;
+  const desktop = v.releases
+    .filter(
+      ({ build, version }) =>
+        desktopBuild.test(build ?? '') || desktopBuild.test(version) || (!build && /^\.\d+$/.test(version)),
+    )
+    .sort((a, b) => Date.parse(b.releasedAt) - Date.parse(a.releasedAt))[0];
+  const releasedAt = desktop?.releasedAt ?? v.app?.releasedAt;
   return [
-    { label: '正式 App', tag: 'BUILD', value: v.appVersion, notes: appLine(v), color: '--lane-app', fraction: 1 },
+    {
+      label: '正式 App',
+      tag: 'BUILD',
+      value: desktop?.version.match(desktopBuild)?.[1] ?? desktop?.version ?? v.appVersion,
+      notes: releasedAt ? [dayKey(new Date(releasedAt))] : [],
+      color: '--lane-app',
+      fraction: 1,
+    },
     ...FLOW.map((lane, i) => ({
       label: labels[i]!,
       tag: tags[i]!,

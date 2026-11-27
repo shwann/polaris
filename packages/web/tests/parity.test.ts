@@ -51,7 +51,8 @@ it('runs the original script and the built React bundle against identical legacy
     const a = old.document,
       b = next.document;
     expect(text(b, '.p-FigureCard-fig > b')).toEqual(text(a, '.fig > b'));
-    expect(text(b, '.p-FigureCard-fig small')).toEqual(text(a, '.fig small'));
+    expect(text(b, '.p-FigureCard-fig:first-child small')).toEqual(['2026-11-10']);
+    expect(text(b, '.p-FigureCard-fig:not(:first-child) small')).toEqual(text(a, '.fig:not(:first-child) small'));
     expect(Array.from(b.querySelectorAll('.p-Matrix-cells i')).map((n) => n.getAttribute('aria-label'))).toEqual(
       // The waiting group was renamed from 等你或客户回复 to 等待中 after the original page.
       Array.from(a.querySelectorAll('.cells i')).map((n) =>

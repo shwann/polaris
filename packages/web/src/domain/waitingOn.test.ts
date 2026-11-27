@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { sample } from '../../tests/fixtures/sample';
 import { laneModel } from './laneModel';
-import { lateTasks, matches, needsMe, needsYouCount, waitCounts, waitingOnOf } from './selectors';
+import { lateTasks, matches, needsMe, needsYouCount, selectView, waitCounts, waitingOnOf } from './selectors';
 import { figures, waitFigureNote } from './presentation';
 import type { Task } from './types';
 
@@ -37,7 +37,7 @@ it('flags lateness and fills the waiting figure from 等你 only', () => {
       now,
     ),
   ).toEqual(['2 项已超过 3 天']);
-  const view = { tasks, app: null, appVersion: '—' } as never;
+  const view = { ...selectView(null, 'main'), tasks };
   const card = figures(view, now).find((f) => f.label === '等你')!;
   expect(card).toMatchObject({ value: 2, notes: ['等客户 1', '等前置 2'] });
 });

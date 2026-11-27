@@ -11,17 +11,7 @@ import { goLane, goRelease } from '../../../hooks/skyBridge';
 import { FIG_LANE } from '../../../domain/lanes';
 
 import { vars } from '../../../styles/style';
-export function FigureCard({
-  figure: f,
-  index,
-  booted,
-  model,
-}: {
-  figure: Figure;
-  index: number;
-  booted: boolean;
-  model?: string;
-}) {
+export function FigureCard({ figure: f, index, booted }: { figure: Figure; index: number; booted: boolean }) {
   const u = useUI(),
     d = DIPPER[index]!,
     title = `北斗${'一二三四五六七'[index]} · ${d.zh}（${d.en}） · 单击点亮北斗里的这颗星，双击跳到对应模块`,
@@ -58,7 +48,7 @@ export function FigureCard({
       </div>
       <b>{typeof f.value === 'number' ? <Count id={f.label} value={f.value} /> : f.value}</b>
       {!!f.notes.length && (
-        <small title={f.notes.join(' · ') + (index === 0 && model ? `（模型 ${model}）` : '')}>
+        <small title={f.notes.join(' · ')}>
           {f.notes.map((text, k) => (
             <span key={text}>
               {k > 0 && <span className={styles.dot}> · </span>}
